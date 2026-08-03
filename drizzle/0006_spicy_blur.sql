@@ -1,0 +1,2 @@
+ALTER TABLE "taxi_ride_requests" ADD COLUMN "accepted_by_taxi_provider_user_id" integer;--> statement-breakpoint
+ALTER TABLE "taxi_ride_requests" ADD CONSTRAINT "taxi_ride_requests_accepted_by_taxi_provider_user_id_taxi_provider_users_id_fk" FOREIGN KEY ("accepted_by_taxi_provider_user_id") REFERENCES "public"."taxi_provider_users"("id") ON DELETE set null ON UPDATE no action;

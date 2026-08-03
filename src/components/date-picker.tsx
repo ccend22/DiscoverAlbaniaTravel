@@ -1,0 +1,317 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { formatDateLong } from "@/lib/format";
+import type { Dictionary } from "@/lib/dictionary";
+import type { Locale } from "@/lib/locale";
+
+const ITEM_HEIGHT = 36;
+const VISIBLE_ITEMS = 5;
+const COLUMN_PADDING = (ITEM_HEIGHT * (VISIBLE_ITEMS - 1)) / 2;
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+function parseDate(value: string): { year: number; month: number; day: number } {
+  const [year, month, day] = value.split("-").map(Number);
+  return { year, month, day };
+}
+
+function formatDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** Monday-first weekday index (0 = Monday .. 6 = Sunday) for the 1st of the given month. */
+function firstWeekdayIndex(year: number, month: number): number {
+  return (new Date(year, month - 1, 1).getDay() + 6) % 7;
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M15 18l-6-6 6-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M9 18l6-6-6-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+interface WheelColumnProps {
+  items: { value: number; label: string }[];
+  selected: number;
+  onSelect: (value: number) => void;
+}
+
+function WheelColumn({ items, selected, onSelect }: WheelColumnProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const suppressScrollHandling = useRef(false);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const index = items.findIndex((item) => item.value === selected);
+    if (index === -1) return;
+
+    suppressScrollHandling.current = true;
+    container.scrollTop = index * ITEM_HEIGHT;
+    const timeout = setTimeout(() => {
+      suppressScrollHandling.current = false;
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [selected, items]);
+
+  function handleScroll() {
+    if (suppressScrollHandling.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      const index = Math.min(
+        Math.max(Math.round(container.scrollTop / ITEM_HEIGHT), 0),
+        items.length - 1
+      );
+      const item = items[index];
+      if (item && item.value !== selected) {
+        onSelect(item.value);
+      }
+    }, 120);
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="h-[180px] w-20 overflow-y-scroll [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        scrollSnapType: "y mandatory",
+        paddingTop: COLUMN_PADDING,
+        paddingBottom: COLUMN_PADDING,
+      }}
+    >
+      {items.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          onClick={() => onSelect(item.value)}
+          className={`flex h-9 w-full items-center justify-center text-sm transition ${
+            item.value === selected ? "font-semibold text-teal" : "text-muted"
+          }`}
+          style={{ scrollSnapAlign: "center" }}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface CalendarPopoverProps {
+  value: string;
+  min: string;
+  onSelectDay: (dateStr: string) => void;
+  dict: Dictionary["datePicker"];
+}
+
+function CalendarPopover({ value, min, onSelectDay, dict }: CalendarPopoverProps) {
+  const selected = parseDate(value);
+  const minParsed = parseDate(min);
+  const [mode, setMode] = useState<"calendar" | "wheel">("calendar");
+  const [viewYear, setViewYear] = useState(selected.year);
+  const [viewMonth, setViewMonth] = useState(selected.month);
+
+  const isAtMinMonth = viewYear === minParsed.year && viewMonth === minParsed.month;
+
+  function goPrevMonth() {
+    if (isAtMinMonth) return;
+    if (viewMonth === 1) {
+      setViewMonth(12);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  }
+
+  function goNextMonth() {
+    if (viewMonth === 12) {
+      setViewMonth(1);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  }
+
+  const totalDays = daysInMonth(viewYear, viewMonth);
+  const leadingBlanks = Array.from({ length: firstWeekdayIndex(viewYear, viewMonth) });
+  const dayCells = Array.from({ length: totalDays }, (_, i) => i + 1);
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const yearItems = [minParsed.year, minParsed.year + 1].map((y) => ({
+    value: y,
+    label: String(y),
+  }));
+  const monthItems = dict.monthsFull.map((label, i) => ({ value: i + 1, label: label.slice(0, 3) }));
+
+  return (
+    <div className="absolute z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+      {mode === "calendar" ? (
+        <>
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={goPrevMonth}
+              disabled={isAtMinMonth}
+              aria-label={dict.previousMonth}
+              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30"
+            >
+              <ChevronLeftIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("wheel")}
+              className="min-h-9 rounded px-2 text-sm font-medium transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft"
+            >
+              {dict.monthsFull[viewMonth - 1]} {viewYear}
+            </button>
+            <button
+              type="button"
+              onClick={goNextMonth}
+              aria-label={dict.nextMonth}
+              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft"
+            >
+              <ChevronRightIcon />
+            </button>
+          </div>
+
+          <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-muted">
+            {dict.weekdayLabels.map((label, i) => (
+              <div key={`${label}-${i}`}>{label}</div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {leadingBlanks.map((_, i) => (
+              <div key={`blank-${i}`} />
+            ))}
+            {dayCells.map((day) => {
+              const dateStr = formatDate(viewYear, viewMonth, day);
+              const isSelected = dateStr === value;
+              const isToday = dateStr === todayStr;
+              const isDisabled = dateStr < min;
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => onSelectDay(dateStr)}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-spring)] ${
+                    isSelected
+                      ? "scale-110 bg-teal font-semibold text-teal-foreground shadow-[var(--shadow-glow-teal)]"
+                      : isDisabled
+                        ? "cursor-not-allowed text-muted/40"
+                        : isToday
+                          ? "border border-teal text-teal"
+                          : "hover:scale-110 hover:bg-teal/10"
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm font-medium">{dict.jumpToMonth}</span>
+            <button
+              type="button"
+              onClick={() => setMode("calendar")}
+              className="text-sm font-medium text-teal"
+            >
+              {dict.done}
+            </button>
+          </div>
+          <div className="relative flex justify-center gap-2">
+            <WheelColumn items={monthItems} selected={viewMonth} onSelect={setViewMonth} />
+            <WheelColumn items={yearItems} selected={viewYear} onSelect={setViewYear} />
+            <div
+              className="pointer-events-none absolute inset-x-0 rounded-md border-y border-teal/60 bg-teal/5"
+              style={{ top: COLUMN_PADDING, height: ITEM_HEIGHT }}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+interface DatePickerProps {
+  name: string;
+  value: string;
+  min: string;
+  onChange: (value: string) => void;
+  dict: Dictionary["datePicker"];
+  locale?: Locale;
+}
+
+export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: DatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <input type="hidden" name={name} value={value} />
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        className="min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal"
+      >
+        {formatDateLong(value, locale)}
+      </button>
+
+      {isOpen && (
+        <CalendarPopover
+          value={value}
+          min={min}
+          onSelectDay={(dateStr) => {
+            onChange(dateStr);
+            setIsOpen(false);
+          }}
+          dict={dict}
+        />
+      )}
+    </div>
+  );
+}

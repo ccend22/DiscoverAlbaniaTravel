@@ -1,0 +1,424 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  /* Discover Albania palette, sampled from the supplied teal and white lockup. */
+  --background: #f4f7f7;
+  --surface: #ffffff;
+  --surface-sunken: #eaf0f0;
+  --foreground: #112f32;
+  --muted: #63787a;
+  --border: #d6e1e1;
+
+  --brand: #00575c;
+  --brand-strong: #003f43;
+  --brand-deep: #002f32;
+  --brand-foreground: #ffffff;
+  --brand-soft: #e0eeee;
+
+  --teal: #087f84;
+  --teal-foreground: #ffffff;
+  --teal-soft: #dff0f0;
+
+  /* Red is reserved for errors and destructive actions. */
+  --red: #bf3d45;
+  --red-foreground: #ffffff;
+  --red-soft: #f9e8e9;
+
+  --success: #217a55;
+  --success-soft: #e3f1e9;
+  --warning: #9b650b;
+  --warning-soft: #f8efd9;
+
+  /* Secondary accent palette — Albanian Riviera sunset/sea tones, used for
+     decorative variety (icon badges, illustrative accents) so the site
+     doesn't read as monochrome teal. Not status colors: keep those on the
+     success/warning/red set above. */
+  --coral: #e2543c;
+  --coral-foreground: #ffffff;
+  --coral-soft: #fce8e2;
+
+  --gold: #c9860f;
+  --gold-foreground: #ffffff;
+  --gold-soft: #fbf0d6;
+
+  --sky: #2b7fa8;
+  --sky-foreground: #ffffff;
+  --sky-soft: #e2f0f6;
+
+  --ring: #087f84;
+  --font-app-sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-app-display: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Premium motion system: Apple-style decelerate/standard/spring curves. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 560ms;
+
+  /* Elevation scale, tinted with the brand ink so shadows feel native to the palette. */
+  --shadow-xs: 0 1px 3px rgba(0, 27, 29, 0.08);
+  --shadow-sm: 0 3px 10px rgba(0, 32, 34, 0.1);
+  --shadow-md: 0 10px 28px rgba(0, 32, 34, 0.13), 0 3px 8px rgba(0, 32, 34, 0.07);
+  --shadow-lg: 0 22px 52px rgba(0, 32, 34, 0.19), 0 8px 20px rgba(0, 32, 34, 0.09);
+  --shadow-glow-teal: 0 0 0 1px rgba(8, 127, 132, 0.16), 0 12px 32px rgba(8, 127, 132, 0.18);
+  --shadow-glow-coral: 0 0 0 1px rgba(226, 84, 60, 0.16), 0 12px 32px rgba(226, 84, 60, 0.2);
+  --shadow-glow-gold: 0 0 0 1px rgba(201, 134, 15, 0.16), 0 12px 32px rgba(201, 134, 15, 0.2);
+  --shadow-glow-sky: 0 0 0 1px rgba(43, 127, 168, 0.16), 0 12px 32px rgba(43, 127, 168, 0.2);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-red: var(--red);
+  --color-red-foreground: var(--red-foreground);
+  --color-red-soft: var(--red-soft);
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
+  --color-teal-soft: var(--teal-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-coral: var(--coral);
+  --color-coral-foreground: var(--coral-foreground);
+  --color-coral-soft: var(--coral-soft);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-gold-soft: var(--gold-soft);
+  --color-sky: var(--sky);
+  --color-sky-foreground: var(--sky-foreground);
+  --color-sky-soft: var(--sky-soft);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-app-sans);
+  --font-mono: var(--font-app-mono);
+  --font-display: var(--font-app-display);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  background: var(--background);
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+}
+
+:where(input, select, textarea)::placeholder {
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):hover {
+  border-color: color-mix(in srgb, var(--muted) 60%, var(--border));
+}
+
+:where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a) {
+  touch-action: manipulation;
+}
+
+/* Touch devices never trigger :hover, so every button/link relying only on a
+   hover style gives zero feedback on tap. Give touch input its own immediate,
+   snappy press feedback — mirrors what the mouse hover states do for pointer
+   users, scoped so it never fights the existing hover/active utility classes
+   on devices that do have a mouse. */
+@media (hover: none) and (pointer: coarse) {
+  :where(button, a, summary):not(:disabled) {
+    transition: transform 120ms var(--ease-out-expo), opacity 120ms var(--ease-out-expo);
+  }
+
+  :where(button, a, summary):not(:disabled):active {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+  transition: outline-offset var(--dur-fast) var(--ease-standard);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 14%, transparent);
+}
+
+table thead {
+  background: color-mix(in srgb, var(--surface-sunken) 72%, var(--surface));
+}
+
+table tbody tr {
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+table tbody tr:hover {
+  background: color-mix(in srgb, var(--brand-soft) 40%, var(--surface));
+}
+
+.station-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--brand);
+  color: var(--brand);
+  box-shadow: var(--shadow-glow-teal);
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+
+.station-marker:hover {
+  transform: scale(1.12);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.leaflet-popup-content-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--muted);
+}
+
+@media print {
+  header,
+  footer {
+    display: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Premium motion & surface utilities                                     */
+/* ---------------------------------------------------------------------- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes ring-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -90;
+  }
+}
+
+.hub-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-pulse 2.6s var(--ease-out-expo) infinite;
+}
+
+.route-pulse {
+  animation: route-flow 2.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-ring,
+  .route-pulse {
+    animation: none;
+  }
+}
+
+@keyframes shimmer-sweep {
+  from {
+    transform: translateX(-140%) skewX(-12deg);
+  }
+  to {
+    transform: translateX(240%) skewX(-12deg);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.animate-fade-in {
+  animation: fade-in var(--dur-slow) var(--ease-standard) both;
+}
+
+.animate-float {
+  animation: soft-float 6s var(--ease-standard) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-float {
+    animation: none;
+  }
+}
+
+/* These blobs are purely decorative background texture, but they're large,
+   blurred, and continuously animated — on mobile GPUs that combination
+   (moving + re-blurring every frame) is a real source of scroll jank for
+   very little visual payoff at small viewport sizes. Keep the color, drop
+   the per-frame cost. */
+@media (max-width: 640px) {
+  .animate-float {
+    animation: none;
+  }
+}
+
+/* Premium hover lift for cards/panels: pair with `shadow-[var(--shadow-sm)]`. */
+.card-lift {
+  transition: transform var(--dur-base) var(--ease-out-expo), box-shadow var(--dur-base) var(--ease-out-expo),
+    border-color var(--dur-base) var(--ease-standard);
+}
+
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Diagonal shine sweep for primary CTAs. Rendered as an inner absolutely-
+   positioned layer (not on the interactive element itself) so its own
+   `overflow: hidden` doesn't clip the parent's hover shadow or focus ring. */
+.shine-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.shine-layer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -10%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-100%) skewX(-15deg);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+
+:where(button, a):hover > .shine-layer::after {
+  transform: translateX(320%) skewX(-15deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shine-layer::after {
+    display: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted) 35%, transparent);
+  border-radius: 999px;
+  border: 3px solid var(--background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+/* Subtle film-grain texture for premium dark hero surfaces. */
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}

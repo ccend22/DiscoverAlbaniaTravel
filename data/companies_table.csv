@@ -1,0 +1,399 @@
+id,name,vat,phone,email,street,city,rating,rating_count,routes_operated,num_routes
+2061,FAZANËT E DIVJAKËS,K33927402O,682339503,sheashpk01@yahoo.it,"Lagjia nr. 2, Rruga ""20 Janari"", banesa nr. 95, Divjakë",,0,0,Divjakë – Tiranë – Divjakë | Divjakë – Lushnje  – Divjakë | Divjakë – Durrës – Divjakë,3
+2066,JURVIS,K92626401T,692971108,ervisdhana@gmail.com,Lagjia Sheq i madh Rruga 1 Maj Banesa me Nr 40/1 Fier,Fier,0,0,Fier – Lushnje – Fier,1
+2068,EURO-ALBANIA TRAVEL,L33609403Q,672033339,ikometaj@hotmail.com,Lagjja Apollonia Bulevardi Jakov Xoxa Godina 7 Kati i 1 Fier,Fier,0,0,"Fier – Rinas – Fier (nga Ura e Dajlanit, Vorë)",1
+2071,ERENER - TRANS,K42727207M,0692208605 0692208605,K42727207M,Lagjia Nr 2 Cërrik,Elbasan,0,0,"Cërrik – Tiranë – Cërrik (me kalim nga Papër, Rrogozhinë) | Cërrik – Tiranë – Cërrik (me kalim nga Elbasani) | Cërrik – Belsh – Cërrik | Cërrik – Papër – Rrogozhinë – Durrës",4
+2074,AN  and  JORG,L53228204F,,L53228204F,Cërrik lagjja nr2 rruga Cërrik-Elbasan km-1 zona kadastrale nr1389 pasuria nr2/50-ND ndertese private kati 1 AF 486 T Elbasan,Elbasan,0,0,Cërrik – Sarandë – Cërrik,1
+2075,SALLIU-TRANS,L13210201C,0531 2 3129,salliutrans@gmail.com,Lagjja nr2 mbrapa karburantit TACI-OIL AA 265 BE Elbasan,Elbasan,0,0,Cërrik – Vlorë – Cërrik,1
+2076,AURORA 2,K16410809V,683984872,pëllumbfetahu@gmail.com,Rruga Nazif Duzha Lagjia Sporti Nr 2 Elbasan,Elbasan,0,0,Gramsh – Elbasan – Gramsh,1
+2078,TOMKLEDE,K47103803D,682292350,kastriotnaska@gmail.com,Lagjia 18 Gushti Gramsh,Elbasan,0,0,Gramsh – Tiranë – Gramsh | Gramsh – Durrës – Gramsh | Gramsh – Korçë – Gramsh,3
+2080,PRODANI,K27713621J,,K27713621J, Lagjia Nr 1 tek Axhensia Librazhd,Elbasan,0,0,Librazhd – Elbasan – Librazhd | Librazhd – Durrës – Librazhd,2
+2081,KAMPULA,L28103601A,693786466,feredinkampula@gmail.com,Lagjja Nr 1 Banesë private Librazhd,Elbasan,0,0,Librazhd – Korçë – Librazhd,1
+2082,HAKA TRAVEL,K87718601D,682247687,K87718601D,Lagjia Nr 1 Rruga Demokracia Pallati Nr 85 Librazhd,Elbasan,0,0,Librazhd – Vlorë – Librazhd,1
+2083,MEGI 2001,K37510651K,0683181269 0683612621,K37510651K,Librazhd Rruga NacionaleLagjja nr 1Voloreku Elbasan,Elbasan,0,0,Librazhd – Tiranë – Librazhd,1
+2085,DIKU-TRANS 2917,L79327101K,682301292,gezimcullhaj61@gmail.com,Fshati Pekisht Rruga Pajovë - Belsh Km 7 Objekti Nr 299 Elbasan,Elbasan,0,0,Peqin – Durrës – Peqin,1
+2086,LLUCA,K29824105N,682066180,Emiliani_lilo@hotmail.com,Ndertesa prane kantierit te prodhimit te materialeve inerte Elbasan,Elbasan,0,0,,0
+2087,LIQENI EXPRESS,L63622202S,699778010,liqeniexpress16@yahoo.com,Zona Kadastrale 1147 Nr Pasurie 30/5 Belsh Elbasan,Elbasan,0,0,Belsh – Tiranë – Belsh (pa të drejtë qëndrimi në Elbasan) | Belsh – Elbasan – Belsh | Belsh – Durrës – Belsh (me kalim Rrogozhinë) | Belsh – Lushnje – Belsh,4
+2088,ART TRAVEL SH.P.K,L17926601U,0697714600 0698980444,artankolneku@gmail.com,Lagjja Nr 1 Zona Kadastrale Nr 2924 Pasuria Nr 2/103-N11 dhe 2/103-N12 Elbasan,Elbasan,0,0,Prrenjas – Librazhd – Prrenjas,1
+2089,LEKA TRAVEL,L28111601Q,0665752400,L28111601Q,Rruga 10 Nentori Lagjja nr 1Banese private prane Bashkise AA 967 EC  Elbasan,Elbasan,0,0,Prrenjas – Elbasan – Prrenjas,1
+2110,SHIJAKU and CO,L62413505H,662047333,edlirazaja@yahoo.it,Lagjia Popullore Rruga Tofik Jashari Durrës,Durres,0,0,Shijak – Durrës – Shijak,1
+2120,TIRKA 2000,J72027001C,692384461,renibala1234@gmail.com,Terminali i Transportit Nderqytetes Zona Jug-Veri Tirane,Tirane,0,0,Tiranë – Gjirokastër – Tiranë,1
+2121,KLID EKSPRES,K22301004Q,692593286,studioelita@hotmail.com,Rruga Irfan Tomini Hyrja Nr 1 Apartamenti Nr 18 Nr pasurie 1/377N-18 Tiranë,Tirane,0,0,Tiranë – Fier – Tiranë | Librazhd-Pogradec-Korce-Librazhd,2
+2124,MARKAJ,K32313008R, 0692823991 0685488124,K32313008R,Rruga Gjergj Legisi Godinë 9 - katëshe kati 8 Nr pasurie 10/302 Tiranë,Tirane,0,0,Tiranë – Mjedë – Pukë – Tiranë,1
+2125,DRIAGONA,K22006002Q,682524914,norimemaj@gmail.com,Njësia Bashkiake Nr 9 Rruga Eshref Frashëri Ndërtesa Nr 12 Hyrja Nr 1 Tiranë,Tirane,0,0,"Tiranë – Koman – B. Curri – Tiranë(ky itinerar realizohet pjeserisht me anije mbi liqenin e ""Fierzes"") | Tiranë – Kukës – Morinë (AL)/Vermicë (KS) – Gjakovë – Qafë Morinë (AL)/(KS) – Bajram Curri – Tiranë",2
+2127,LU - NA,K31412087P,692089127,lu_na_shpk@yahoo.com,Rruga e Durresit Pallati Fratari Kulla Nr 1 Tirane,Tirane,0,0,Tiranë – Fushë Krujë – Tiranë (me kalim nga Kamza) | Tiranë – Lezhë – Tiranë | Tiranë – Laç – Tiranë | Tiranë – Rinas (Aeroport) – Tiranë,4
+2128,"""TERBUNI TRANS"" Sh.P.K",L39525301O,685051808,terbunitrans@live.com,Objekti pranë Pallatit të Kulturës Pukë,Shkoder,0,0,Pukë - Shkodër - Pukë | Pukë - Kukës - Pukë | Pukë - Tiranë - Pukë,3
+2129,"""MIRDITA-N"" SH.P.K",L29526302D,684021863,andolimshpk@gmail.com,Banesë Private Bashkia Fushe- Arrëz Pukë Shkodër,Shkoder,0,0,Fushë Arrëz - Shkodër- Fushë Arrëz | Fushë Arrëz - Lezhë- Fushë Arrëz,2
+2133,MALESIA TRAVEL,L67508702G,0672228333 0674889966,bardhguri@icloud.com,Lagjja Qender Rruga Nacionale Koplik-Bajze godine 2-kateshe kati 2-te nr 2/63-1+3 zona kadastrale 2220 Shkoder,Shkoder,0,0,Koplik - Shkodër - Koplik,1
+2134,KOPLIKU SHPK,K37522705E,682811392,fatjoni-finance@hotmail.com,Lagjia Pikza Rruga Pikza ZK 2220  Nr 235 Kodi Postar 4301 Koplik,Shkoder,0,0,Koplik - Tiranë - Koplik,1
+2135,VELIPOJA  EKSPRES,K26723001H,0672860748 0692259782,gezimelezi@yahoo.com,Lagjia Partizani Rruga Lopçej Godinë 1 - katëshe Nr 45 Shkodër,Shkoder,0,0,Shkodër - Koplik - Shkodër | Shkodër - Vau i Dejës - Shkodër,2
+2137,ELIAN-SHKODRA,K86622004G,22242566,bahrimemcaj@yahoo.com,Rruga Luguçesme Nr Pasurie 5/17 Shkodër,Shkoder,0,0,Shkodër - Durrës - Shkodër | Shkodër - Durrës - Shkodër,2
+2138,ROKI TOURS,L16306004D,672323975,antonjetaradovani@yahoo.com,Rruga Bulevardi Zogu i Parë Nr 25 Shkodër,Shkoder,0,0,Shkodër - Fushë Arrëz - Shkodër | Shkodër - Lezhë - Shkodër,2
+2140,NELI-TOURS,L47027901T,,L47027901T,Lagjia Tobel Rruga Tobel - Krumë Ndërtesë private Nr 7 Kukës,Kukes,0,0,Krumë - Kukës - Krumë,1
+2144,LACI KOMPANI,L27917201V,672086011,pajtimlaci@gmail.com,Lagjia Nr 1 Rruga Kukësi  i Vjetër Kukës,Kukes,0,0,Kukës - Tiranë - Kukës,1
+2174,ARGJIRO,J93316647D,692188263,ggolemi12@gmail.com,Ura e Lumit Rruga nacionale Gjirokaster Tepelene,Gjirokaster,0,0,Gjirokastër - Berat - Gjirokastër | Gjirokastër - Korçë - Gjirokastër | Gjirokastër - Durrës - Gjirokastër | Gjirokastër - Sarandë - Gjirokastër | Gjirokastër - Tiranë - Gjirokastër | Gjirokastër - Elbasan - Gjirokastër | Gjirokastër - Vlorë - Gjirokastër,7
+2176,A D E L SH P K,K23610401D,SKA ,eltonseraj@yahoo.com,"L.29 MARSI, ",,0,0,Patos – Vlorë – Patos (pa të drejtë qëndrimi në Fier) | Patos – Tiranë – Patos,2
+2181,ROBERT SINAJ,L76619204D,694415713,L76619204D,Armen Rruga Sonda Objekt Nr 258 Vlore,Vlore,0,0,Selenicë - Vlorë - Selenicë,1
+2183,YLMA KONISPOL,K34107820G,692731593,Ylmakonispol@gmail.com,Konispol,Vlore,0,0,Konispol - Tiranë - Konispol | Konispol - Sarandë - Konispol,2
+2184,TRANSPORT-SARANDA-2012-SH.P.K,L24212801F,0692480599 0692164418,L24212801F,Lagjia Nr 3Rruga Adem Sheme pranë Filialit Elektrik Sarandë,Vlore,0,0,Sarandë - Vlorë - Sarandë ( me kalim nga Muzina ),1
+2186,JONI-TRANS-SARANDA,K84824801T,692571642,jonitranssaranda@gmail.com,Lagjia Nr 1 Rruga Tolo Jovani Banesa Nr 160 Sarandë,Vlore,0,0,Sarandë - Delvinë - Sarandë,1
+2187,TRANSBUS - SARANDA,K83725804U,692071820,ahmetitravel@yahoo.com,Lagjia Nr 1 Sarandë,Vlore,0,0,Sarandë- Vlorë - Sarandë ( me kalim nga bregu ) | Sarandë - Himarë - Sarandë | Sarandë - Tiranë - Sarandë ( me kalim nga bregu ),3
+2188,ARJONI-TRAVEL,L23913803A,,L23913803A,"Lagjia nr. 4, rruga ""Peshkatari"", pallati ""Boçi"", kati i 3-të, Sarandë",Vlore,0,0,Sarandë - Përmet - Sarandë | Gjirokastër – Tepelenë – Gjirokastër,2
+2189,TRANS DEA,K83826802M,692762594,mellesmurtaj@gmail.com,Lagjia Nr 1 afer Hotel LINDI Sarande Vlore,Vlore,0,0,Sarandë - Finiq - Sarandë | Sarandë - Berat - Sarandë,2
+2192,City Himara,L73731801D,692397010,L73731801D,Njësia Administrative Lukovë Lagjia Shkallë Rruga e Plazhit Ambjenti Nr 7 Vlorë,Vlore,0,0,Himarë - Sarandë - Himarë,1
+2193,RUCI  TOURS,K36510236K,33228699,eva@rucitours.com,Lagjia 28 Nëntori Godinë 2 - katëshe Kati 1 Nr 428 Hotel Sazani Vlorë,Vlore,0,0,Himarë - Vlorë - Himarë,1
+2196,BORAKU,K36406218M,694056232,hoxhajlavdosh@yahoo.it,Lagjia 28 Nëntori Rruga Zenel Gjoleka Objekt Privat me Nr 64 Kati 1 Vlorë,Vlore,0,0,Vlorë - Sarandë - Vlorë (me kalim nga Bregu),1
+2198,"""BREGASI""",L76330202K,683020904,L76330202K,Rruga Pilo Bega Banesa 1040 Shkalla 1Ap 13 Vlorë,Vlore,0,0,Vlorë - Himarë - Vlorë,1
+2200,GEA,K47428201Q,692394415,lorencqarri77@gmail.com,Lagjia Qendër Objekti Nr 33 Kodi Postar 9411 Vlorë,Vlore,0,0,Vlorë - Shkodër - Vlorë,1
+2201,HERMES AEROPORT,L67324202E,672084587,L67324202E,"Bulevardi ""Ismail Qemali"", Lagjia ""Pavarësia"", Kulla nr. 1, Hyrja nr. 1, Kati 1, Vlorë",Vlore,0,0,Shkodër - Rinas - Shkodër | Vlorë - Rinas(Aeroport) - Vlorë,2
+2202,SKERDBES,K46817201R,SKA ,skerdbes@yahoo.it,Lagjia Muradie Vlorë,Vlore,0,0,Vlorë - Çorovodë - Vlorë,1
+2239,8078,,,,,Tirane,0,0,,0
+2280,BEAM,K22313004H,,musavokshi@yahoo.com,Rruga Dritan Hoxha Pallati MC Inerte Nr 203 shkalla 3 kati pare Tirane,Tirane,0,0,Tiranë – Bilisht – Tiranë | Tiranë – Koplik – Tiranë (pa të drejtë qëndrimi në Shkodër) | Tiranë – Peqin – Tiranë | Tiranë – Rrëshen – Tiranë,4
+2281,"""DYRRAH""",K31531594L,,,Lagjja nr4prane Stacionit te trenit Durres,Durres,0,0,,0
+2298,Agjencia Sharka,,,,,,0,0,,0
+2303,JON IMPEKS.,J82916478M,,,Lagjia 11 Janari  Rr Ramiz Aranitasi Fier,Fier,0,0,,0
+2306,euro,,,,,,0,0,,0
+2307,PIK,,,,,,0,0,,0
+2315,Ergest Liko,M14222404J,,,Lagjja Loni DhamoRruga Ypsilonigodine 3 kateshe prane stacionit te trenitpasurie me numer 28zk 8572 Fier,Fier,0,0,,0
+2323,TIRA,,,,,,0,0,,0
+2324,ELIS TRAVEL,L58602601M,,,Lagjja nr 1 Rruga Gjorg Golemi objekt privat me zone kadastrale 2446 nr pasurie 8/41 Elbasan,Elbasan,0,0,,0
+2327,TIRANA,,,,,,0,0,,0
+2328,HAJD,,,,,,0,0,,0
+2329,Terminali Tiranë Veri-Jug (kthesa e Kamzës),,,,Rruga Kastriotët Kthesa e Kamzës,,0,0,,0
+2332,Terminali Burrel,,,,Sheshi Ahmet Zogu,,0,0,,0
+2333,Terminali Durrës (Stacioni i Trenit),,,,Sheshi ''26 Nëntori'',,0,0,,0
+2335,Terminali Gjirokastër,,,,Bulevardi 18 Shtatori,,0,0,,0
+2336,Terminali Gramsh,,,,Rruga Bexhet Tosumi,,0,0,,0
+2339,Terminali Kukës,,,,Rruga Islam Spahiu,,0,0,,0
+2341,Terminali Librazhd,,,,Sheshi Demokracia,,0,0,,0
+2346,Terminali Shkodër,,,,Bulevardi Bujar Bishanaku,,0,0,,0
+2353,Terminali Kuçovë,,,,Rruga Stanislav Zyber,,0,0,,0
+2354,Terminali Ura Vajgurore (Bashkia Dimal),,,,Sheshi Djaloshi i Dimalit,,0,0,,0
+2355,Terminali Shijak,,,,Rruga SH84,,0,0,,0
+2356,Terminali Fushë-Krujë,,,,Rruga e Laçit,,0,0,,0
+2358,Terminali Cërrik,,,,Rruga Cërrik-Gostinë,,0,0,,0
+2359,Terminali Prrenjas,,,,Rruga SH3 pranë Shëtitores Kryesore,,0,0,,0
+2361,Terminali Peqin,,,,Bulevardi Mustafa Gjinishi,,0,0,,0
+2363,Terminali Roskovec,,,,Unaza e qytetit,,0,0,,0
+2365,Terminali Tepelenë (ish-Agjencia),,,,Sheshi ''Ali Pashë Tepelena'',,0,0,,0
+2367,Terminali Dropull,,,,Dropull,,0,0,,0
+2368,Terminali Libohovë,,,,Qendër Libohovë,,0,0,,0
+2374,Terminali Pukë,,,,Pranë Qendrës Rinore ,,0,0,,0
+2375,Terminali Fushë-Arrëz,,,,Unaza Fushë-Arrëz,,0,0,,0
+2382,Terminali Rrëshen,,,,Rruga Vincenzo Di Paoli,,0,0,,0
+2383,Terminali Konispol,,,,Pranë Bashkisë,,0,0,,0
+2395,Terminali Velipojë,,,,Rruga Shkodër-Velipojë,,0,0,,0
+2404,Plepa Golem,,,,,,0,0,,0
+2405,Plepa Durrës,,,,,,0,0,,0
+2406,test,,,,,,0,0,,0
+2409,Ben Hysa Travel GTFS,K02622203S,,,,,0,0,,0
+2410,ANBASTAR GTFS,L718140024A,,,,,0,0,,0
+2435,D.D-Transport 2022,M23217202B,0693316594,xhoanakila1985@gmail.com,"Lagjia ""Skënderbej"", ZK. 8523, pasuria nr. 35/34, Elbasan",Elbasan,0,0,Elbasan – Peqin – Elbasan,1
+2437,Testime,,0662026206,ardian.asa@hotmail.com,,,0,0,,0
+2438,1,,,,,,0,0,,0
+2446,test233,,,,,,0,0,,0
+2448,w,,,,,,0,0,,0
+2449,ARNES-2017,L77002401F,,,"Njësia Administrative Yzberisht, Rruga ""Loni Ligori"", Pallati ""Usluga"", Tiranë",Tirane,0,0,Bulqizë – Elbasan – Bulqizë,1
+2453,ENSU VIAGGIO,L94001402E,0686118258,enxhi993@gmail.com,"Lagjia ""18 Tetori"", Rruga ""Arif Kurti"", banesa nr. 2, Lushnje ",,0,0,Lushnjë – Elbasan – Lushnjë,1
+2454,XHESI TURIST,M32407505V,0682622309,dritanshpata@icloud.com,"Lagjia Arapaj, Katund Sukth, Zona Kadastrale nr. 3541, Godinë 1 - katëshe, nr. 11, Durrës ",,0,0,Durrës – Lushnje – Durrës,1
+2455,SADI-07 ,M46529701I,0682357912,gjizafatmir@gmail.com,"Lagjia ""Gjokë Doçi"", objekt privat me nr. pasurie 13/67+1-12, ZK 2932 , Peshkopi",,0,0,Peshkopi – Burrel – Peshkopi,1
+2456,TIRANA TRANS 22,M21421013D,0692209395,rudinakapaj@hotmail.com,"Rruga Bulevardi Zogu i Pare, Godina Nr.2, Kati 1  , Tirane",,0,0,,0
+2462,123 GTFS,test123,,,,,0,0,,0
+2059,TRANSUDHETARE,J64103414M,682137824,sulo.edi@gmail.com,ISH PARKU UDHETAREVE Fier,Fier,0,0,Lushnjë – Librazhd – Lushnjë | Lushnjë – Vlorë – Lushnjë | Lushnjë – Fier – Lushnjë,3
+2060,KOHA EKSPRES,K34017402I,SKA ,saimir.myzeqari15@gmail.com,Rruga  Skender Libohova Lushnje,Fier,0,0,Lushnjë – Tiranë – Lushnjë | Lushnjë – Durrës  – Lushnjë | Lushnjë – Berat – Lushnjë,3
+2062,SE-AL TRANS,L01811504Q,0682977833 052227764,saimiraliu@yahoo.com,Lagjia Nr 14 Rruga Tirana Godinë pranë ish-Plastikës Durrës,Durres,0,0,Durrës – Peqin – Durrës | Divjakë – Librazhd – Divjakë,2
+2063,Shametaj Transport,K88128801D,682748122,shametaj.transport@gmail.com,Lagjia 28 Nëntori banesë private pranë Sigal Ballsh,Fier,0,0,"Ballsh – Tiranë – Ballsh (me kalim nga Fratar, Levan) | Ballsh – Vlorë – Ballsh | Ballsh – Fier – Ballsh",3
+2064,ENSILV -BUS,L18308801S,695541380,leftershehaj@yahoo.it,Lagjia 5 Shkurti Banesa me Nr 37 Ballsh,Fier,0,0,Ballsh – Tiranë – Ballsh (me kalim nga Patosi),1
+2065,A R J A N I,J63208424W,35534229488,arjanitravel@yahoo.com,Lagjia Apollonia Rruga Brigada e 11 Sulmuese përballë Bashkise Kati 1 Fier,Fier,0,0,Fier – Vlorë  – Fier | Fier – Roskovec – Fier | Tiranë – Patos – Tiranë | Tiranë – Roskovec – Tiranë,4
+2067,ZAHAJ 2013,L32725402U,693660707,bledar.zahaj@gmail.com,Lagjja 1 Maj Rruga Jani Bakalli prane Stacionit te Autobuzeve Patos Fier,Fier,0,0,Fier – Ballsh – Fier,1
+2069,ÇUKO,J62903571K,692091453,glei.shenaj@yahoo.com,Lagjia Afrim i Ri rruga Fier - Seman sheshi 70 m në perëndim te hekurudhës Fier,Fier,0,0,Fier – Elbasan – Fier | Fier – Berat – Fier | Fier – Kuçovë – Fier | Fier – çorovodë – Fier | Fier – Korçë – Fier,5
+2073,QAFA E BLIRIT,K72715201W,686403770,enversula707@gmail.com,LN2  CERRIK Elbasan,Elbasan,0,0,"Cërrik – Kuçovë – Cërrik (ma kalim Gostimë, Mollas, Klos)  | Cërrik – Berat – Cërrik",2
+2091,SULA TRAVEL 06,L68320601C,688217876,kledisula2@gmail.com,Lagjia Nr 1 Rruga Skënderbeu Pallati Nr 5 Kati i II-të Prrenjas,Elbasan,0,0,Prrenjas – Durrës – Prrenjas,1
+2092,TRANSPORT BALLA 2002 ,L58106601R,698577561,artan.balla@gmail.com,Lagjia e Liqenit Rruga Domosdova Ndërtesa Nr 8 Hyrja Nr 2 Prrenjas,Elbasan,0,0,Prrenjas – Tiranë – Prrenjas,1
+2095,UDHËTARI  2001,K23425201O,693696773,OltionZogolli@gmail.com,Kompleksi i Shoqërisë  Ajek shpk Lagjia Shënkoll Nr Pasurie 16/432 Elbasan,Elbasan,0,0,Elbasan – Cërrik – Elbasan,1
+2096,LADI TRANS,L33102203A,683243090,vjollca.hidri@yahoo.com,Lagjia Beqir Dardha Zona Kadastrale Nr 8521,Elbasan,0,0,Elbasan – Belsh – Elbasan,1
+2097,ERA TRAVEL 2013,L33122201P,692084205,eratravel@gmail.com,Lagjja 28 Nentori rruga Esat Bordi zk8523 pasuria nr8/32 Zyrat brenda Pallatit te sportit Elbasan,Elbasan,0,0,Elbasan – Tiranë – Elbasan,1
+2098,Ben Hysa Travel,L02622203S,686012311,albulbiçaku@gmail.com,Lagjia Skënderbej Rruga Iliaz Kosova Nr 15 pranë Ish NSHLD Elbasan,Elbasan,0,0,,0
+2099,DUMREJA - 2,L13521202F,0682458946 0697575429,dumreja2@gmail.com,Lagjia Dyli Haxhire Rruga Demir Sulçebeu Nr 323 Elbasan,Elbasan,0,0,Elbasan – Lushnje – Elbasan (me kalim nga Belshi),1
+2100,TRANSGER,L02726201C,692259582,L02726201C,Lagjja 28 NentoriRruga Kadri Abdihoxhapallati 108\3 Elbasan,Elbasan,0,0,,0
+2101,LLIXHA 2001,K13127201O,054 2 43355 0692088163,iljanadaka@hotmail.com,Lagjja 28 Nentori rruga 25 Nentori pallati nr109/1 kati 1 Elbasan,Elbasan,0,0,Elbasan – Lushnje – Elbasan (me kalim nga Rrogozhina),1
+2102,Skampa Trans,L82914203S,672040436,rizahasa@outlook.com,"Rruga ""Zogu i Parë"", Lagjia ""28 Nëntori"", Pallati nr. 120/8, Elbasan",Elbasan,0,0,Elbasan – Kuçovë – Elbasan (me kalim nga Dragoti) | Elbasan – Kavajë – Elbasan | Elbasan – Shijak – Elbasan (pa të drejtë hyrje në Durrës) | Elbasan – Kuçovë – Elbasan (me kalim nga Cërriku) | Elbasan – Kuçovë – Elbasan (me kalim nga Cërriku),5
+2103,GINO EXPRESS,L42905202H,692455358,L42905202H,Lagjia Çlirimi Rruga Kadri Skura Banesë private Nr 85 Elbasan,Elbasan,0,0,Elbasan – Klenjë – Peshkopi – Elbasan,1
+2104,TRANS KELA,L12704203B,054 2 41097,sokratkela@yahoo.com,Lagjja Shenkoll rruga Mustafa Kotherja shtepi private nr13 Elbasan,Elbasan,0,0,Elbasan – Korçë – Elbasan,1
+2114,MAGIC GLOBE,L41427021C,672054888,arbi7001@yahoo.com,Pallati Hark Kati 1 ZK Nr 1664 Nr Pasurie 3/89-N5 Fushë Krujë,Durres,0,0,Fushë Krujë – Tiranë – Fushë Krujë (me kalim nga Rinasi dhe Qafa e Kasharit) | Fushë Krujë – Tiranë – Fushë Krujë (me kalim nga Kamza) | Fushë Krujë – Krujë – Fushë Krujë,3
+2116,A  and  ATRANS,L04001204A,683632735,transkruja@gmail.com,Fushe Kruje Qender pallati Hark kati 1 zona kadastrale nr 1664 me numer pasurie 3/89-N5 Durres,Durres,0,0,Krujë – Tiranë – Krujë,1
+2123,BIT + D 2010,L01908016U,682600326,L01908016U,Nj Adm Nr 7 Rr Babe Rexha shtëpi private tek ish Fusha e Aviacionit Nr 1 Tiranë,Tirane,0,0,Tiranë – Kukës – Tiranë,1
+2126,ELALBA  - 1,K12202003J,692025096,nexhdet.d@live.com,Rruga e Durresit Pallati Fratari Nr 1 Kulla Nr 1 Kati pare Tirane,Tirane,0,0,Tiranë – Durrës – Tiranë | Tiranë – Shkodër – Tiranë,2
+2139,ROZAFA-ORTAKET,K26702001R,674416822,artanreci@yahoo.com,Lagjia Vojo Kushi Rruga Bujar Bishanaku Shkodër,Shkoder,0,0,Shkodër - Tiranë - Shkodër,1
+2141,QJL-TRANS,L56816901K,672286881,saimir.aliu@yahoo.com,Lagjia Nr 1 Rruga Pjetër Bogdani Godina 2 përballë Bashkisë Kukës,Kukes,0,0,Krumë - Durrës - Krumë,1
+2146,EDI ER-2016,L67731201U,682081989,miftarkovaci@gmail.com,Lagjia Brija Ndërtesë private Nr 4 Kukës,Kukes,0,0,Kukës - Elbasan - Kukës,1
+2147,Vellezerit - KOPANI,L17525201C,695128917,L17525201C,Lagjja Nr1 Pallati Nr11 Shk Nr1 Ap Nr1 Autobus Mercedes Benz SPRINTER me targe AA 014 HE Kukes,Kukes,0,0,Kukës - Shkodër - Kukës,1
+2148,XHEA TRANS,L36331601E,081127768 0693525380,L36331601E,Objekt Privat pranë ish Gjimnazit të Vjetër Korçë,Korce,0,0,Bilisht - Korçë - Bilisht,1
+2149,EKSPRES BILISHT REVANI ,K77323601P,692191387,ekspres revani@yahoo.com,Rruga Superstrada e Devollit Hyrja 1 Nr 171 Korçë,Korce,0,0,Bilisht - Tiranë - Bilisht,1
+2150,DINKO,L74812002L,696368770,adinko@gmail.com,Lagjia e Qendrës rruga kryesore Nr pasurie 685/11 Korçë,Korce,0,0,Maliq - Tiranë - Maliq,1
+2151,Melesini Trans,L67926001M,695232884,L67926001M,Rruga '15 Maji' ZK Nr 2430 Nr 11 Korçë,Korce,0,0,Leskovik - Korçë - Leskovik,1
+2153,ER-TRANS,K98628001R,682251535,K98628001R,Blloku Nr 4 në hyrje të ish ndërrmarjes së ndërtimit Ersekë Korçë,Korce,0,0,Ersekë - Korçë- Ersekë | Ersekë - Durrës - Ersekë | Ersekë - Tiranë - Ersekë,3
+2154,""" XHAFATRAVEL """,L74222001M,695612460,xhafatravelkorce@gmail.com,Lagjja 12 Rruga Sheshi i Teatrit Pallati nr6 Hyrja 2 Korce,Korce,0,0,Pogradec - Maliq - Korçë - Pogradec,1
+2155,MUSKA - TRANS,L54621605Q,693722121,diamantleka@22gmail.com,Lagjia Nr 5 Rruga Kajo Karafili ZK 8582 Pasuria me Nr 5/111-N Korçë,Korce,0,0,Pogradec - Prrenjas - Pogradec,1
+2156,SHQIPONJA - TRANS,K53807603C,683889339,u.omellari@gmail.com,Tek Agjencia Pogradec Korçë,Korce,0,0,Pogradec - Tiranë - Pogradec | Pogradec - Durrës - Pogradec | Pogradec - Korçë - Pogradec,3
+2158,START BUS KORCA   SHPK,K24722001V,0692046378 082251036,startbuskorca@gmail.com,Lagjja 17 Rruga Midhi Kostani Tek Terminali,,0,0,Korçë - Vlorë - Korçë | Korçë - Tiranë - Korçë | Korçë - Fier - Korçë | Korçë - Berat- Korçë | Korçë - Bilisht - Korçë | Korçë - Durrës - Korçë | Korçë - Lushnjë - Korçë,7
+2175,BESIERI,K72811401R,692337618,barjamfaslliaj@gmail.com,Lagjja 29 Nentori Rruga Mihal Bego Godina 11 Hyrja 2 Kati 3 Ap 5 Fier,Fier,0,0,Patos – Berat – Patos | Shkodër - Pukë - Shkodër | Shkodër - Rrëshen - Shkodër | Shkodër - Laç - Shkodër,4
+2182,TRANS-SOPOTI,L67101501I,684168730,pgramozi@yahoo.com,Lagjja Sinan Ballaci sheshi Sulejman Delvina godina nr1 kati i pare Vlore,Vlore,0,0,Delvinë - Sarandë - Delvinë | Delvinë - Tiranë - Delvinë,2
+2185,MEHMETI TRANS,L74129801A,692288830,redonmehmeti97@yahoo.com,Rruga Guri Nazifi Godina Nr 1 Lagjia Nr 4 Sarandë,Vlore,0,0,Sarandë - Konispol - Sarandë,1
+2190,SARANDA-BUTRINT-TRANSPORT,K83903806B,,K83903806B,Lagjia Nr 4 mbi Portin Detar Sarande Vlore,Vlore,0,0,Sarandë - Elbasan - Sarandë,1
+2191,TRANS-BUTRINTI,K04814854U,692490281,dhimiterbarzuka@gmail.com,Lagjja nr2 rruga Onhezmi pallati nr107 kati i pare Vlore,Vlore,0,0,Sarandë - Tepelenë - Sarandë | Sarandë - Fier - Sarandë | Sarandë - Tiranë - Sarandë (me kalim nga Muzina) | Sarandë - Gjirokastër - Sarandë | Sarandë - Durrës - Sarandë (me kalim nga Muzina),5
+2205,INTERBUZ VLORA.,K37004203O,692162158,aldadani73@gmail.com,Lagjia 28 Nëntori Vlorë,Vlore,0,0,Vlorë - Fier - Vlorë | Vlorë - Tiranë - Vlorë | Vlorë - Durrës - Vlorë | Vlorë - Elbasan - Vlorë (me kalim nga Rrogozhina) | Vlorë - Kuçovë - Vlorë (me kalim nga Roskoveci),5
+2208,"""KELI TRAVEL""",L72919802B,693933017,kelitravel@yahoo.com,Lagjja nr 2rruga e Peqinit objekt 9 katesh kati pare  me zone kadastrale nr 3234  pasuria nr 3/54-N8 Tirane,Tirane,0,0,Rrogozhinë - Elbasan - Rrogozhinë,1
+2211,LOSHI TOURS,L52907801A,692103604,L52907801A,Lagjja nr6 rruga Skuraj objekt 1-katesh zk8552 objekti nr6633 Tirane,Tirane,0,0,Kavajë – Rrogozhinë – Kavajë,1
+2214,ALDO TOURS 2013,L33129802C,682091857,aldotours@gmail.com,"Lagjja nr 2,Autobus Mercedes Benz,ngjyre e bardhe ,me targe AA 847 XH, Tirane",Tirane,0,0,Kavajë – Durrës – Kavajë,1
+2217,BUZMADHE,L62419007A,686310311,qylhanxhiubrunilda@gmail.com,Rruga Demokracia Vila Nr 222 Tiranë,Tirane,0,0,Kamëz – Kukës – Kamëz,1
+2219,Tirana Travel,L21729012U,692496192,tirana_travel@hotmail.com,Bulevardi Zogu i Iprane hotel Republikesgodina nr2 Tirane,Tirane,0,0,,0
+2221,ANBASTAR,L71814024A,694042235,anbastartravel@hotmail.com,Terminali i Transportit Ndërqytetës Zona Jug - Veri Tiranë,Tirane,0,0,Tiranë – Konispol – Tiranë,1
+2222,SHKOZA TRAVEL,L71516028J,692138393,L71516028J,Rruga Misto Mame Pallati Nr 4 Shkalla 2 Ap18 Tiranë,Tirane,0,0,Tiranë – Leskovik – Tiranë,1
+2223,TAGO,L81807009O,695366649,L81807009O,Rruga e Durrësit Nr Pasurie 1/525-N Z-K 8350 Tiranë,Tirane,0,0,Tiranë – Sukth – Tiranë,1
+2273,K.M.K,L78223801E,0696074475,Dorinakala10@gmail.com,Ballsh-Mallakaster Bulevardi Rrapo Hekali Shkalla 1 Kati 1 ZKadastrale 1090 NrPasurie 7/9810/Ndertese Fier,Fier,0,0,,0
+2286,BESNIK MERSINI,,,,,,0,0,,0
+2296,Teminali bwerat,L23326001F,,,,,0,0,,0
+2300,TISSA,,,,,,0,0,,0
+2305,mel,,,,,,0,0,,0
+2309,udhet,,,,,,0,0,,0
+2310,b.e,,,,,,0,0,,0
+2311,testweew,,,,,,0,0,,0
+2312,toml,,,,,,0,0,,0
+2313,mal,,,,,,0,0,,0
+2321,MEH,,,,,,0,0,,0
+2322,Albana Alimeta,M12207033L,,,TiraneTiraneDajtLinzeRrMuhamet Deliu pall Alba FlorKati i pare Nr1 Tirane,Tirane,0,0,,0
+2325,Valbona Sallaku,L01311506R,,,Maminas Ndertese 3 kat kati i pare Zona Kadastrale 3796 NrPasurise 349/9 Durres,Durres,0,0,,0
+2326,Arben Liçi,L13420203F,,,Belsh Qender Zona Kadastrale 1147 Nr Pasurise 275/24/1 Elbasan,Elbasan,0,0,,0
+2330,Terminali Elbasan (Kryqëzimi i Cërrikut),,,,Rruga Thoma Kalefi,,0,0,,0
+2331,Terminali Bulqizë,,,,Rruga e Pazarit,Bulqizë,0,0,,0
+2334,Terminali Fier,,,,Rruga Harrilla Bozdo'' Lagjia ''15 Tetori'',,0,0,,0
+2337,Terminali Korçë,,,,Rruga Midhi Kostani,,0,0,,0
+2338,Terminali Krujë,,,,Rruga Donika Kastrioti,,0,0,,0
+2340,Terminali Lezhë (Katedralja),,,,Rruga ''Papa Gjon Pali II'' (pranë Katedrales),,0,0,,0
+2342,Terminali Lushnjë,,,,Pranë Stacionit të Trenit,,0,0,,0
+2343,Terminali Peshkopi,,,,Rruga “Ismail Feta”,,0,0,,0
+2347,Terminali Bajram Curri,,,,Sheshi Dardania,Bajram Curri,0,0,,0
+2348,Terminali Vlorë,,,,Rruga Demokracia,,0,0,,0
+2349,Tiranë Terminali Lindje ,,,,Autostrada Tiranë-Elbasan pranë Qendrës Tregtare TEG,,0,0,,0
+2350,Terminali Tiranë Qendër - Aeroport,,,,Rruga Ludovik Shllaku,Tiranë,0,0,,0
+2351,LU-NA,,,,,,0,0,,0
+2352,Terminali Ballsh,,,,Bulevardi Rrapo Hekali,Ballsh,0,0,,0
+2357,"Terminali Elbasan, Pallati i Sportit",,,,Pallati i Sportit Tomorr Sinani,,0,0,,0
+2360,Terminali Belsh,,,,Rruga Sami Frashëri,,0,0,,0
+2362,Terminali Patos,,,,Shëtitorja Republika,,0,0,,0
+2364,Terminali Përmet,,,,Shëtitorja Mentor Xhemali'',,0,0,,0
+2369,Terminali Këlcyrë,,,,Qendër Këlcyrë,,0,0,,0
+2370,Terminali Laç,,,,Rruga SH39,,0,0,,0
+2371,Terminali Maliq,,,,Rruga Punëtori,,0,0,,0
+2372,Terminali Bilisht,,,,Rruga ''Ismail Qemali'',,0,0,,0
+2373,Terminali Krumë,,,,Sheshi Luan I Haradinaj,,0,0,,0
+2381,Terminali Çorovodë,,,,Lagjia ''Çlirimi'' (ish Agjencia),,0,0,,0
+2385,Terminali Sukth,,,,Sukth Durrës,,0,0,,0
+2386,Terminali Orikum,,,,Rruga Demokracia,,0,0,,0
+2387,Terminali Ersekë,,,,Agjencia Ersekë,,0,0,,0
+2389,Terminali Poliçan,,,,Rruga 22 Gushti,,0,0,,0
+2390,Terminali Leskovik,,,,Agjencia Leskovik,,0,0,,0
+2391,Terminali Klos,,,,Rruga Fullqet,,0,0,,0
+2393,Terminali Vau Dejës,,,,Rruga e Hidrocentralit ,,0,0,,0
+2411,KELMENDI TRAVEL,M08324701A,0692844384,leonard.lumaj@yahoo.com,"Lagjja Qender, Rruga Vermoshit, godine 2-kateshe, kati II-te, nr 2 .   , Tamare",,0,0,,0
+2457,FLORIAN trans 2022,M29711101H,0692359714,florlluca72@icloud.com,"Bulevardi Mustafa Gjinishi, pallati nr.13/50, kati 4, hyrja 12.  , Peqin",,0,0,Peqin – Tiranë – Peqin,1
+2458,VEDRA TOURS,M42819601A,+355688373860,vedraprona@gmail.com,"Qendër Libohovë, Nepravisht, ndërtesa nr. 1, hyrja nr. 1, Libohovë",,0,0,Gjirokastër – Libohovë – Gjirokastër,1
+1013,DPSHTR,,,,,,0,0,,0
+2021,DEMOKRACIA 95,K31601531F,692183198,begueni@gmail.com ,Lagjia Nr 4 Rruga Egnatia  Godinë banimi 8 katëshe kati parë Nr 5292 Durrës,Durres,0,0,Durrës – Korçë – Durrës | Durrës – Fier – Durrës | Durrës – Tiranë – Durrës,3
+2026,"""META 2017"" SH.P.K",L77510901V,685330610,klevismeta@yahoo.com,"Lagjia ""Pjetër Budi"", rruga ""Dervish Hima"", Pallati nr. 4, Apartamenti nr. 3,  Burrel",,0,0,Tiranë – Divjakë – Tiranë | Lushnjë – Divjakë – Lushnjë | Burrel - Peshkopi - Burrel | Burrel – Klos – Burrel | Burrel - Kamëz - Burrel | Kamëz - Burrel - Kamëz | Klos – Burrel – Klos,7
+2031,ARIU-ARIU,L27418702D,068 4813977,dashurie.cibaku@gmail.com,Lagjia Nazmi Rushiti Kati i I-rë i ndërtesës 3 katëshe Dibër,Diber,0,0,Peshkopi –Durrës  – Peshkopi | Peshkopi – Tiranë – Peshkopi,2
+2072,GOSTIMA 2003,K33128202G,698403444,gostima2003@gmail.com,Lagjia Nr 2 Rruga e ish SMT-së Objekti Nr 10 Elbasan,Elbasan,0,0,Cërrik – Elbasan – Cërrik,1
+2077,DIOMELA,K96615802E,0692374116 0692374116,K96615802E,Lagjia Sporti 2 ZK Nr 1842 Gramsh,Elbasan,0,0,Gramsh – Kamzë – Gramsh,1
+2079,SEFA TRANS,L47707602A,692535994,seferalliu@gmail.com,Lagjjen nr 1Pallati 114Bashkia LibrazhdRrethi Librazhd Elbasan,Elbasan,0,0,Librazhd – Prrenjas – Librazhd,1
+2084,ALVA,K49007105V,682225908,shpendkruja40@gmail.com,Lagjia Xhami Rruga Hysen Ballhysa Nr 15 Peqin,Elbasan,0,0,Peqin –Elbasan  – Peqin,1
+2090,FLOADER,L48512601M,682642598,L48512601M,Lagjia Nr 2 Rruga 10 Nëntori Pallati Nr 51 Kati 1 Nr 1 Prrenjas,Elbasan,0,0,Prrenjas – Pogradec – Prrenjas,1
+2093,NE ER ,L52519213M,696593840,eriodionhysa2019@gmail.com,Lagjia 28 Nentori Rruga 17 Marsi Ndertese 2 - kateshe kati 2 Elbasan,Elbasan,0,0,Elbasan – Librazhd – Elbasan | Elbasan – Prrenjas – Elbasan,2
+2094,EGNATIA TRANS,K83019209T,56657,K83019209T,Lagjia Qemal Stafa Rruga Sul Misiri Nr 20 Elbasan,Elbasan,0,0,Elbasan – Gramsh – Elbasan,1
+2106,ARBESA-EL,K73417202K,0693552800 05442534,zyra.kontabel@yahoo.com,Lagjia Sul Papri Rruga 25 Nëntori Pallati 121/1 Hyrja Nr 9 Elbasan,Elbasan,0,0,Elbasan – Fier – Elbasan | Elbasan – Berat – Elbasan,2
+2107,TRANSEL,K63320202V,672040436,liljanadaka@hotmail.com,Lagjia 5 Maj Elbasan,Elbasan,0,0,"Elbasan – Himarë – Elbasan (me kalim nga Bregu, pa të drejtë qëndrimi në Vlorë) | Elbasan – Durrës – Elbasan | Elbasan – Vlorë – Elbasan",3
+2108,VELLEZERIT  SHKALLA,L01621503G,682926592, dritanshkalla1@gmail.com,Durres,Durres,0,0,Shijak – Librazhd – Shijak,1
+2109,VËLLEZËR SHPATA,K81705504N,682622309,dritanshpata@gmail.com,Lagjja nr 4 rruga Skenderbej tek stacioni i trenit me trage AA 997 LB Durres,Durres,0,0,Durrës – Krumë – Durrës (pa të drejtë qëndrimi në Kukës),1
+2111,PALI TRANS 2013,L32112504F,684843743,liri@gmail.com,Autobus me targe AA 326 FF Durres,Durres,0,0,Shijak – Elbasan – Shijak,1
+2112,ERZENI - TRANS,K31527595W,0689009723 057123580,erzenitrans@gmail.com,Lagjia Kodër Shijak,Durres,0,0,Shijak – Tiranë – Shijak,1
+2113,BORA TRANS,L43810201A,672054888,L43810201A,Fshati Hasan Ndërtesë private 1 - katëshe me Nr pasurie 28/70 Durrës,Durres,0,0,Fushë Krujë – Durrës – Fushë Krujë,1
+2117,ALDI 04,K93903203L,695468710,bertballa6@gmail.com,"Kraste, ndërtese private, 1 katëshe, zona kadastrale nr. 8622, me numër pasurie 54/3, ",,0,0,Krujë – Shkodër – Krujë,1
+2118,F.D.A. LINE BUS,L01510503R,692044307,alfred.kapciu@hotmail.com,Lagjia Nr13 Rr Tre Vëllezërit Thanasi Objekt me NrPasurie 46/41+1-6Durrës,Durrës,0,0,Golem – Durrës - Golem | Durrës – Golem – Durrës,2
+2130,PAVABLE,K09111324M,686482750,K09111324M,Pranë Pallatit të Kulturës në qendër të qytetit Fushë - Arrez,Shkoder,0,0,Fushë Arrëz - Durrës- Fushë Arrëz,1
+2131, PRENGA,K19629306F,SKA ,ndreka.arben@gmail.com,Fushë Arrëz Shkodër,Shkoder,0,0,Fushë Arrëz - Tiranë- Fushë Arrëz,1
+2132,''NORDIN'',J97113015J,692027605,dedesmakaj@yahoo.com,Rruga Sarajet e Hotit ZK 8598 Nr pasurie 8/34 Vau Dejës,Shkoder,0,0,Vau Dejës - Guri Zi - Shkodër - Vau Dejës | Vau Dejës - Kukës - Vau Dejës | Vau Dejës - Krye Bushat - Shkodër - Vau Dejës | Vau Dejës - Lezhë - Vau Dejës | Vau Dejës - Tiranë - Vau Dejës,5
+2136,DINAMIC-EXPRESS,K87101006T,0692844314 0693216106,fahriemekshiqi@gmail.com,Lagjia Vojo Kushi Rruga Çlirimi Shkoder,Shkoder,0,0,Shkodër - Elbasan - Shkodër | Shkodër - Vlorë - Shkodër,2
+2142,SEIDI - TOURS,K97116901R,692463550,halilxhaferi8@gmail.com,Lagjia Nr 2 Rruga Demokracia ZK Nr 2282  Kukës,Kukes,0,0,Krumë - Tiranë - Krumë,1
+2152,Leskovik Trans,L67916001I,694443767,xhentiljana.ajazi@gmail.com,Rruga 15 Maji pallat Nr4 shkalla Nr2 kati i dyte apartamenti Nr4 prane sheshit Faik Konica Korce,Korce,0,0,Leskovik - Tiranë- Leskovik,1
+2157,MORAVA  93,K33804004D,082248890 0692621180,alba_trendi@yahoo.com,Lagjia Nr 17 Bulevardi Midhi Kostani Kati I-rë Objekti Nr 23 Korçë,Korce,0,0,Korçë - Gjirokastër - Korçë | Korçë - Pogradec - Korçë | Korçë - Sarandë - Korçë | Korçë-Elbasan-Korçë,4
+2159,JUSI-2,K09112009C,683858188,lleshaj.gjon @yahoo.com,Rruga Gjergj Fishta Nr50 Rreshen Lezhe,Lezhe,0,0,Rrëshen - Tiranë - Rrëshen | Rrëshen - Shkodër - Rrëshen | Rrëshen - Lezhë - Rrëshen | Rrëshen - Laç - Rrëshen | Rrëshen - Durrës - Rrëshen,5
+2160,LASKA-1,L17709301D,682025764,kol.laska@outlook.com,Lagjia Nr 4 Rruga Laç - Milot Ndërtesë 1 katëshe Laç,Lezhe,0,0,Laç - Durrës - Laç | Laç - Tiranë - Laç | Laç - Peshkopi- Laç | Laç - Kukës - Laç | Laç - Rrëshen - Laç | Laç - Lezhë - Laç | Laç - Shkodër - Laç,7
+2161,KEIVI TOURS,L67617501L,682002236,keivitours@gmail.com,Lagjia Beselidhja Rruga Shtraus Zyre me Nr 4/400-N4 kati I-re Lezhe,Lezhe,0,0,Lezhë - Peshkopi - Lezhë | Lezhë - Laç- Lezhë,2
+2162,LEZHA - TRAVEL,K88406502H,685511137,Lezhatravel1@gmail.com,Lagjia Kodër Marlekaj autostrada Lezhë - Shkodër Godina afër Viva - Bar Lezhë,Lezhe,0,0,Lezhë - Velipojë - Lezhë,1
+2163,LINDA 80,K37513530U,0685537255 0682037255,prekmiraj@yahoo.com,"Rruga Kryesore Lezhe Tirane km 3, zyre ne zonen kadastrale 1986 nr. pasurise 134 13",,0,0,Lezhë - Durrës - Lezhë | Lezhë - Rrëshen- Lezhë | Lezhë - Fushë Arrëz - Lezhë | Lezhë - Pukë - Lezhë | Lezhë - Tiranë - Lezhë | Lezhë - Shkodër - Lezhë,6
+2164,B.E.S TRAVEL,L69007501Q,695537630,Sejdo.beqiri@gmail.com,Lagjia Nr 1 depo e Ndërmarjes së Ndërtimit Memaliaj,Gjirokaster,0,0,Memaliaj - Tiranë - Memaliaj,1
+2165,TEPELENA-TRANSPORT,L68815501J,695331363,gramoshyseni@yahoo.com,Lagjia Selam Musa Godinë 2 - katëshe Rruga Shullaz Gjirokastër,Gjirokaster,0,0,Tepelenë - Tiranë - Tepelenë,1
+2166,ARSTAR TOURS,K89224202G,692242328,K89224202G,Lagjia Partizani afër Bashkisë Përmet,Gjirokaster,0,0,Përmet - Korçë- Përmet,1
+2167,Penta Group Albania,L06319202R,682957833,pentaoil@hotmail.com,Zona Industriale Vlore Rruga Damian Humariti nr 144-145 Perball Shkolles Ibrahim Kushta Pasuria nr46/151 Zona Kadastrale 8604 Pasuria nr46/151-ND Zona Kadastrale 8604 Vlore,Vlore,0,0,Përmet - Vlorë - Përmet,1
+2168,FJOART TRAVEL,L39129201Q,682094606,astritmamillo@yahoo.com,"Lagjia e re, Rruga ""Kongresi Përmetit"", kati i parë, Përmet ",,0,0,Këlcyrë - Tiranë - Këlcyrë | Përmet - Tiranë - Përmet,2
+2169,PERMETI EKSPRES,K89223201Q,684097681,danmeta60@yahoo.com,Permetlagjja Bajamerruga Kongresi Permetitpallati i rikati i parene zonen kadastrale 2917 me numer pasurie 16/64-N9 Gjirokaster,Gjirokaster,0,0,Përmet - Durrës - Përmet | Përmet - Sarandë - Përmet | Përmet - Gjirokastër - Përmet,3
+2170,LIBOHOVA,K23116607J,692234487,ketjonapasho@yahoo.com,Libohovë Gjirokastër,Gjirokaster,0,0,Libohovë - Gjirokastër - Libohovë,1
+2171,SKENDI-2014,L53428602T,698501621,L53428602T,"Lagjia Pyjore, rruga ""Nepravisht - Libohovë"", Godinë 1-katëshe, Gjirokastër",Gjirokaster,0,0,Libohovë - Tiranë - Libohovë | Gjirokastër – Përmet – Gjirokastër,2
+2172,BEST - TRAVEL - GJIROKASTRA,L63112601P,,L63112601P,Rruga  Gjirokastër  Kakavijë në hyrje të doganës Kakavijë Objekti Nr 85/21ND,Gjirokaster,0,0,Dropull - Tiranë - Dropull,1
+2173,GREEN BUS TRAVEL,L81523015O,,L81523015O,Lagjia Kodër Vorë Rruga Bashkia Nr 13 Vorë,Tirane,0,0,Gjirokastër - Dropull - Gjirokastër | Tiranë – Manëz – Tiranë | Memaliaj - Sarandë - Memaliaj | Dropull - Gjirokastër - Dropull | Tiranë – Memaliaj – Tiranë | Tiranë – Librazhd – Tiranë,6
+2177,MELEQE TRANS,K93211401D,6822295238,K93211401D,Lagjia Nr1 sheshi qëndror banesa ngjitur me zyrat e Bashkisë Roskovec Fier ,Fier,0,0,Roskovec – Fier – Roskovec,1
+2178,LENTIN 2015,L53617403M,693138460,tmiljus67@gmail.com,Fshati Velmish Rruga Velmish - Strum ZK me Nr 3737 Nr Pasurie 15/4 Godinë 1 katëshe me Nr 5,Fier,0,0,Roskovec – Tiranë – Roskovec,1
+2179,"""TRANS LUKS"" SHPK",K74128402B,,K74128402B,Lagjia Gafur Muço Lushnje,Fier,0,0,Lushnjë – Korçë – Lushnjë,1
+2180,"""SHARKA TRAVEL""",L14527402D,692150539,sheashpk01@yaoo.it,Lagjia Skënder Libohova Rruga Vath Korreshi ZK Nr 8572 Lushnje,Fier,0,0,Lushnjë – Sarandë – Lushnjë,1
+2195,HAJDINI TRANSPORT,L36630202P,695142696,L36630202P,Pranë Spiles kati 1 Himarë,Vlore,0,0,Himarë - Fier - Himarë,1
+2197,HAMZAJ,K36417206V,692485935,rr.hamzaj@hotmail.com,Lagjia Pavarësia  Rruga Hasan Kushta  Vlorë,Vlore,0,0,Vlorë - Korçë - Vlorë | Vlorë - Gjirokastër - Vlorë (ngaLevani) | Vlorë - Sarandë - Vlorë (me kalim nga Muzina),3
+2199,ALESIO  VL 2011,L17409208V,692317233,L17409208V,Lagjia 24 Maji  Rruga Andrea Varfi Nr 20 Vlorë,Vlore,0,0,Vlorë - Librazhd - Vlorë,1
+2207,REFATI-08,K83227802A,0692958583 0686700090,armandpici@gmail.com,Lagjia Nr 2 Rruga Qamil Gjuzi Ndërtesë 1 katëshe Rrogozhinë,Tirane,0,0,Rrogozhinë - Tiranë - Rrogozhinë,1
+2213,Brahimaj Tours,L63302801G,683400527,brahimajtours@gmail.com,Lagjia Nr 3 Rruga Kavaljon Pallati 201 Kavajë,Tirane,0,0,Kavajë – Elbasan – Kavajë,1
+2215,Edi and Sena Travel and Tours,L71928009G,693324821,keireisen1@gmail.com,Rruga e Durrësit Pallati mbrapa Ring Center Tiranë,Tirane,0,0,Kamëz – Pogradec – Kamëz,1
+2216,VALAMARJA - 07,K72029014V,68326193,K72029014V,FRUTI KULTURE BASHKKAMEZ Tirane,Tirane,0,0,Kamëz – Gramsh - Kamëz,1
+2218,TIRANA - BUS,L41511008N,692496192,L41511008N,Pranë Liqenit Artificial Kompleksi CYCLADE Tiranë,Tirane,0,0,Tiranë – Elbasan – Tiranë (me kalim nga Tuneli),1
+2220,LIONEL TRAVEL,L72002020A,692117847,lioneltravel20@yahoo.com,Njësia Bashkiake Nr 3 Rruga Sitki Çiço Pallati 2 Ap 21 Tiranë,Tirane,0,0,Tiranë – Maliq – Tiranë,1
+2225,SHEHI TRANS,L42304029T,682183543,vokshiermir@yahoo.com, Njësia Bashkiake Nr 4 Rruga Myslym Keta dyqan privat Nr 1 Tiranë,Tirane,0,0,Tiranë – Poliçan – Tiranë (pa të drejtë qëndrimi në Berat),1
+2226,EDEN TOURS,L31804005I,,L31804005I,Rruga e Durrësit Godina Nr 79 Hyrja 5 Apartamenti 42/2 Tiranë,Tirane,0,0,Tiranë – Orikum – Tiranë (pa të drejtë qëndrimi në Vlorë),1
+2227,KEI Sh.p.k,K72406011J,692089127,K72406011J,Rruga e Durrësit Pallati Fratari Tiranë,Tirane,0,0,Tiranë – Pogradec – Tiranë,1
+2228,BATURBA,K62202003O,692142036,kozetakuci@yahoo.com,Rruga Irfan Tomini Pallati Agdea Kati 7 Tiranë,Tirane,0,0,Tiranë – Patos – Ballsh – Tiranë,1
+2229,IRIDEST,K72111030I,692060614,palëdedaj@yahoo.com,Njësia Bashkiake Nr 9 Rruga Reshit Petrela Pallati USLUGA Ap Nr 6 Tiranë,Tirane,0,0,Tiranë – Shijak – Tiranë,1
+2230,ENO,K31705061T,0682295791 2359244,enoshpkhodo@hotmail.com,Njesia Bashkiake Nr 11 Rruga Don Bosko Pallati Aurora Nr 1 Kati i II Tirane,Tirane,0,0,Tiranë – Ersekë – Tiranë,1
+2231,SIGAL BUSINESS CENTER,L32202049T,+355 4 2253407 0692079301,info@sigal.com.al,Qendra e Biznesit SIGAL BUSINESS CENTER Tirane,Tirane,0,0,Tiranë – B. Curri – Tiranë (me kalim nga Qafa e Malit),1
+2232,P I K O,K22301006J,692089127,K22301006J,Rruga e Durrësit Pallati Fratari Shkalla 1 Kati 1 Tiranë,Tirane,0,0,Tiranë – Dropull – Tiranë | Tiranë – Libohovë – Tiranë | Tiranë – Lushnjë – Tiranë,3
+2233,KESIDA,K41619021N,682327307,K41619021N,Rruga Artan Lenja Pallati Nr 12 Ap 40 Tiranë,Tirane,0,0,Tiranë – Gramsh – Tiranë,1
+2235,T I B E,K31327069U,693717107,totidushku2@gmail.com,"Njësia Bashkiake nr. 7, rruga ""Babë Rexha"", pallati nr. 11, shkalla 4, Tiranë",Tirane,0,0,Tiranë – Kuçovë – Tiranë | Tiranë – Berat – Tiranë | Berat - Ura Vajgurore – Berat,3
+2237,OLGENO,K31825016M,696539661,sxdfinance@gmail.com,Rruga e Durresit brenda terminalit te jugut Tirane,Tirane,0,0,Tiranë – Sarandë – Tiranë ( me kalim nga Bregu ) | Tiranë – Himarë – Tiranë,2
+2238,EL-ALBA TRANS,J62014003V,692089126,bilbilrakipi@yahoo.com,Rruga e Durrësit Pallati Fratari Kulla Nr 1 Tiranë,Tirane,0,0,Tiranë – Vlorë – Tiranë | Tiranë – Selenicë – Tiranë,2
+2292,JON IMPEKS,,,,,,0,0,,0
+2293,Terminali Berat,L23326001F,,,Lagjia Barrikada,Berat,0,0,,0
+2295,JUSI TRAVEL,L06808206J,,,Rruga Gjergj Kastrioti Lagjja Pavaresia Pallati Coloseo kati 1 Vlore,Vlore,0,0,,0
+2304,TRANSPORT SARANDA,,,,,,0,0,,0
+2308,cuko,,,,,,0,0,,0
+2314,RIK,,,,,,0,0,,0
+2316,lu-na,,,,,,0,0,,0
+2317,Murati Agjenci,,,,,,0,0,,0
+2318,Halim Bistri,K82626605Q,,,Lagjia 18 Shtatori Tek Ura e Lumit Gjirokaster,Gjirokaster,0,0,,0
+2319,DUK,,,,,,0,0,,0
+2320,DUKA,,,,,,0,0,,0
+2345,Terminali Sarandë,,,,Rruga Flamurit,,0,0,,0
+2366,Terminali Memaliaj,,,,Rruga Tafil Buzi,,0,0,,0
+2376,Terminali Koplik,,,,Qendër Koplik,,0,0,,0
+2377,Terminali Kavajë (ish-Agjencia),,,,Rruga Taulantia,,0,0,,0
+2378,Terminali Rrogozhinë,,,,Pranë Stadiumit Egnatia,,0,0,,0
+2379,Terminali Himarë,,,,Rruga SH8 Potam,,0,0,,0
+2380,Terminali Delvinë,,,,Rruga Veli Kallapodhi,,0,0,,0
+2384,Terminali Selenicë,,,,Sheshi Minatori,,0,0,,0
+2388,Terminali Divjakë,,,,Pranë Bashkisë,,0,0,,0
+2392,Terminali Kavajë (Linja Tiranë),,,,Shëtitorja Josif Budo,,0,0,,0
+2394,Terminali Finiq,,,,Rruga 'SH83,,0,0,,0
+2396,Terminali Durrës Plepa,,,,Rruga Shkëmbi i Kavajës,Durrës,0,0,,0
+2397,Terminali Rinas (Aeroport) ,,,,Aeroporti Ndërkombëtar Nënë Tereza,,0,0,,0
+2398,Terminali Kamëz,,,,Bulevardi Blu,,0,0,,0
+2399,"Terminali Lezhë, linja Veri-Lindje",,,,Rruga Franz Josef Strauss (pranë ''Urës së Cenit''),,0,0,,0
+2400,"Terminali Lezhë, stacioni linjave të veriut",,,,Rruga SH1 (pranë ''Urës së Mikpritjes''),,0,0,,0
+2401,Terminali Vorë,,,,Rruga Nacionale e Vjetër,,0,0,,0
+2402,Terminali Golem,,,,Rrethrrotullimi Golem,,0,0,,0
+2413,SULEJMAN HYSKJA,K32802209U,0694791406,deklarime.online@yahoo.com,"Lagjja Partizani, rruga Mustafa Skuqi, ndertesa nr.25, automjet me targe EL 446 A TX., ",,0,0,,0
+2436,12359,,,,,,0,0,,0
+2463,GILIGM-PERMET,M48927201H,0696118345,mamillogavril@gmail.com,"Rruga Kongresi Permetit , Pallati 5 katesh, Kati 1, objekti nr.1,Lagjia Bajame, Permet  , ",,0,0,,0
+2485,DH E M B E L I.,K11609007R,682140546,nd.dhembeli@gmail.com,"Njesia administrative 12, Rr ""Muhamet Deliu"" ZK 2460, Nr pasurise 297 /9-15, Linze  ",,0,0,,0
+1,COMMUNICATION PROGRESS1,K01625001,0674042416, etransport@dpshtrr.gov.al,"Rr. Stanislav Zuber, Nd. 2, H.I9. Njesia administrative Nr. 7, 1023, Tirane. Zona kadastrale 8210, Nr. Pasurie 7/137 Nd-N8, VOL. 18, Fq. 114 dhe Nr. Pasurie 7/137 ND-N10, VOL. 18. Fq. 116, ",,0,0,,0
+1999,"""DURRESI"" SH.P.K",K31702518J,682290627,kacmoli@gmail.com,Lagjia Nr 4 përballë Pallatit të Sportit Durrës,Durres,0,0,Durrës – Krujë – Durrës,1
+2000,DITATRANS,K42408501Q,682050362,petritlikasukth@gmail.com,Rruga e Tonës Nr 28 Durrës,Durres,0,0,Sukth – Tiranë – Sukth,1
+2001,AXHAMI CO SHPK,K41523513A,682351756,taniderjaj1@gmail.com,Lagjja Nr 16 Kthesa Manëz Përballë Zyrës së Postës Durrës,Durres,0,0,Manëz – Tiranë – Manëz,1
+2002,RIKI TRANS,L71309505G,699887414,danjelaaliko@hotmail.com,Lagjia Nr 13 Rruga Pavarësia Objekt me Nr pasurie 53/126 Durrës,Durres,0,0,"Korçë - Ersekë - Korçë | Tiranë – Durrës – Tiranë (me kalim nga Plepat, Ndroq) | Korçë - Lozhan - Gramsh - Korçë | Durrës – Vorë  – Durrës | Shijak – Korçë – Shijak | Korçë-Kamëz-Korçë",6
+2003,LONDON EYE,L81326031F,693298599,emilina.shala@yahoo.com,Fshati Hasan Ndërtesë private 1 - katëshe  Nr Pasurie 28/70 Durrës,Durres,0,0,Durrës – Fushë Krujë – Durrës | Durrës – Fushë Krujë – Durrës,2
+2004,RILINDI SHPK,K49326636A,682041913,rilindi-shpk@hotmail.com,Lagjia 28 Gushti Rruga Sulejman Vokshi Nr Pasurisë 6/53-N Bajram Curri,Kukes,0,0,"B. Curri - Koman - Tiranë - B. Curri (ky itinerar realizohet pjeserisht me anije mbi liqenin e ""Fierzes"") | B. Curri - Durrës - B. Curri | B. Curri -Tiranë - B. Curri (Qafa e Malit) | Durrës – B. Curri – Durrës | BAJRAM CURRI - QAFË MORINË (AL) / (KS) / GJAKOVË - PRIZREN - VERMICË (KS) / MORINË (AL) - KUKËS - TIRANË - BAJRAM CURRI",5
+2005,EIGA,K51611501N,693169333,alban.bamusta@yahoo.com,Rrashbull Durrës,Durres,0,0,Durrës – Prrenjas – Durrës | Durrës – Pogradec – Durrës | Durrës – Laç – Durrës,3
+2006,ANDI 2011,L62416503G,682380091,saimir.aliu@gmail.com,Lagjia Nr4 Rruga Skënderbej pranë stacionit të trenit Durrës,Durres,0,0,Durrës – Fushë Arrëz – Durrës,1
+2007,XHEJNI TRAVEL,L62415503B,694766533,L62415503B,Rruga Skenderbej Autobus tip MAN me targe AA 855 IB Durres,Durres,0,0,Durrës – Ersekë – Durrës,1
+2008,KOPO TRANS,L78921201C,683709109,kopotrans@gmail.com,"Rruga Nacionale Kelcyre -Berat. Ndertese nje kateshe Nr.17, Podgoran Fushe, Permet , Gjirokaster",Gjirokaster,0,0,Durrës – Gjirokastër – Durrës | TIRANË - LESKOVIK - TIRANË  (me kalim nga Kelcyra) | LESKOVIK – TIRANË - LESKOVIK (me kalim nga Kelcyra),3
+2009,ALDARS,K61905503J,683282942,arsenta_sulejmani@hotmail.com,Lagjja nr 4 Rruga Skenderbej Autobus me targe AA 477 II Durres,Durres,0,0,Durrës – Cërrik – Durrës,1
+2010,HADROJ - 04,K71612505G,692173901,shadroj@gmail.com,Autobus me targë AA 692 VB Durrës,Durres,0,0,Durrës – Pukë – Durrës,1
+2011,AUTO DUKA TRANS ,L62415504J,698640999,enibozo@gmail.com,Lagjia Nr 4 Objekt me numër pasurie 4/15-N1 ZK 8514 pranë Stacionit të Trenit Durrës,Durres,0,0,Durrës – Kamëz – Durrës,1
+2012,ESLI-TRANS,K91928501T,692211501,K91928501T,Lagjia Nr 4 Rruga Skënderbej Stacioni i Trenit Durrës,Durres,0,0,Durrës – Përmet – Durrës | Durrës – Kuçovë – Durrës,2
+2013,QANI,K31317004D,682133937,ynacoshpk@yahoo.com,Rruga Sami Frasheri Pallati 9 Shk5 Ap36 Tirane,Tirane,0,0,Durrës – Çorovodë – Durrës | Tiranë – Çorovodë – Tiranë (pa të drejtë qëndrimi në Berat),2
+2014,RIGERSI TRANS 2011,K31406538L,692514161,K31406538L,Lagjia  Nr 4 Stacioni  i Trenit Durrës,Durres,0,0,Durrës – Bulqizë – Durrës | Durrës – Burrel – Durrës | Durrës – Peshkopi – Durrës,3
+2015,LEDJAN,K31529517P,694001460,K31529517P,Lagjia Nr 4 Rruga Skënderbej Pallati Nr 125 Durrës,Durres,0,0,Durrës – Berat – Durrës,1
+2016,ALFA - TRANS,K31528554O,684029892,ervisabregu@icloud.com,Lagjia Nr 15 Rruga Kushtrimi i te pareve Durres,Durres,0,0,Durrës – Gramsh – Durrës,1
+2017,ARMED,K41606511R,692170766,dyrrah.shpk@gmail.com,Lagjia Nr 14 Rruga Hoxha Tahsim Godina Nr 30 Durrës,Durres,0,0,Durrës – Kukës – Durrës | Durrës – Bilisht – Durrës,2
+2018,TRANS KOMOD,L62420503D,692024909,bardhi.ilir@yahoo.it,Lagjja nr4 Rruga Skenderbej Durres prane  Stacionit te Trenit Durres Sheshi i Autobusave Durres,Durres,0,0,Durrës – Vlorë – Durrës,1
+2019,"""TEUTA - 95""",K31529513G,682036693,begueni@gmail.com,Lagjia Nr 4 Rruga Skënderbej Pallati Nr 147 Kati parë Durrës,Durres,0,0,Durrës – Belsh – Durrës | Durrës – Elbasan – Durrës | Durrës – Librazhd – Durrës,3
+2020,SHQIPONJA,K31615517R,685052754,mehmetarapi@yahoo.com,Lagjia Nr 4 Stacioni i Trenit Durrës,Durres,0,0,,0
+2022,NORD,K31526521F,682034159,K31526521F,Lagjia Nr 4 rruga Skënderbej Nr 2 pranë Blu Star Durrës,Durres,0,0,Durrës – Rrëshen  – Durrës | Durrës – Lezhë – Durrës | Durrës – Sarandë – Durrës | Durrës – Shkodër – Durrës,4
+2023,MARSONI AL TRANSPORT,L62415024Q,SKA ,ndini_dhimiter@hotmail.com,Bulevardi Blu Qendra e Biznesit OLSI Kamëz Tiranë,Tirane,0,0,Tiranë – Burrel – Tiranë | Klos – Durrës – Klos | Tiranë – Klos – Tiranë,3
+2024,"""KLOSI-A"" sh.p.k",L47810901E,682345683,avniarapi@hotmail.com,Lagjja nr1 Ndertese Nr6 Autobuz tip Benz me targa AA 169 NM Diber,Diber,0,0,Klos – Tiranë – Klos,1
+2025,"""BULQIZA""",K47220406W,0685335851 0682765772,maksimxhura@gmail.com,Lagja e Re Rruga Demokracia Pallati 98 apartamenti 2 shkalla 1 kati 1 Diber,Diber,0,0,Bulqizë – Tiranë – Bulqizë | Bulqizë – Durrës – Bulqizë,2
+2027,"""4 ORTAKET"" shpk",K87618901S,692100195,agronkola69@yahoo.com,"Lagja Pjeter Budi, Banese Private Nr.30, ",,0,0,Burrel – Durrës – Burrel | Burrel – Tiranë – Burrel | Burrel-Shkoder-Burrel,3
+2028,LEO GITA TRANS,L47307701I,068 3502958,fehmigjiza1959@gmail.com,Rruga Dali Ndreu  Pallati P Balliu Kati 5-të Dibër,Diber,0,0,Peshkopi – Bulqizë – Peshkopi | Shijak – Peshkopi – Shijak | Bulqizë – Peshkopi – Bulqizë,3
+2029,DIBRA F P,L57312701L,685072019,shini.gerti@gmail.com,Lagjja Nazmi Rushiti,,0,0,Tiranë – Bulqizë - Tiranë | Peshkopi – Kamëz  – Peshkopi,2
+2030,BASHKIMI TRANS PARTNER,L77421701P,068 2399301,arifkaloshi@otlook.com,Lagjja Gjok Doci pallati Nr 337 Ap 1 kati i pare Diber,Diber,0,0,Peshkopi – Lezhë – Peshkopi | Peshkopi – Shkodër – Peshkopi,2
+2032,ALBtrans International,L66605702P,069 5784290,eshehat@gmail.com,"Njesia/ Agjensi Transp. Kombetare dhe Nderkombetare Udhetaresh Tirane, Linze, Rruga ""Dalip Topi"", P29, H1, AP6, me numer pasurie 604/20+1-6, Kodi Postare Nr.1001, ",,0,0,Peshkopi – Kukës – Peshkopi,1
+2033,SHPRESA - AL,K31321021N,4271491,shpresa.al@gmail.com,"Njësia Bashkiake Nr.9, Rruga ''Urani Pano'', mbrapa ''Veve Center'', Pallati Nr.11, Kati 2, Tirane",Tirane,0,0,Tiranë – Kukës – Krumë – B. Curri – Tiranë | Tiranë – Fushë Arrëz – Tiranë | Kamëz – Shkodër – Kamëz | Kamëz – Korçë – Kamëz | Tiranë – Krujë – Tiranë | Tiranë – Rrogozhinë – Tiranë | Tiranë – Krumë – Tiranë | Tiranë – Peshkopi – Tiranë | Kamëz – Durrës – Kamëz | Kamëz – Peshkopi – Kamëz,10
+2034,SHQIPONJA shpk,K23206026B,692329520,ferbentkapllani@gmail.com,Lagjja  Barrikada  rruga  Antipatrea  godine me nr60 Terminali Berat Berat,Berat,0,0,Berat – Kuçovë - Berat | Durrës – Kavajë – Durrës,2
+2035,OSUMI,K32515123N,692977224,zarifmara@gmail.com,Lagjia 28 Nëntori Sheshi Tek Agjencia Berat,Berat,0,0,Berat – Poliçan – Berat | Berat – Corovodë – Berat,2
+2036,ERVISI,K32506011I,SKA ,araldtrans.al@gmail.com,Lagjia  Barrikada  Rruga nacionale Berat - Ura Vajgurore Nr pasurie 3-92 Berat,Berat,0,0,Berat – Gramsh – Berat,1
+2037,NIKJORG,K32513074R,682264509,gaqmorava@gmail.com,Lagjia 30 vjetori Pallati Nr 751 Berat,Berat,0,0,Berat – Gjirokastër - Berat | Berat – Sarandë – Berat,2
+2038,MANGALEMI SHPK,K23206025Q,693745105,L.ajderaj1980@gmail.com,Lagjia 30 Vjetori Berat,Berat,0,0,Berat – Tiranë – Berat,1
+2039,LEKSI OR,J62904105U,684070426,leksior@gmail.com,Lagjia  30 Vjetori  Rruga  Antipatrea  Ap Nr 12 Shkalla Nr 1 Berat,Berat,0,0,Berat – Vlorë – Berat,1
+2040, BITRI,K23206017C,692875006,K23206017C,Lagjia Jani Vruho Rruga Veri Zaloshnja Godina me Nr 16 Berat,Berat,0,0,Berat – Korçë – Berat,1
+2041,AIDA-TRANS-02 SH.P.K,K32515186K,693326574,K32515186K,"JANI VRUHO, Berat",Berat,0,0,Berat - Fier - Berat,1
+2042,TROKA,K32923030T,693234330,K32923030T,Lagjia Muzakaj Berat,Berat,0,0,Berat – Elbasan - Berat,1
+2043,NIAGARA-KR,K32515125G,SKA ,edmondferti@gmail.com,Lagjia  Uznovë  Rruga  Antipatrea  Godinë 1 - katëshe Nr 26 Berat,Berat,0,0,Berat – Durrës – Berat,1
+2044,STAR 2002,L63204002T,684070420,ormenajsyrja@ymail.com,Lagjia  4 Shtatori  Rruga  Aleks Ormenaj  Godina Nr 29/2  Nr pasurie 2/400 Berat,Berat,0,0,Selenicë - Tiranë - Selenicë | Berat - Patos - Berat | Poliçan – Vlorë – Poliçan | Ura Vajgurore - Poliçan - Ura Vajgurore | Çorovodë – Vlorë – Corovodë | Berat – Lushnje - Berat | Berat – Përmet – Berat | Ura Vajgurore - Corovodë - Ura Vajgurore | Ura Vajgurore - Fier - Ura Vajgurore | Ura Vajgurore - Tiranë - Ura Vajgurore,10
+2045,DOLESE,K17621102J,682073470,gencibraushi@hotmail.com,TAFIL SKENDO Berat,Berat,0,0,Kuçovë – Berat – Kuçovë | Kuçove – Vlore – Kuçove,2
+2046,ALB-ENIO,L27910101D,695573075,L27910101D,"Lagjja "" Tafil Skendo "", rruga "" 5 Qershori "", godina me nr.15., Berat",Berat,0,0,Kuçovë – Corovodë – Kuçovë | Kuçovë – Poliçan – Kuçovë | Kuçovë – Çorovodë – Kuçovë,3
+2047,ALFONS - TRANS,L68413101J,692192135,L68413101J,Lagjja  Tafil Skendo  rruga  5 Qershori  stacioni i autobuzave me nr15 Berat,Berat,0,0,Kucove – Shkoder – Kucove,1
+2048,DONI TRAVEL,L72911202R,682385685,dragotiandon@gmail.com,Fshati Dragot ZK 1991 Ndërtesë private me Nr pasurie 126 Belsh,Elbasan,0,0,Kucove – Librazhd – Kucove,1
+2049,NANO,K37509151V,SKA ,K37509151V,Lagjja  1 Maj  rruga kryesore pallati nr90 kati i pare Berat,Berat,0,0,,0
+2050,ARBA,K37510182J,695866382,Entel.leo86@gmail.com,Lagjja Llukan Prifti rruga kryesore Godinë një katëshe nr21 Autobus Mercedes Benz me targë AA 760 PD Berat,Berat,0,0,Kucove – Korce – Kucove,1
+2051,INTERBAN  K,L57508102P,696864546,kastriotbego@gmail.com,Lagjia  Tafil Skëndo  Rruga  Stiliano Thomai  Nr pasurie16/3 Kuçovë,Berat,0,0,Kuçove – Fier  – Kuçove,1
+2052,FLORINDI  SHPK,K78612101K,683246321,K78612101K,Lagjia Llukan Prifti  Rruga 5 - Qershori Godinë 1 katëshe Nr15 Kuçovë,Berat,0,0,Kuçove – Gjirokaster  – Kuçove,1
+2053,AMADA SH P K,K88603102U,682268956,amada@gmail.com,Lagjia  Llukan Prifti  Rruga 5 Qershori Pallati i Kulturës Shk 1 Kuçovë,Berat,0,0,Kuçovë – Elbasan – Kuçovë (me kalim nga Cërriku) | Kucove – Elbasan – Kucove,2
+2054,KUCOVA,K17621107D,695181111,ibrahimullaj@gmail.com,"Lagjia ""11 Janari"", Kuçovë",,0,0,Kucove – Durres – Kucove | Kuçovë – Tiranë  – Kuçovë,2
+2055,POLIÇANI TRANS,K99502401C,693019544,berti.perroj@yahoo.com,Godinë njëkatëshe pranë Bashkisë në Bulevardin Kryesor Berat,Berat,0,0,Poliçan – Berat – Poliçan | Poliçan – Tiranë – Poliçan,2
+2056,DASHI,K38709482H,695244818,tikudashi@gamil.com,Godinë 1 - katëshe në Lagjen Kalluç Berat,Berat,0,0,Poliçan – Durrës – Poliçan,1
+2057,ARTJOL DULELLARI TRANS,L69814401A,695748212,L69814401A,Lagjia  Çlirim  Rruga  Estref Caka  pallati Nr 10 Çorovodë,Berat,0,0,Çorovodë – Poliçan - Corovodë,1
+2058,FASTBAS,K29309405K,682312183,ferdinantalushani@yahoo.com,Rruga Arkitekt Kasëmi Godinë 1 - katëshe e ish Parkut Nr 129 Çorovodë,Berat,0,0,Çorovode – Tirane – Corovode,1
+2070,KOMPAKT,K23407401F,682153960,ilirlulaj@yahoo.com,"Fier,Lagja Afrim,Pasuria nr.9/168,Zona kadastrale nr.8534., Fier",Fier,0,0,Fier – Përmet – Fier | Fier – Durrës – Fier | Fier – Gjirokastër – Fier | Fier – Sarandë – Fier | Fier – Tiranë – Fier,5
+2105,GUCAJ AR,K72812202S,0682279598 0682279598,K72812202S,Lagjja Sul Papri rruga 25 Nentoripallati 124 nr07 Elbasan,,0,0,Elbasan – Gjirokastër – Elbasan | Elbasan – Sarandë – Elbasan,2
+2115,SHKELZENI - AGJENSI,K41921002D,,shlusha@hotmail.com,Bathore Kamez,Tirane,0,0,Krujë – Fushë Krujë – Krujë | Krujë – Durrës – Krujë,2
+2119,ADIS,K31412511R,052/25539,info@adis.al,"Lagjja  Nr.5, Rruga ""Mujo Ulqinaku"", Prane  Pallatit  te Sportit,  Durres  , ",,0,0,Durrës – Rinas (Aeroport) – Durrës,1
+2122,ELALBA - 2,K21402001V,682024562,shoqeria.elalba2shpk@gmail.com,Rruga e Durrësit Kulla Hawai Nr 3 Apartamenti Nr 67 Tiranë,Tirane,0,0,Tiranë – Korçë – Tiranë | Tiranë – Elbasan – Tiranë,2
+2143,ABADONI,L01320013P,682181904,abedinberisha01@gmail.com,"Lagjja Gjongecaj, Rruga Fatmir Hasandoçi, Zona kadastrale 1347, Nr. pasurise 8, ",,0,0,B. Curri - Krumë - Kukës -Tiranë- B. Curri,1
+2145,FAT-5,K37509289U,682160235,Fatlum_halilaj@hotmail.com,"Lagjja Nr.1, Rruga Pavarsia, Ndertese private Nr.45., ",,0,0,Kukës - Krumë - Kukës | Kukës - Kamzë - Kukës | Kukës - Durrës - Kukës | Kukës – Peshkopi – Kukës,4
+2194,RIVIERA,K36514201P,692127070,K36514201P,5 RAJ HIMARE,,0,0,Himarë - Tiranë - Himarë,1
+2203,GJONAJ 2024,K36405207P,0692092465 0694391480,nurajandon@yahoo.com,"Rruga Thanas Konomi, Lagjja 24 Maji, Objekt privat Nr.50, , Vlore",Vlore,0,0,Vlorë - Përmet - Vlorë | Vlorë - Lushnje - Vlorë,2
+2204,HODAJ  TRASPORT,L47306201T,694734314,L47306201T,"Rruga Nacinale Vlore-Fier, km 7, Lagjja Hoxhaj, Godine nr.15, ",,0,0,Vlorë - Berat - Vlorë (me kalim nga Roskoveci),1
+2206,LUSE TRANS,L52817801B,,L52817801B,Tirane,,0,0,Rrogozhinë - Kavajë - Rrogozhinë,1
+2209,""" ANDROMEDA GROUP "" SH.P.K",L61307527C,698592352,krenarbardhi@gmail.com,"Lagjja nr. 4, Rruga Egnatia, Flag Ship Center, Kati 0, ",,0,0,Durrës – Shijak – Durrës | Vorë - Shijak - Vorë,2
+2210,ALTI. 07,L01929003C,0694132124,lirimnokshiqi@yahoo.com,Rruga Nacionale Vorë - Marikaj Vila Nr 7 Tiranë,Tirane,0,0,Vorë - Durrës - Vorë,1
+2212,CITY KAVAJA,L63621801S,692114751,janizeqo@yahoo.com,"Lagjja nr 2,objekt 2 katesh, kati 1,nr pasurie 16/334,zk 8551., ",,0,0,Kavajë – Tiranë – Kavajë | Tiranë – Kavajë – Tiranë,2
+2224,VALGON TRAVEL,L71304009G,692296777,valgontravel.gmail.com,Lagjia Qendër Zona Nr 1664 Pasuria me Nr 3/213 Objekt 2 katësh Fushë - Krujë,Durres,0,0,Tiranë – Fushë Krujë – Tiranë (me kalim nga Rinas dhe Qafa e Kasharit),1
+2234,DH E M B E L I ,K11609007R,0682140546 0672067045,nd.dhembeli@yahoo.com,Rruga Irfan Tomini Pallati 11 Shkalla 2 Apartamenti 9 Tiranë,Tirane,0,0,Tiranë – Përmet – Tiranë | Tiranë – Këlcyrë – Tiranë,2
+2236,T I S A,K31520093K,694042235,tisatravel1@hotmail.com,"Terminali i Transportit Nderqytetes, Zona Jug-Veri, Tirane",Tirane,0,0,"Tiranë – Sarandë – Tiranë (me kalim nga Muzina) | Tiranë – Tepelenë – Tiranë | Tiranë – Delvinë – Tiranë (me kalim nga Muzina, Kardhikaq) | Tiranë – Konispol – Tiranë (nga Bregu)",4
+2240,75676578,,,,,,0,0,,0
+2242,283643,,0686252113,Dorinakala10@gmail.com,,Tirane,0,0,,0
+2245,87325,,08390489823,,,,0,0,,0
+2247,test6t89,,76234598324189589,,Rr Komuna e Parisit Pallatet 1 Maj Shkalla 18 Apartamenti 5 Tirane,Tirane,0,0,,0
+2248,1233,,0686252113,,,Tirane,0,0,,0
+2251,Blerta Beqiri,L92411036A,0677174447,,"Njësia Administrative nr.7, rruga ""Stanislav Zuber"", ndërtesa 2, hyrja 19, kodi postar 1023., ",,0,0,,0
+2252,2reyry,4564,0677174447,Dorinakala10@gmail.com,Rr Komuna e Parisit Pallatet 1 Maj Shkalla 18 Apartamenti 5   Tirane,,0,0,,0
+2256,4564,,0677174447,fatjola.bulica@hotmail.com,,Tirane,0,0,,0
+2299,ENDIOLA,L49001501H,,,"Lagjja Mustafa Matohiti, rruga Ali Pashe Tepelena, zona kadastrale 3574, nr. pasurise 186, godine 2-kateshe me nr. 1, kati-1, ish-Agjensia, ",,0,0,,0
+2344,Terminali Pogradec,,,,,,0,0,,0
+2403,,,,,,,0,0,,0
+2408,DPSHTRR,1,,,,,0,0,TEPELENE – VLORË – TEPELENË | Çorovodë – Përmet – Çorovodë | Ura Vajgurore – Kuçovë– Ura Vajgurore | Peshkopi – Klos– Peshkopi | Elbasan – Shkodër – Elbasan | Elbasan – Shijak – Elbasan (pa të drejtë hyrje në Durrës) | Maliq – Durrës - Maliq | Kuçovë – Ura Vajgurore – Kuçovë | Ura Vajgurore – Berat – Ura Vajgurore | Bulqizë – Shkodër – Bulqizë | Bulqizë – Klos – Bulqizë | Bulqizë – Burrel – Bulqizë | Burrel – Shkodër – Burrel | Burrel – Bulqizë – Burrel | Klos – Peshkopi – Klos | Klos – Bulqizë – Klos | Durrës – Cërrik – Durrës | Durrës – Lushnje – Durrës | Durrës – Shijak– Durrës | Shijak – Kavajë – Shijak | Elbasan – Gjirokastër – Elbasan | Elbasan – Peqin – Elbasan | Prrenjas – Korçë – Prrenjas | Belsh – Kuçovë – Belsh | Belsh – Librazhd – Belsh | Belsh – Gramsh – Belsh | Peqin – Fier – Peqin | Gramsh – Belsh – Gramsh | Ballsh – Berat – Ballsh | Ballsh – Gjirokastër – Ballsh | Ballsh – Sarandë – Ballsh | Ballsh – Patos – Ballsh | Lushnjë – Vlorë – Lushnjë | Patos – Berat – Patos | Patos – Roskovec – Patos | Gjirokastër – Tepelenë – Gjirokastër | Përmet – Këlcyrë – Përmet | Përmet – Tepelenë – Përmet | Tepelenë – Gjirokastër – Tepelenë | Tepelenë – Memaliaj – Tepelenë | Tepelenë – Përmet – Tepelenë | Memaliaj – Gjirokastër – Memaliaj | Memaliaj – Tepelenë – Memaliaj | Këlcyrë – Përmet – Këlcyrë | Lezhë – Kukës – Lezhë | Korçë – Pustec – Korçë | Leskovik – Përmet – Leskovik | Maliq – Pogradec - Maliq | Kukës – Bajram Curri – Kukës | B. Curri – Krumë – B. Curri | B. Curri – Kukës – B. Curri | Krumë – B. Curri – Krumë | Shkodër – B. Curri – Shkodër | Fushë Arrëz – Pukë – Fushë Arrëz | Pukë – Fushë Arrëz – Pukë | Pukë – Vau i Dejës – Pukë | Vlorë – Delvinë – Vlorë | Vlorë – Selenicë – Vlorë | Sarandë – Ballsh – Sarandë | Konispol – Gjirokastër – Konispol | Delvinë – Gjirokastër – Delvinë | Himarë – Dropull – Himarë | Gjirokastër – Memaliaj – Gjirokastër | Çorovodë – Durrës – Çorovodë | Çorovodë – Berat – Çorovodë | Çorovodë – Ura Vajgurore – Çorovodë | Poliçan – Çorovodë – Poliçan | Poliçan – Ura Vajgurore – Poliçan | Shijak – Kavajë – Shijak | Belsh – Cërrik – Belsh | Peqin – Fier – Peqin | Lushnjë – Belsh – Lushnjë | Roskovec – Vlorë – Roskovec (pa të drejtë qëndrimi në Fier) | Patos – Ballsh – Patos | Përmet – Berat – Përmet | Lëzhe – Vau Dejës – Lezhë | Korçë – Përmet – Korçë | Korçë – Leskovik– Korçë | Ersekë – Durrës – Ersekë | Kukës – Pukë – Kukës | Shkodër – Kukës – Shkodër | Shkodër – B. Curri – Shkodër | Fushë Arrëz – Pukë – Fushë Arrëz | Pukë – Durrës – Pukë | Pukë – Lezhë – Pukë | Pukë – Vau i Dejës – Pukë | Sarandë – Ballsh – Sarandë | Sarandë – Korçë – Sarandë | Finiq – Sarandë – Finiq | Roskovec - Patos – Roskovec,90
+2445,Testimm,,0692826190,blertabeqiri@gmail.com,,,0,0,,0
+2459,TOURING,L66405001F,0682169642,adria-tours@yahoo.com," Lagjja Qemal Stafa, Bulevardi Zogu i Pare, godine 5-kateshe, kati i I-re, nr.147   , Shkoder",,0,0,,0
+2464,LARA TRAVEL,M49610201H,0698902619,laratravel2024@gmail.com,"Rruga"" Jani Vreto 034"" Ndertesa nr 1 Hyrja 1 Kodi postar 6401  , ",,0,0,,0
+2465,Testim,,,,,Tirane,0,0,,0
+2466,“Tranzit 2021”,M52929001R,0695335285,anduenmertiri@gmail.com,"Berat ,Rruga Staver Naco H1 ap 4 NR Pasurie 10/304+1-4 Vol 38 fq184 ZK8501, Berat",Berat,0,0,,0
+2468,6464,,,,"Rr. ""Stanislav Zuber"", Nd. 2, H.I9. Njesia administrative Nr. 7, 1023, Tirane. Zona kadastrale 8210, Nr. Pasurie 7/137 Nd-N8, VOL. 18, Fq. 114 dhe Nr. Pasurie 7/137 ND-N10, VOL. 18. Fq. 116, ",,0,0,,0
+2469,hyjtyhf,,,,,,0,0,,0
+2474,COMMUNICATION PROGRESS,K01625001C,682058221,cp@commprog.com,"Rr. ""Stanislav Zuber"", Nd. 2, H.I9. Njesia administrative Nr. 7, 1023, Tirane. Zona kadastrale 8210, Nr. Pasurie 7/137 Nd-N8, VOL. 18, Fq. 114 dhe Nr. Pasurie 7/137 ND-N10, VOL. 18. Fq. 116  ",,0,0,,0
+2475,TRANSPORT SARANDA 2012,,,,,,0,0,,0
+2476,"""PAREA AEROPORT""",M21510504F,672033393,aeroportparea@gmail.com,"Lagjja Apollonia, Rr. Jakov Xoxa, Godina Nr.5  ",,0,0,,0
+2481,SATA Group,M22611205F,692799197,scankja@gmail.com,"Elbasan, Lagjja Emin Matraxhiu, rruga Borodin Mitarja, zk.8521, pasuria nr.11/3+4-N1, kati 1.  ",,0,0,,0

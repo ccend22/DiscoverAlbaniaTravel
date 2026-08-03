@@ -1,0 +1,80 @@
+id,name,code,city,address,latitude,longitude
+318,Bajram Curri,BC-1,Bajram Curri,Sheshi Dardania,42.35676,20.07331
+319,Ballsh,FR-11,Ballsh,Bulevardi Rrapo Hekali,40.601042,19.735544
+327,Belsh,El-23,Belsh,Rruga Sami Frashëri,40.98176,19.89239
+313,Berat,BR-1,Berat,Lagjia Barrikada,40.72247,19.94333
+309,Bilisht,KO-1,Bilisht,Rruga ''Ismail Qemali'',40.62238,20.98664
+328,Bulqizë,BZ-1,Bulqizë,Rruga e Pazarit,41.49466,20.217665
+297,Burrel,BZ-3,Burrel,Sheshi Ahmet Zogu,41.610569,20.01385
+330,Cerrik,EL-12,Cërrik,Rruga Cërrik-Gostinë,41.03188,19.97517
+314,Corovode,BR-11,Çorovodë,Lagjia ''Çlirimi'' (ish Agjencia),40.505809,20.224709
+308,Delvine,GJ-31,Delvina,Rruga Veli Kallapodhi,39.94967,20.09765
+339,Divjake,DV-1,Divjakë,Pranë Bashkisë,40.99379,19.53328
+331,Dropull,GJ-11,Dropull,Dropull,39.93738,20.26782
+280,Durrës (Plepa),DR-3,Durrës,,41.292459,19.5096
+300,Durrës Stacioni i Trenit,DR-1,Durrës,Sheshi ''26 Nëntori'',41.31771,19.45373
+294,"Elbasan ""Kryqezimi i Cerrikut""",EL-4,Elbasan,Rruga Thoma Kalefi,41.103326,20.08333
+291,Elbasan Pallati i Sportit,EL-3,Elbasan,Pallati i Sportit Tomorr Sinani,41.11102,20.07808
+287,Ersekë,ER-1,Ersekë,Agjencia Ersekë,40.34136,20.68378
+279,Fier,FR-8,Fier,Rruga Harrilla Bozdo'' Lagjia ''15 Tetori'',40.723421,19.574718
+336,Finiq,SR-6,Vlorë,Rruga 'SH83,39.9059,20.06238
+301,Fushe- Arrez,SH-10,Fushë Arrëz,Unaza Fushë-Arrëz,42.069354,20.03395
+304,Fushë-Krujë,KR-10,Fushe Krujë,Rruga e Laçit,41.47974,19.72096
+285,Gjirokastër,GJ-1,Gjirokastër,Bulevardi 18 Shtatori,40.08424,20.144559
+347,Golem,DR-22,Golem,Rrethrrotullimi Golem,41.247461,19.53213
+306,Gramsh,EL-6,Gramsh,Rruga Bexhet Tosumi,40.87394,20.18498
+311,Himarë,VL-22,Himarë,Rruga SH8 Potam,40.09855,19.75229
+298,Kamëz,TR-00096,Kamëz,Bulevardi Blu,41.38517,19.75957
+357,Kamez 2,TR-00097,Tiranë,,41.377129,19.764102
+333,Kavaje (ish Agjencia),KJ-5,Kavajë,Rruga Taulantia,41.183164,19.55582
+316,Kavaje (linja TR),KJ-1,Kavajë,Shëtitorja Josif Budo,41.18632,19.55963
+284,Këlcyrë,PR-2,Këlcyrë,Qendër Këlcyrë,40.3135,20.19241
+345,Klos,DI-101,Klos,Rruga Fullqet,41.50647,20.08629
+324,Konispol,SR-8,Konispol,Pranë Bashkisë,39.65961,20.18428
+323,Koplik,MA-2,Koplik,Qendër Koplik,42.21098,19.43743
+307,Korçë,KO-2,Korçë,Rruga Midhi Kostani,40.623525,20.773677
+322,Kruje,KR-1,Krujë,Rruga Donika Kastrioti,41.51228,19.79211
+302,Krumë,KRU-4,Krumë,Sheshi Luan I Haradinaj,42.19746,20.41403
+292,Kucove,BR-46,Kuçovë,Rruga Stanislav Zyber,40.80409,19.91082
+321,Kukës,KU-1,Kukës,Rruga Islam Spahiu,42.075538,20.425601
+288,Laç,LA-3,Laç,Rruga SH39,41.635107,19.711742
+351,Leskovik,KO-9,Korçë,,40.15248,20.59915
+326,Lezhë (Katedralja),LE-1,Lezhë,Rruga ''Papa Gjon Pali II'' (pranë Katedrales),41.77816,19.64697
+341,Lezhë Veri,LE-3,Lezhë,Rruga SH1 (pranë ''Urës së Mikpritjes''),41.781589,19.641472
+315,"Lezhë, Veri-Lindje",LE-2,Lezhë,Rruga Franz Josef Strauss (pranë ''Urës së Cenit''),41.774388,19.643853
+337,Libohovë,GJ-13,Libohovë,Qendër Libohovë,40.03201,20.2627
+299,Librazhd,LB-3,Librazhd,Sheshi Demokracia,41.17923,20.31192
+290,Lushnjë,LU-1,Lushnjë,Pranë Stacionit të Trenit,40.93956,19.69879
+342,Maliq,KO-12,Maliq,Rruga Punëtori,40.70953,20.6986
+340,Manëz,MA-0001,Manëz,,41.365267,19.549811
+350,Memaliaj,GJ-9,Memaliaj,Rruga Tafil Buzi,40.35202,19.98271
+355,Orikum,VL-35,Orikum,Rruga Demokracia,40.32766,19.4745
+325,Patos,FR-12,Patos,Shëtitorja Republika,40.68145,19.62496
+282,Peqin,EL-7,Peqin,Bulevardi Mustafa Gjinishi,41.04587,19.75008
+286,Përmet,PR-1,Përmet,Shëtitorja Mentor Xhemali'',40.23169,20.35605
+289,Peshkopi,DI-3,Peshkopi,Rruga “Ismail Feta”,41.680877,20.429576
+348,Plepa-Durres,DR-7,Durrës,,41.29158,19.50932
+346,Plepa-Golem,DR-15,Durrës,,41.291528,19.509181
+329,Pogradec,PG-5,Pogradec,Rruga Industriale,40.89961,20.65796
+338,Polican,SK-1,Poliçan,Rruga 22 Gushti,40.61346,20.09952
+335,Prrenjas,LB-5,Prrenjas,Rruga SH3 pranë Shëtitores Kryesore,41.0694,20.54898
+317,Puke,PU-1,Pukë,Pranë Qendrës Rinore,42.045058,19.900628
+356,Pustec,KO-3,Korçë,,40.78687,20.902562
+353,Rinas Aeroport,TR-4,Tiranë,Aeroporti Ndërkombëtar Nënë Tereza,41.4179,19.71386
+303,Roskovec,FR-10,Roskovec,Unaza e qytetit,40.73688,19.70175
+310,Rrëshen,LA-2,Rrëshen,Rruga Vincenzo Di Paoli,41.76837,19.87671
+343,Rrogozhine,KJ-4,Rrogozhinë,Pranë Stadiumit Egnatia,41.07642,19.66396
+296,Sarandë,SR-7,Sarandë,Rruga Flamurit,39.87575,20.00645
+305,Selenicë,VL-101,Selenicë,Sheshi Minatori,40.53666,19.6373
+295,Shijak,DR-16,Shijak,Rruga SH84,41.34538,19.56161
+293,Shkodër,SH-15,Shkodër,Bulevardi Bujar Bishanaku,42.06825,19.51116
+332,Sukth,DR-2,Sukth,Sukth Durrës,41.37358,19.53458
+320,Tepelenë,GJ-12,Tepelenë,Sheshi ''Ali Pashë Tepelena'',40.2938,20.02141
+281,Tiranë Jug-Lindje,TR-1,Tiranë,Autostrada Tiranë-Elbasan pranë Qendrës Tregtare TEG,41.283324,19.85541
+354,Tirane Qendër Aeroport,TR-14,Tiranë,Rruga Ludovik Shllaku,41.32848,19.82084
+283,Tiranë Veri-Jug,TR-2,Tiranë,Rruga Kastriotët Kthesa e Kamzës,41.344151,19.777016
+344,Ura Vajgurore,FR-19,Ura Vajgurore,Sheshi Djaloshi i Dimalit,40.7737,19.87846
+334,Vau i Dejës,SH-2,Vau i Dejës,Rruga e Hidrocentralit,42.00758,19.63668
+349,Velipojë,SH-1,Shkodër,Rruga Shkodër-Velipojë,41.866916,19.42283
+312,Vlorë,VL-28,Vlorë,Rruga Demokracia,40.474077,19.490175
+352,Vore,TR-3,Vorë,Rruga Nacionale e Vjetër,41.395234,19.655646
