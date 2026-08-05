@@ -2,6 +2,7 @@ substitutions:
   _REGION: europe-west1
   _SERVICE: discover-albania-travel
   _REPOSITORY: cloud-run-source-deploy
+  _RUNTIME_SERVICE_ACCOUNT: discover-albania-run@discoveralbaniatravel.iam.gserviceaccount.com
   _NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
 
 steps:
@@ -12,14 +13,14 @@ steps:
       - --build-arg
       - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${_NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
       - --tag
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
       - .
 
   - id: Push container
     name: gcr.io/cloud-builders/docker
     args:
       - push
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
 
   - id: Deploy to Cloud Run
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -29,15 +30,20 @@ steps:
       - deploy
       - ${_SERVICE}
       - --image
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
       - --region
       - ${_REGION}
       - --platform
       - managed
+      - --service-account
+      - ${_RUNTIME_SERVICE_ACCOUNT}
+      - --set-secrets
+      - DATABASE_URL=discover-albania-database-url:latest,GOOGLE_CLIENT_ID=discover-albania-google-client-id:latest,GOOGLE_CLIENT_SECRET=discover-albania-google-client-secret:latest,ADMIN_SESSION_SECRET=discover-albania-admin-session-secret:latest,USER_SESSION_SECRET=discover-albania-user-session-secret:latest,VENDOR_SESSION_SECRET=discover-albania-vendor-session-secret:latest
+      - --allow-unauthenticated
       - --quiet
 
 images:
-  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
 
 options:
   logging: CLOUD_LOGGING_ONLY
