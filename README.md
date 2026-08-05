@@ -16,7 +16,8 @@ on laptops. If port 3000 is occupied, Next.js prints the alternate local URL.
 ## Deploy to Cloud Run
 
 Pushes to `main` are built by Google Cloud Build using `cloudbuild.yaml` and deployed to the existing
-`shqipfol` Cloud Run service in `europe-west1`. The production image uses Next.js standalone output
+`discover-albania-travel` Cloud Run service in the `discoveralbaniatravel` project in `europe-west1`.
+The production image uses Next.js standalone output
 and listens on Cloud Run's `PORT` (`8080` by default).
 
 Runtime credentials belong in Google Secret Manager / Cloud Run environment configuration, never in

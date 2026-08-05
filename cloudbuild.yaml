@@ -1,6 +1,6 @@
 substitutions:
   _REGION: europe-west1
-  _SERVICE: shqipfol
+  _SERVICE: discover-albania-travel
   _REPOSITORY: cloud-run-source-deploy
   _NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
 
