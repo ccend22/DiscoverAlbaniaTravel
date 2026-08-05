@@ -3,6 +3,9 @@ import path from "node:path";
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  // Cloud Run only needs the traced runtime dependencies and the generated
+  // standalone server, which keeps the production container small.
+  output: "standalone",
   poweredByHeader: false,
   turbopack: {
     root: path.resolve(__dirname),
