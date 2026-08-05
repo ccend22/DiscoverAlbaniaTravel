@@ -4,9 +4,22 @@ import { getDestinationById } from "@/db/queries/destinations";
 import { LinkButton } from "@/components/ui/button";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
+import type { Metadata } from "next";
 
 interface DestinationDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: DestinationDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const destination = await getDestinationById(Number(id));
+  if (!destination) return { title: "Destination Not Found", robots: { index: false } };
+
+  return {
+    title: destination.name,
+    description: destination.description.slice(0, 160),
+    alternates: { canonical: `/destinations/${destination.id}` },
+  };
 }
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {

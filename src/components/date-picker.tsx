@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { formatDateLong } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
+import { CloseIcon } from "./icons";
+import { useIsMobile } from "@/lib/use-is-mobile";
+import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { tapToDismiss } from "@/lib/tap-to-dismiss";
+import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
 const ITEM_HEIGHT = 36;
 const VISIBLE_ITEMS = 5;
@@ -102,7 +107,7 @@ function WheelColumn({ items, selected, onSelect }: WheelColumnProps) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="h-[180px] w-20 overflow-y-scroll [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="overlay-scroll h-[180px] w-20 overflow-y-scroll [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{
         scrollSnapType: "y mandatory",
         paddingTop: COLUMN_PADDING,
@@ -126,14 +131,16 @@ function WheelColumn({ items, selected, onSelect }: WheelColumnProps) {
   );
 }
 
-interface CalendarPopoverProps {
+interface CalendarContentProps {
   value: string;
   min: string;
   onSelectDay: (dateStr: string) => void;
   dict: Dictionary["datePicker"];
+  /** Larger day cells for thumb-friendly tapping in the mobile bottom sheet. */
+  compact?: boolean;
 }
 
-function CalendarPopover({ value, min, onSelectDay, dict }: CalendarPopoverProps) {
+function CalendarContent({ value, min, onSelectDay, dict, compact = true }: CalendarContentProps) {
   const selected = parseDate(value);
   const minParsed = parseDate(min);
   const [mode, setMode] = useState<"calendar" | "wheel">("calendar");
@@ -141,6 +148,8 @@ function CalendarPopover({ value, min, onSelectDay, dict }: CalendarPopoverProps
   const [viewMonth, setViewMonth] = useState(selected.month);
 
   const isAtMinMonth = viewYear === minParsed.year && viewMonth === minParsed.month;
+  const cellSize = compact ? "h-9 w-9" : "h-11 w-11";
+  const navSize = compact ? "h-9 w-9" : "h-11 w-11";
 
   function goPrevMonth() {
     if (isAtMinMonth) return;
@@ -164,7 +173,7 @@ function CalendarPopover({ value, min, onSelectDay, dict }: CalendarPopoverProps
   const totalDays = daysInMonth(viewYear, viewMonth);
   const leadingBlanks = Array.from({ length: firstWeekdayIndex(viewYear, viewMonth) });
   const dayCells = Array.from({ length: totalDays }, (_, i) => i + 1);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getAlbaniaDateInputValue();
 
   const yearItems = [minParsed.year, minParsed.year + 1].map((y) => ({
     value: y,
@@ -172,97 +181,89 @@ function CalendarPopover({ value, min, onSelectDay, dict }: CalendarPopoverProps
   }));
   const monthItems = dict.monthsFull.map((label, i) => ({ value: i + 1, label: label.slice(0, 3) }));
 
-  return (
-    <div className="absolute z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
-      {mode === "calendar" ? (
-        <>
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={goPrevMonth}
-              disabled={isAtMinMonth}
-              aria-label={dict.previousMonth}
-              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30"
-            >
-              <ChevronLeftIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("wheel")}
-              className="min-h-9 rounded px-2 text-sm font-medium transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft"
-            >
-              {dict.monthsFull[viewMonth - 1]} {viewYear}
-            </button>
-            <button
-              type="button"
-              onClick={goNextMonth}
-              aria-label={dict.nextMonth}
-              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft"
-            >
-              <ChevronRightIcon />
-            </button>
-          </div>
+  return mode === "calendar" ? (
+    <>
+      <div className="mb-2 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={goPrevMonth}
+          disabled={isAtMinMonth}
+          aria-label={dict.previousMonth}
+          className={`flex ${navSize} items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30`}
+        >
+          <ChevronLeftIcon />
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("wheel")}
+          className="min-h-9 rounded px-2 text-sm font-medium transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft"
+        >
+          {dict.monthsFull[viewMonth - 1]} {viewYear}
+        </button>
+        <button
+          type="button"
+          onClick={goNextMonth}
+          aria-label={dict.nextMonth}
+          className={`flex ${navSize} items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft`}
+        >
+          <ChevronRightIcon />
+        </button>
+      </div>
 
-          <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-muted">
-            {dict.weekdayLabels.map((label, i) => (
-              <div key={`${label}-${i}`}>{label}</div>
-            ))}
-          </div>
+      <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-muted">
+        {dict.weekdayLabels.map((label, i) => (
+          <div key={`${label}-${i}`}>{label}</div>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-7 gap-1">
-            {leadingBlanks.map((_, i) => (
-              <div key={`blank-${i}`} />
-            ))}
-            {dayCells.map((day) => {
-              const dateStr = formatDate(viewYear, viewMonth, day);
-              const isSelected = dateStr === value;
-              const isToday = dateStr === todayStr;
-              const isDisabled = dateStr < min;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => onSelectDay(dateStr)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-spring)] ${
-                    isSelected
-                      ? "scale-110 bg-teal font-semibold text-teal-foreground shadow-[var(--shadow-glow-teal)]"
-                      : isDisabled
-                        ? "cursor-not-allowed text-muted/40"
-                        : isToday
-                          ? "border border-teal text-teal"
-                          : "hover:scale-110 hover:bg-teal/10"
-                  }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">{dict.jumpToMonth}</span>
+      <div className="grid grid-cols-7 gap-1">
+        {leadingBlanks.map((_, i) => (
+          <div key={`blank-${i}`} />
+        ))}
+        {dayCells.map((day) => {
+          const dateStr = formatDate(viewYear, viewMonth, day);
+          const isSelected = dateStr === value;
+          const isToday = dateStr === todayStr;
+          const isDisabled = dateStr < min;
+          return (
             <button
+              key={day}
               type="button"
-              onClick={() => setMode("calendar")}
-              className="text-sm font-medium text-teal"
+              disabled={isDisabled}
+              {...tapToDismiss(() => onSelectDay(dateStr))}
+              className={`flex ${cellSize} items-center justify-center justify-self-center rounded-full text-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-spring)] ${
+                isSelected
+                  ? "scale-110 bg-teal font-semibold text-teal-foreground shadow-[var(--shadow-glow-teal)]"
+                  : isDisabled
+                    ? "cursor-not-allowed text-muted/40"
+                    : isToday
+                      ? "border border-teal text-teal"
+                      : "hover:scale-110 hover:bg-teal/10 active:bg-teal/15"
+              }`}
             >
-              {dict.done}
+              {day}
             </button>
-          </div>
-          <div className="relative flex justify-center gap-2">
-            <WheelColumn items={monthItems} selected={viewMonth} onSelect={setViewMonth} />
-            <WheelColumn items={yearItems} selected={viewYear} onSelect={setViewYear} />
-            <div
-              className="pointer-events-none absolute inset-x-0 rounded-md border-y border-teal/60 bg-teal/5"
-              style={{ top: COLUMN_PADDING, height: ITEM_HEIGHT }}
-            />
-          </div>
-        </>
-      )}
-    </div>
+          );
+        })}
+      </div>
+    </>
+  ) : (
+    <>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium">{dict.jumpToMonth}</span>
+        <button type="button" onClick={() => setMode("calendar")} className="text-sm font-medium text-teal">
+          {dict.done}
+        </button>
+      </div>
+      <div className="relative flex justify-center gap-2">
+        <WheelColumn items={monthItems} selected={viewMonth} onSelect={setViewMonth} />
+        <WheelColumn items={yearItems} selected={viewYear} onSelect={setViewYear} />
+        <div
+          className="pointer-events-none absolute inset-x-0 rounded-md border-y border-teal/60 bg-teal/5"
+          style={{ top: COLUMN_PADDING, height: ITEM_HEIGHT }}
+        />
+      </div>
+    </>
   );
 }
 
@@ -278,9 +279,13 @@ interface DatePickerProps {
 export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const sheetMode = isOpen && isMobile;
+
+  useBodyScrollLock(sheetMode);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || sheetMode) return;
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -288,29 +293,76 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, sheetMode]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
+
+  function selectDay(dateStr: string) {
+    onChange(dateStr);
+    setIsOpen(false);
+  }
 
   return (
     <div className="relative" ref={containerRef}>
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={value} suppressHydrationWarning />
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={`${name}-date-picker`}
+        aria-label={`${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
         className="min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal"
       >
         {formatDateLong(value, locale)}
       </button>
 
-      {isOpen && (
-        <CalendarPopover
-          value={value}
-          min={min}
-          onSelectDay={(dateStr) => {
-            onChange(dateStr);
-            setIsOpen(false);
-          }}
-          dict={dict}
-        />
+      {isOpen && !sheetMode && (
+        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="absolute z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+          <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />
+        </div>
+      )}
+
+      {sheetMode && (
+        <>
+          <div
+            className="animate-sheet-fade touch-manipulation fixed inset-0 z-40 bg-black/40"
+            aria-hidden="true"
+            {...tapToDismiss(() => setIsOpen(false))}
+          />
+          <div
+            id={`${name}-date-picker`}
+            role="dialog"
+            aria-modal="true"
+            className="animate-sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-surface shadow-[var(--shadow-lg)]"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+          >
+            <div className="flex shrink-0 justify-center pb-1 pt-2.5" aria-hidden="true">
+              <span className="h-1 w-10 rounded-full bg-border" />
+            </div>
+            <div className="flex shrink-0 items-center justify-between px-4 pb-3">
+              <p className="text-sm font-semibold text-foreground">{dict.jumpToMonth}</p>
+              <button
+                type="button"
+                {...tapToDismiss(() => setIsOpen(false))}
+                aria-label="Close"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors active:bg-surface-sunken"
+              >
+                <CloseIcon width={18} height={18} />
+              </button>
+            </div>
+            <div className="overlay-scroll overflow-y-auto px-4 pb-4">
+              <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} compact={false} />
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

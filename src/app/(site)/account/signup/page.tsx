@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { signupUserAction } from "../actions";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { GoogleIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 
 interface SignupPageProps {
@@ -33,6 +34,9 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <input
             name="name"
             required
+            minLength={2}
+            autoComplete="name"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
@@ -42,6 +46,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             name="email"
             type="email"
             required
+            autoComplete="email"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
@@ -50,6 +56,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <input
             name="phone"
             type="tel"
+            autoComplete="tel"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
@@ -60,10 +68,23 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             type="password"
             required
             minLength={8}
+            autoComplete="new-password"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
         <Button type="submit">{sp.createAccount}</Button>
+
+        <div className="flex items-center gap-3 text-xs text-muted" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          {sp.orDivider}
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <LinkButton href="/account/google" variant="outline" className="w-full" native>
+          <GoogleIcon />
+          {sp.continueWithGoogle}
+        </LinkButton>
       </form>
 
       <p className="mt-6 text-sm text-muted">

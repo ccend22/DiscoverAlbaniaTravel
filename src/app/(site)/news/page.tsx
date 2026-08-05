@@ -3,15 +3,31 @@ import { listBlogPosts } from "@/db/queries/blog";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRightIcon, CalendarIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Travel News & Activities",
+  description: "Read travel news, destination updates, and activity ideas for exploring Albania.",
+  alternates: { canonical: "/news" },
+};
 
 interface NewsPageProps {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
 }
 
+const PAGE_SIZE = 24;
+
 export default async function NewsPage({ searchParams }: NewsPageProps) {
-  const { category } = await searchParams;
+  const { category, page: pageParam } = await searchParams;
   const validCategory = category === "news" || category === "activity" ? category : undefined;
-  const [posts, { locale, dict }] = await Promise.all([listBlogPosts(validCategory), getLocaleAndDictionary()]);
+  const parsedPage = Number.parseInt(pageParam ?? "1", 10);
+  const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const [pageRows, { locale, dict }] = await Promise.all([
+    listBlogPosts(validCategory, { limit: PAGE_SIZE + 1, offset: (page - 1) * PAGE_SIZE }),
+    getLocaleAndDictionary(),
+  ]);
+  const hasNextPage = pageRows.length > PAGE_SIZE;
+  const posts = pageRows.slice(0, PAGE_SIZE);
   const np = dict.newsPage;
 
   const TABS = [
@@ -75,6 +91,21 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
           </p>
         )}
       </div>
+
+      {(page > 1 || hasNextPage) && (
+        <nav className="mt-8 flex items-center justify-between gap-4" aria-label="News pagination">
+          {page > 1 ? (
+            <Link href={`/news?${new URLSearchParams({ ...(validCategory ? { category: validCategory } : {}), page: String(page - 1) })}`} className="text-sm font-medium text-teal hover:underline">
+              {locale === "al" ? "Më të rejat" : "Newer posts"}
+            </Link>
+          ) : <span />}
+          {hasNextPage && (
+            <Link href={`/news?${new URLSearchParams({ ...(validCategory ? { category: validCategory } : {}), page: String(page + 1) })}`} className="text-sm font-medium text-teal hover:underline">
+              {locale === "al" ? "Më të vjetrat" : "Older posts"}
+            </Link>
+          )}
+        </nav>
+      )}
 
       <Link
         href="/"

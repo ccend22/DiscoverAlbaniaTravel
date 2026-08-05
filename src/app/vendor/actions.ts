@@ -3,13 +3,17 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
+  vendorClaimSignupSchema,
   vendorDepartureSchema,
   vendorLoginSchema,
+  vendorNewOperatorSignupSchema,
   vendorOperatorSchema,
   vendorRouteSchema,
   vendorNewDepartureSchema,
 } from "@/lib/validation";
 import {
+  applyAsNewOperator,
+  applyForExistingOperator,
   authenticateVendor,
   createVendorDeparture,
   createVendorRoute,
@@ -49,6 +53,63 @@ export async function loginVendorAction(formData: FormData) {
 
   await setVendorSession(result.id);
   redirect("/vendor");
+}
+
+export async function signupClaimOperatorAction(formData: FormData) {
+  const parsed = vendorClaimSignupSchema.safeParse({
+    operatorId: formData.get("operatorId"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    redirect(`/vendor/signup?mode=claim&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+  }
+
+  const result = await applyForExistingOperator(parsed.data.operatorId, {
+    name: parsed.data.name,
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (!result.ok) {
+    redirect(`/vendor/signup?mode=claim&error=${encodeURIComponent(result.error)}`);
+  }
+
+  redirect("/vendor/login?pending=1");
+}
+
+export async function signupNewOperatorAction(formData: FormData) {
+  const parsed = vendorNewOperatorSignupSchema.safeParse({
+    operatorName: formData.get("operatorName"),
+    vat: formData.get("vat"),
+    phone: formData.get("phone"),
+    street: formData.get("street"),
+    city: formData.get("city"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    redirect(`/vendor/signup?mode=new&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+  }
+
+  const result = await applyAsNewOperator({
+    operatorName: parsed.data.operatorName,
+    vat: parsed.data.vat,
+    phone: cleanOptional(parsed.data.phone),
+    street: cleanOptional(parsed.data.street),
+    city: cleanOptional(parsed.data.city),
+    contactName: parsed.data.name,
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (!result.ok) {
+    redirect(`/vendor/signup?mode=new&error=${encodeURIComponent(result.error)}`);
+  }
+
+  redirect("/vendor/login?pending=1");
 }
 
 export async function logoutVendorAction() {

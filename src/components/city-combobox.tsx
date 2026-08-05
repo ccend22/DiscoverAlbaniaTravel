@@ -87,7 +87,9 @@ export function CityCombobox({ name, value, onChange, options, placeholder, requ
         aria-expanded={isOpen}
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
+        aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
         className="min-h-11 w-full rounded-md border border-border bg-surface px-3 py-2 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal"
+        suppressHydrationWarning
       />
 
       {isOpen && filtered.length > 0 && (
@@ -97,17 +99,20 @@ export function CityCombobox({ name, value, onChange, options, placeholder, requ
           className="absolute z-30 mt-1.5 max-h-64 w-full min-w-[220px] origin-top animate-fade-up overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
         >
           {filtered.map((option, index) => (
-            <li key={option} role="option" aria-selected={index === highlighted}>
+            <li key={option} role="none">
               <button
+                id={`${name}-option-${index}`}
+                role="option"
+                aria-selected={index === highlighted}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectOption(option)}
                 onMouseEnter={() => setHighlighted(index)}
-                className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm transition-colors duration-[var(--dur-fast)] ${
+                className={`flex min-h-12 w-full items-center gap-2.5 rounded px-3 py-2.5 text-left text-[15px] transition-colors duration-[var(--dur-fast)] active:bg-teal-soft sm:min-h-9 sm:py-2 sm:text-sm ${
                   index === highlighted ? "bg-teal-soft text-teal" : "text-foreground hover:bg-surface-sunken"
                 }`}
               >
-                <MapPinIcon width={14} height={14} className="shrink-0 opacity-60" />
+                <MapPinIcon width={15} height={15} className="shrink-0 opacity-60" />
                 <span className="truncate">{option}</span>
               </button>
             </li>

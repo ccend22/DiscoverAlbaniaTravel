@@ -20,6 +20,7 @@ import {
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
+import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
 export type AdminMutationResult = { ok: true } | { ok: false; error: string };
 
@@ -48,7 +49,7 @@ export interface AdminOverviewStats {
 }
 
 export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getAlbaniaDateInputValue();
 
   const [row] = await db
     .select({
@@ -60,7 +61,7 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
       pendingVendorApplications: sql<number>`(select count(*) from ${vendorUsers} where ${vendorUsers.status} = 'pending')`,
       taxiRequests: sql<number>`(select count(*) from ${taxiRideRequests})`,
     })
-    .from(operators)
+    .from(sql`(select 1) as singleton`)
     .limit(1);
 
   return {

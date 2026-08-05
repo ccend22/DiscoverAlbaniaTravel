@@ -20,6 +20,8 @@ export function Alert({ tone = "info", children, className = "" }: AlertProps) {
   const { classes, Icon } = TONES[tone];
   return (
     <div
+      role={tone === "error" ? "alert" : "status"}
+      aria-live={tone === "error" ? "assertive" : "polite"}
       className={`flex animate-fade-up items-start gap-2.5 rounded-md border p-3.5 text-sm shadow-[var(--shadow-xs)] ${classes} ${className}`}
     >
       <Icon width={17} height={17} className="mt-0.5 shrink-0" />

@@ -32,6 +32,8 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             type="email"
             required
             autoFocus
+            autoComplete="email"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
@@ -41,6 +43,8 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             name="password"
             type="password"
             required
+            autoComplete="current-password"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>

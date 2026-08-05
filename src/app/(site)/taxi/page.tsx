@@ -1,6 +1,13 @@
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Scheduled Taxi Requests",
+  description: "Request a scheduled taxi for airport transfers, regional journeys, and door-to-door travel across Albania.",
+  alternates: { canonical: "/taxi" },
+};
 import { AlbaniaMapVisual } from "@/components/albania-map-visual";
 import { TaxiRequestForm } from "@/components/taxi-request-form";
 import { ClockIcon, CheckCircleIcon, MapPinIcon } from "@/components/icons";
@@ -31,22 +38,9 @@ export default async function TaxiPage({ searchParams }: { searchParams: Promise
     <div>
       <section className="relative overflow-hidden bg-brand-deep text-white">
         <div
-          className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 animate-float rounded-full bg-teal/40 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -right-32 top-1/3 h-[28rem] w-[28rem] animate-float rounded-full bg-coral/25 blur-3xl [animation-delay:-3s]"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-1/4 h-64 w-64 animate-float rounded-full bg-gold/20 blur-3xl [animation-delay:-6s]"
-          aria-hidden="true"
-        />
-        <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-10%,rgba(255,255,255,0.1),transparent)]"
           aria-hidden="true"
         />
-        <div className="grain-overlay pointer-events-none absolute inset-0" aria-hidden="true" />
 
         <div className="relative mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-12">
           <div>

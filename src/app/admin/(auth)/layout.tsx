@@ -7,7 +7,6 @@ export default function AdminAuthLayout({ children }: { children: React.ReactNod
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(8,127,132,0.22),transparent)]"
         aria-hidden="true"
       />
-      <div className="grain-overlay pointer-events-none absolute inset-0" aria-hidden="true" />
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-white">

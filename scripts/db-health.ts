@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
-import nextEnv from "@next/env";
+import { loadEnvConfig } from "@next/env";
 
-nextEnv.loadEnvConfig(process.cwd());
+loadEnvConfig(process.cwd());
 
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 
@@ -26,7 +26,8 @@ const expectedTables = [
   "vendor_users",
 ] as const;
 
-const [database] = await query`
+async function main() {
+  const [database] = await query`
   select current_database() as database_name,
     current_schema() as current_schema,
     current_setting('server_version') as server_version
@@ -132,3 +133,9 @@ console.log(JSON.stringify({
   duplicates,
   bookingInventory,
 }, null, 2));
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

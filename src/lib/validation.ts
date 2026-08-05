@@ -197,6 +197,24 @@ export const adminVendorUserEditSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
 });
 
+export const vendorClaimSignupSchema = z.object({
+  operatorId: z.coerce.number().int().positive("Choose your company from the list"),
+  name: z.string().trim().min(2, "Enter your full name"),
+  email: z.string().trim().email("Enter a valid email address").transform((value) => value.toLowerCase()),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+export const vendorNewOperatorSignupSchema = z.object({
+  operatorName: z.string().trim().min(2, "Enter the company name"),
+  vat: z.string().trim().min(3, "Enter the company's VAT/tax number"),
+  phone: z.string().trim().optional(),
+  street: z.string().trim().optional(),
+  city: z.string().trim().optional(),
+  name: z.string().trim().min(2, "Enter your full name"),
+  email: z.string().trim().email("Enter a valid email address").transform((value) => value.toLowerCase()),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
 export const vendorNewDepartureSchema = z
   .object({
     routeId: z.coerce.number().int().positive(),

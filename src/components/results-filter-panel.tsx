@@ -83,14 +83,17 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
     <div className="flex flex-col gap-6">
       <div>
         <p className="mb-2 text-sm font-semibold text-foreground">{rf.departureTime}</p>
-        <div className="flex flex-col gap-2 text-sm">
+        <div className="flex flex-col gap-0.5 text-sm">
           {(Object.keys(BUCKET_LABELS) as TimeBucket[]).map((bucket) => (
-            <label key={bucket} className="flex items-center gap-2 text-foreground/90">
+            <label
+              key={bucket}
+              className="-mx-2 flex min-h-11 items-center gap-2.5 rounded px-2 text-foreground/90 transition-colors active:bg-surface-sunken"
+            >
               <input
                 type="checkbox"
                 checked={selectedBuckets.has(bucket)}
                 onChange={() => toggleBucket(bucket)}
-                className="h-4 w-4 rounded border-border accent-teal"
+                className="h-[18px] w-[18px] shrink-0 rounded border-border accent-teal"
               />
               {BUCKET_LABELS[bucket]}
             </label>
@@ -100,14 +103,17 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
 
       <div>
         <p className="mb-2 text-sm font-semibold text-foreground">{rf.operator}</p>
-        <div className="flex max-h-48 flex-col gap-2 overflow-y-auto text-sm">
+        <div className="overlay-scroll flex max-h-48 flex-col gap-0.5 overflow-y-auto text-sm">
           {operators.map((name) => (
-            <label key={name} className="flex items-center gap-2 text-foreground/90">
+            <label
+              key={name}
+              className="-mx-2 flex min-h-11 items-center gap-2.5 rounded px-2 text-foreground/90 transition-colors active:bg-surface-sunken"
+            >
               <input
                 type="checkbox"
                 checked={selectedOperators.has(name)}
                 onChange={() => toggleOperator(name)}
-                className="h-4 w-4 shrink-0 rounded border-border accent-teal"
+                className="h-[18px] w-[18px] shrink-0 rounded border-border accent-teal"
               />
               <span className="truncate">{name}</span>
             </label>

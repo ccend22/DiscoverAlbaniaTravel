@@ -112,6 +112,8 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                   <input
                     name="passengerName"
                     required
+                    minLength={2}
+                    autoComplete="name"
                     defaultValue={profile?.name}
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
                   />
@@ -122,6 +124,8 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     name="passengerPhone"
                     required
                     type="tel"
+                    minLength={6}
+                    autoComplete="tel"
                     defaultValue={profile?.phone ?? undefined}
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
                   />
@@ -132,6 +136,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     name="passengerEmail"
                     required
                     type="email"
+                    autoComplete="email"
                     defaultValue={profile?.email}
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
                   />

@@ -37,7 +37,6 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({ variant = "primary", size, className, children, ...props }: ButtonProps) {
   return (
     <button className={buttonClasses(variant, size, className)} {...props}>
-      {variant === "primary" && <span className="shine-layer" aria-hidden="true" />}
       {children}
     </button>
   );
@@ -47,12 +46,36 @@ interface LinkButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   href: string;
   variant?: Variant;
   size?: Size;
+  /**
+   * Force a real browser navigation instead of Next's client-side <Link>.
+   * Required for hrefs that point at a Route Handler which immediately
+   * redirects cross-origin (e.g. kicking off Google OAuth): Next's router
+   * tries to fetch it as an RSC payload first, that fetch can't follow a
+   * cross-origin redirect, and it throws "Failed to fetch" in the console
+   * before falling back to a normal navigation anyway.
+   */
+  native?: boolean;
 }
 
-export function LinkButton({ href, variant = "primary", size, className, children, ...props }: LinkButtonProps) {
+export function LinkButton({
+  href,
+  variant = "primary",
+  size,
+  className,
+  children,
+  native,
+  ...props
+}: LinkButtonProps) {
+  const classes = buttonClasses(variant, size, className);
+  if (native) {
+    return (
+      <a href={href} className={classes} {...props}>
+        {children}
+      </a>
+    );
+  }
   return (
-    <Link href={href} className={buttonClasses(variant, size, className)} {...props}>
-      {variant === "primary" && <span className="shine-layer" aria-hidden="true" />}
+    <Link href={href} className={classes} {...props}>
       {children}
     </Link>
   );

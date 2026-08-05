@@ -29,14 +29,14 @@ export function FeaturedDestinations({ places, photoCredit }: { places: Featured
           <Link
             key={place.name}
             href={place.destinationId ? `/destinations/${place.destinationId}` : "/destinations"}
-            className="card-lift group relative aspect-[3/4] overflow-hidden rounded-lg shadow-[var(--shadow-sm)] sm:aspect-[4/5]"
+            className="group relative aspect-[3/4] overflow-hidden rounded-lg shadow-[var(--shadow-sm)] sm:aspect-[4/5]"
           >
             <Image
               src={place.image}
               alt={place.name}
               fill
               sizes="(min-width: 640px) 33vw, 50vw"
-              className="object-cover transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] group-hover:scale-110"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/5 to-transparent transition-opacity duration-[var(--dur-base)] group-hover:from-black/90" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-1.5 p-3 sm:p-4">

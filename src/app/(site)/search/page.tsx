@@ -15,6 +15,12 @@ import { getRoadRoute } from "@/lib/routing";
 import { AlertCircleIcon } from "@/components/icons";
 import { getLocaleAndDictionary, type Locale } from "@/lib/i18n";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Bus Search Results",
+  robots: { index: false, follow: true },
+};
 
 async function buildRouteSegments(results: TripDepartureDetail[]): Promise<RouteSegment[]> {
   const bareSegments: RouteSegment[] = results.map((trip) => ({
@@ -124,7 +130,7 @@ function LegResults({
       {outcome.results.length > 0 && (
         <>
           <div className="mb-6">
-            <RouteMap segments={segments} />
+            <RouteMap segments={segments} tapToInteractLabel={dict.routeMap.tapToInteract} />
           </div>
           <ResultsFilterPanel results={outcome.results} travelDate={date} passengers={passengers} dict={dict} locale={locale} />
         </>

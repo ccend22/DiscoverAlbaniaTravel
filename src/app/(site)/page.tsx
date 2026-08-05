@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SearchWidget } from "@/components/search-widget";
 import { AlbaniaMapVisual } from "@/components/albania-map-visual";
 import { FeaturedDestinations, type FeaturedPlace } from "@/components/featured-destinations";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { LinkButton } from "@/components/ui/button";
 import { ArrowRightIcon, BuildingIcon, MapPinIcon, BusIcon } from "@/components/icons";
 import {
@@ -62,43 +63,36 @@ export default async function HomePage() {
     <div>
       <section className="relative overflow-hidden bg-brand-deep text-white">
         <div
-          className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 animate-float rounded-full bg-teal/40 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -right-32 top-1/3 h-[28rem] w-[28rem] animate-float rounded-full bg-coral/25 blur-3xl [animation-delay:-3s]"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 animate-float rounded-full bg-gold/20 blur-3xl [animation-delay:-6s]"
-          aria-hidden="true"
-        />
-        <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-10%,rgba(255,255,255,0.1),transparent)]"
           aria-hidden="true"
         />
-        <div className="grain-overlay pointer-events-none absolute inset-0" aria-hidden="true" />
 
         <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-14">
           <div>
-            <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.14em] text-white/62">
-              {dict.home.kicker}
-            </p>
-            <h1 className="mt-3 max-w-2xl animate-fade-up font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white [animation-delay:80ms] sm:text-5xl">
-              {dict.home.title}
-            </h1>
-            <p className="mt-4 max-w-xl animate-fade-up text-base leading-7 text-white/72 [animation-delay:160ms] sm:text-lg">
-              {dict.home.subtitle}
-            </p>
+            <ScrollReveal>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/62">
+                {dict.home.kicker}
+              </p>
+            </ScrollReveal>
+            <ScrollReveal className="[animation-delay:80ms]">
+              <h1 className="mt-3 max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
+                {dict.home.title}
+              </h1>
+            </ScrollReveal>
+            <ScrollReveal className="[animation-delay:160ms]">
+              <p className="mt-4 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
+                {dict.home.subtitle}
+              </p>
+            </ScrollReveal>
           </div>
 
-          <div className="hidden animate-fade-up justify-self-end [animation-delay:220ms] lg:block" aria-hidden="true">
+          <ScrollReveal className="hidden justify-self-end [animation-delay:220ms] lg:block">
             <AlbaniaMapVisual className="h-auto w-full max-w-[280px] text-white/65 drop-shadow-[0_20px_45px_rgba(0,0,0,0.35)]" />
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      <section className="relative z-10 border-b border-border">
+      <section className="relative border-b border-border">
         <div className="mx-auto -mt-8 max-w-7xl px-4 pb-10 sm:px-6">
           <SearchWidget cityOptions={cityOptions} originToDestinations={originToDestinations} dict={dict} locale={locale} />
         </div>
@@ -166,7 +160,7 @@ export default async function HomePage() {
                 <Link
                   key={`${route.fromCity}-${route.toCity}`}
                   href={`/search?origin=${encodeURIComponent(route.fromCity)}&destination=${encodeURIComponent(route.toCity)}&date=${today}`}
-                  className={`card-lift group flex min-h-20 items-center justify-between rounded-md border border-l-4 border-border bg-surface p-4 hover:bg-surface-sunken/60 ${accent.border} ${accent.glow}`}
+                  className={`group flex min-h-20 items-center justify-between rounded-md border border-l-4 border-border bg-surface p-4 transition-[background-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:bg-surface-sunken/60 ${accent.border} ${accent.glow}`}
                 >
                   <div>
                     <p className="flex items-center gap-2 font-medium text-foreground">

@@ -56,6 +56,7 @@ export function TaxiRequestForm({ error, minimumDate, user, dict }: TaxiRequestF
             <input
               name="pickupLocation"
               required
+              minLength={3}
               value={pickupLocation}
               onChange={(e) => setPickupLocation(e.target.value)}
               placeholder={tf.pickupLocationPlaceholder}
@@ -77,6 +78,7 @@ export function TaxiRequestForm({ error, minimumDate, user, dict }: TaxiRequestF
             <input
               name="destination"
               required
+              minLength={3}
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               placeholder={tf.destinationPlaceholder}
@@ -155,15 +157,15 @@ export function TaxiRequestForm({ error, minimumDate, user, dict }: TaxiRequestF
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{tf.yourName}</span>
-            <input name="passengerName" required defaultValue={user?.name ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
+            <input name="passengerName" required minLength={2} autoComplete="name" defaultValue={user?.name ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{tf.phoneNumber}</span>
-            <input name="passengerPhone" type="tel" required defaultValue={user?.phone ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
+            <input name="passengerPhone" type="tel" required minLength={6} autoComplete="tel" defaultValue={user?.phone ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{tf.email}</span>
-            <input name="passengerEmail" type="email" required defaultValue={user?.email ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
+            <input name="passengerEmail" type="email" required autoComplete="email" defaultValue={user?.email ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 outline-none focus:border-teal" />
           </label>
         </div>
       </div>

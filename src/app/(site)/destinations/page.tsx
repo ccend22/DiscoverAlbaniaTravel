@@ -2,6 +2,13 @@ import Link from "next/link";
 import { listDestinations } from "@/db/queries/destinations";
 import { ArrowRightIcon, MapPinIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Destinations",
+  description: "Explore destinations across Albania and find intercity bus connections for your trip.",
+  alternates: { canonical: "/destinations" },
+};
 
 // Complete literal classes per accent — Tailwind can't resolve `bg-${color}`
 // template interpolation, so each full string must appear as-is in source.

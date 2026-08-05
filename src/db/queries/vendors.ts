@@ -1,8 +1,18 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
-import { operators, routes, stations, tripDepartures, vendorUsers } from "../schema";
+import { bookings, operators, routes, stations, tripDepartures, vendorUsers } from "../schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { isUniqueViolation } from "./db-errors";
+import { isUniqueViolation, violatedConstraint } from "./db-errors";
+
+/**
+ * Operators created by the original data import (and by admin's "new
+ * operator" form) get an auto-generated vendor_users row with this email
+ * pattern and a locked, unguessable password — a placeholder, not a real
+ * claimed login. Signup treats operators as still "claimable" as long as
+ * their only vendor_users row (if any) matches this pattern or was rejected.
+ */
+const PLACEHOLDER_VENDOR_EMAIL_PREFIX = "vendor+operator-";
 
 export type AdminMutationResult = { ok: true } | { ok: false; error: string };
 
@@ -104,6 +114,54 @@ export async function listVendorDepartures(vendorUserId: number) {
     .innerJoin(stations, eq(tripDepartures.fromStationId, stations.id))
     .where(eq(routes.operatorId, context.operatorId))
     .orderBy(asc(routes.code), asc(tripDepartures.departureTime));
+}
+
+export interface VendorBookingRow {
+  bookingReference: string;
+  travelDate: string;
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail: string;
+  seats: number;
+  priceAtBooking: string;
+  status: "confirmed" | "cancelled";
+  createdAt: Date;
+  routeCode: string;
+  fromStationName: string;
+  toStationName: string;
+  departureTime: string;
+}
+
+export async function listVendorBookings(vendorUserId: number): Promise<VendorBookingRow[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+
+  const fromStation = alias(stations, "vendor_booking_from_station");
+  const toStation = alias(stations, "vendor_booking_to_station");
+
+  return db
+    .select({
+      bookingReference: bookings.bookingReference,
+      travelDate: bookings.travelDate,
+      passengerName: bookings.passengerName,
+      passengerPhone: bookings.passengerPhone,
+      passengerEmail: bookings.passengerEmail,
+      seats: bookings.seats,
+      priceAtBooking: bookings.priceAtBooking,
+      status: bookings.status,
+      createdAt: bookings.createdAt,
+      routeCode: routes.code,
+      fromStationName: fromStation.name,
+      toStationName: toStation.name,
+      departureTime: tripDepartures.departureTime,
+    })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .where(eq(routes.operatorId, context.operatorId))
+    .orderBy(desc(bookings.travelDate), asc(tripDepartures.departureTime));
 }
 
 export async function listVendorRoutes(vendorUserId: number) {
@@ -317,4 +375,137 @@ export async function listAllOperators(): Promise<AdminOperatorRow[]> {
     .orderBy(asc(operators.name));
 
   return rows.map((row) => ({ ...row, routeCount: Number(row.routeCount) }));
+}
+
+// ---------------------------------------------------------------------------
+// Vendor self-signup: an operator either claims their existing (imported)
+// company or registers a new one. Both land as a "pending" vendor_users row
+// for an admin to approve at /admin/vendors — the same queue already used
+// for approvals, nothing new on that side.
+// ---------------------------------------------------------------------------
+
+export interface ClaimableOperator {
+  id: number;
+  name: string;
+  city: string | null;
+}
+
+export async function listClaimableOperators(): Promise<ClaimableOperator[]> {
+  const rows = await db
+    .select({
+      id: operators.id,
+      name: operators.name,
+      city: operators.city,
+      vendorEmail: vendorUsers.email,
+      vendorStatus: vendorUsers.status,
+    })
+    .from(operators)
+    .leftJoin(vendorUsers, eq(vendorUsers.operatorId, operators.id))
+    .orderBy(asc(operators.name));
+
+  const byOperator = new Map<number, ClaimableOperator & { claimed: boolean }>();
+  for (const row of rows) {
+    const isPlaceholder = !row.vendorEmail || row.vendorEmail.startsWith(PLACEHOLDER_VENDOR_EMAIL_PREFIX);
+    const isActiveClaim = !isPlaceholder && (row.vendorStatus === "approved" || row.vendorStatus === "pending");
+    const existing = byOperator.get(row.id);
+    if (!existing) {
+      byOperator.set(row.id, { id: row.id, name: row.name, city: row.city, claimed: isActiveClaim });
+    } else if (isActiveClaim) {
+      existing.claimed = true;
+    }
+  }
+
+  return Array.from(byOperator.values())
+    .filter((o) => !o.claimed)
+    .map(({ id, name, city }) => ({ id, name, city }));
+}
+
+export type VendorSignupResult = { ok: true } | { ok: false; error: string };
+
+export async function applyForExistingOperator(
+  operatorId: number,
+  input: { name: string; email: string; password: string }
+): Promise<VendorSignupResult> {
+  const [existingRow] = await db
+    .select({ id: vendorUsers.id, email: vendorUsers.email, status: vendorUsers.status })
+    .from(vendorUsers)
+    .where(eq(vendorUsers.operatorId, operatorId))
+    .limit(1);
+
+  const isPlaceholder = !existingRow || existingRow.email.startsWith(PLACEHOLDER_VENDOR_EMAIL_PREFIX);
+  const isActiveClaim = existingRow && !isPlaceholder && existingRow.status !== "rejected";
+  if (isActiveClaim) {
+    return { ok: false, error: "This company already has an active account. Contact support if that's a mistake." };
+  }
+
+  const passwordHash = hashPassword(input.password);
+  try {
+    if (existingRow) {
+      await db
+        .update(vendorUsers)
+        .set({ email: input.email, passwordHash, name: input.name, status: "pending", updatedAt: new Date() })
+        .where(eq(vendorUsers.id, existingRow.id));
+    } else {
+      await db.insert(vendorUsers).values({
+        operatorId,
+        email: input.email,
+        passwordHash,
+        name: input.name,
+        status: "pending",
+      });
+    }
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, error: "That email is already used by another vendor account." };
+    }
+    throw error;
+  }
+}
+
+export async function applyAsNewOperator(input: {
+  operatorName: string;
+  vat: string;
+  phone: string | null;
+  street: string | null;
+  city: string | null;
+  contactName: string;
+  email: string;
+  password: string;
+}): Promise<VendorSignupResult> {
+  const passwordHash = hashPassword(input.password);
+  try {
+    await db.execute(sql`
+      with created_operator as (
+        insert into ${operators} (
+          ${sql.identifier(operators.name.name)},
+          ${sql.identifier(operators.vat.name)},
+          ${sql.identifier(operators.phone.name)},
+          ${sql.identifier(operators.street.name)},
+          ${sql.identifier(operators.city.name)}
+        )
+        values (${input.operatorName}, ${input.vat}, ${input.phone}, ${input.street}, ${input.city})
+        returning ${operators.id}
+      )
+      insert into ${vendorUsers} (
+        ${sql.identifier(vendorUsers.operatorId.name)},
+        ${sql.identifier(vendorUsers.email.name)},
+        ${sql.identifier(vendorUsers.passwordHash.name)},
+        ${sql.identifier(vendorUsers.name.name)},
+        ${sql.identifier(vendorUsers.status.name)}
+      )
+      select created_operator.id, ${input.email}, ${passwordHash}, ${input.contactName}, 'pending'
+      from created_operator
+    `);
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      const constraint = violatedConstraint(error);
+      if (constraint === "vendor_users_email_unique") {
+        return { ok: false, error: "That email is already used by another vendor account." };
+      }
+      return { ok: false, error: "That VAT/tax number is already registered." };
+    }
+    throw error;
+  }
 }

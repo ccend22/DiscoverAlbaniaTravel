@@ -6,6 +6,7 @@ import { CityCombobox } from "./city-combobox";
 import { ArrowRightIcon, SearchIcon } from "./icons";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
+import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
 type TripType = "oneway" | "roundtrip";
 
@@ -69,7 +70,7 @@ export function SearchWidget({
   defaultPassengers,
 }: SearchWidgetProps) {
   const sw = dict.searchWidget;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getAlbaniaDateInputValue();
   const [originInput, setOriginInput] = useState(defaultOrigin ?? "");
   const [destinationInput, setDestinationInput] = useState(defaultDestination ?? "");
   const [dateValue, setDateValue] = useState(defaultDate || today);
@@ -146,7 +147,7 @@ export function SearchWidget({
           <RoundTripIcon className={tripType === "roundtrip" ? "opacity-90" : "opacity-60"} />
           {sw.roundTrip}
         </button>
-        <input type="hidden" name="tripType" value={tripType} />
+        <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
       </div>
 
       <div className="grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)_minmax(130px,0.55fr)]">
@@ -225,6 +226,7 @@ export function SearchWidget({
             onChange={(e) => setTimeValue(e.target.value)}
             onClick={openTimePicker}
             className="min-h-11 cursor-pointer rounded-md border border-border bg-surface px-3 py-2 text-base outline-none transition-colors hover:border-muted/60 focus:border-teal"
+            suppressHydrationWarning
           />
         </label>
 
@@ -251,7 +253,7 @@ export function SearchWidget({
               +
             </button>
           </div>
-          <input type="hidden" name="passengers" value={passengers} />
+          <input type="hidden" name="passengers" value={passengers} suppressHydrationWarning />
         </div>
       </div>
 

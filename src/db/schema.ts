@@ -74,7 +74,8 @@ export const adminUsers = pgTable("admin_users", {
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
+  googleId: text("google_id").unique(),
   name: text("name").notNull(),
   phone: text("phone"),
   status: userStatusEnum("status").notNull().default("active"),

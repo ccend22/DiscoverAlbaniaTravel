@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BrandMark } from "./brand-mark";
-import { MenuIcon } from "./icons";
 import { LanguageToggle } from "./language-toggle";
+import { MobileNav } from "./mobile-nav";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 
 function BrandLockup() {
@@ -48,7 +48,7 @@ export async function SiteHeader() {
   const utilityLinks = [{ href: "/account", label: dict.nav.myAccount }];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/8 bg-brand-deep/85 text-white shadow-[0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl backdrop-saturate-150">
+    <header className="header-surface sticky top-0 z-40 border-b border-white/8 text-white shadow-[0_1px_0_rgba(255,255,255,0.05)]">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
         <Link href="/" aria-label="Discover Albania home" className="shrink-0 rounded-sm">
           <BrandLockup />
@@ -72,36 +72,7 @@ export async function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <LanguageToggle locale={locale} />
-
-          <details className="group relative lg:hidden">
-            <summary
-              className="flex h-11 w-11 list-none items-center justify-center rounded-md text-white transition-colors duration-[var(--dur-fast)] hover:bg-white/10 active:bg-white/15 [&::-webkit-details-marker]:hidden"
-              aria-label={dict.nav.openMenu}
-            >
-              <MenuIcon width={22} height={22} className="transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-open:rotate-90" />
-            </summary>
-            <nav className="absolute right-0 z-50 mt-2 w-60 origin-top-right animate-fade-up rounded-md border border-border bg-surface p-2 text-foreground shadow-[var(--shadow-lg)]">
-              {primaryLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block min-h-11 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-green-50 hover:text-green-700 active:bg-green-50 active:text-green-700"
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="my-1 border-t border-border" />
-              {utilityLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block min-h-11 rounded-md px-3 py-2.5 text-sm text-muted transition-colors duration-[var(--dur-fast)] hover:bg-green-50 hover:text-green-700 active:bg-green-50 active:text-green-700"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </details>
+          <MobileNav primaryLinks={primaryLinks} utilityLinks={utilityLinks} openMenuLabel={dict.nav.openMenu} />
         </div>
       </div>
     </header>

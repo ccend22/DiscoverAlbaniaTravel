@@ -26,7 +26,7 @@ const en = {
   },
   home: {
     kicker: "Bus tickets and scheduled taxis",
-    title: "Discover Albania",
+    title: "Discover Albania Travel",
     subtitle: "Compare verified bus schedules, reserve your seat, or arrange a private taxi anywhere across Albania.",
     taxiKicker: "Private travel",
     taxiHeading: "Need a taxi?",
@@ -94,6 +94,9 @@ const en = {
     existsOtherDays: "{origin} to {destination} buses exist in our schedule, but none run on {date} — try a different date.",
     tryAnotherSearch: "Try another search",
     noDirectBuses: "No direct buses found from {origin} to {destination} on this date — this route may require a transfer, which isn’t supported yet.",
+  },
+  routeMap: {
+    tapToInteract: "Tap map to interact",
   },
   resultsFilterPanel: {
     departureTime: "Departure time",
@@ -310,6 +313,8 @@ const en = {
     signIn: "Sign in",
     noAccount: "Don’t have an account?",
     createOne: "Create one",
+    continueWithGoogle: "Continue with Google",
+    orDivider: "or",
   },
   signupPage: {
     kicker: "Traveler account",
@@ -322,6 +327,8 @@ const en = {
     createAccount: "Create account",
     alreadyHaveAccount: "Already have an account?",
     signIn: "Sign in",
+    continueWithGoogle: "Continue with Google",
+    orDivider: "or",
   },
 };
 
@@ -350,7 +357,7 @@ const al: typeof en = {
   },
   home: {
     kicker: "Bileta autobusi dhe taksi me orar",
-    title: "Zbulo Shqipërinë",
+    title: "Zbulo Shqipërinë Travel",
     subtitle: "Krahaso oraret e verifikuara të autobusëve, rezervo vendin tënd, ose organizo një taksi private kudo në Shqipëri.",
     taxiKicker: "Udhëtim privat",
     taxiHeading: "Të duhet një taksi?",
@@ -418,6 +425,9 @@ const al: typeof en = {
     existsOtherDays: "Autobusë nga {origin} për në {destination} ekzistojnë në orarin tonë, por asnjë nuk kryhet më {date} — provo një datë tjetër.",
     tryAnotherSearch: "Provo një kërkim tjetër",
     noDirectBuses: "Nuk u gjetën autobusë direkt nga {origin} për në {destination} në këtë datë — ky itinerar mund të kërkojë ndërrim, çka nuk mbështetet ende.",
+  },
+  routeMap: {
+    tapToInteract: "Prek hartën për ta përdorur",
   },
   resultsFilterPanel: {
     departureTime: "Ora e nisjes",
@@ -634,6 +644,8 @@ const al: typeof en = {
     signIn: "Identifikohu",
     noAccount: "Nuk ke llogari?",
     createOne: "Krijo një",
+    continueWithGoogle: "Vazhdo me Google",
+    orDivider: "ose",
   },
   signupPage: {
     kicker: "Llogaria e udhëtarit",
@@ -646,6 +658,8 @@ const al: typeof en = {
     createAccount: "Krijo llogarinë",
     alreadyHaveAccount: "Ke tashmë një llogari?",
     signIn: "Identifikohu",
+    continueWithGoogle: "Vazhdo me Google",
+    orDivider: "ose",
   },
 };
 

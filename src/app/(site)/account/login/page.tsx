@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { loginUserAction } from "../actions";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { GoogleIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 
 interface LoginPageProps {
@@ -32,6 +33,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             name="email"
             type="email"
             required
+            autoComplete="email"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
@@ -41,10 +44,23 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             name="password"
             type="password"
             required
+            autoComplete="current-password"
+            suppressHydrationWarning
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
           />
         </label>
         <Button type="submit">{lp.signIn}</Button>
+
+        <div className="flex items-center gap-3 text-xs text-muted" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          {lp.orDivider}
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <LinkButton href="/account/google" variant="outline" className="w-full" native>
+          <GoogleIcon />
+          {lp.continueWithGoogle}
+        </LinkButton>
       </form>
 
       <p className="mt-6 text-sm text-muted">

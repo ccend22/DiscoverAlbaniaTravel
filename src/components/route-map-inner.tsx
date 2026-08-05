@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useIsMobile } from "@/lib/use-is-mobile";
 
 const BUS_ICON_SVG = `
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -81,12 +82,37 @@ function FitToSegments({ points }: FitToSegmentsProps) {
   return null;
 }
 
-export interface RouteMapProps {
-  segments: RouteSegment[];
+/**
+ * Unlike Google Maps, Leaflet has no built-in "cooperative" gesture mode, and
+ * this map sits inline at the top of the search results — on a phone it's
+ * most of the screen, so without a gate a single-finger swipe meant to
+ * scroll past it pans the map instead. Requires one explicit tap before
+ * enabling drag/zoom handlers; page scroll passes through until then.
+ */
+function GestureGate({ active }: { active: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const handlers = [map.dragging, map.touchZoom, map.scrollWheelZoom, map.doubleClickZoom];
+    for (const handler of handlers) {
+      if (active) handler.enable();
+      else handler.disable();
+    }
+  }, [active, map]);
+
+  return null;
 }
 
-export function RouteMap({ segments }: RouteMapProps) {
+export interface RouteMapProps {
+  segments: RouteSegment[];
+  tapToInteractLabel: string;
+}
+
+export function RouteMap({ segments, tapToInteractLabel }: RouteMapProps) {
   const isDark = useIsDarkMode();
+  const isMobile = useIsMobile();
+  const [interacted, setInteracted] = useState(false);
+  const gestureActive = !isMobile || interacted;
 
   const { markers, lines, points } = useMemo(() => {
     const markerMap = new Map<string, { name: string; lat: number; lng: number }>();
@@ -117,7 +143,7 @@ export function RouteMap({ segments }: RouteMapProps) {
   }, [segments]);
 
   return (
-    <div className="h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border">
+    <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border">
       <MapContainer center={[41.15, 20.0]} zoom={8} scrollWheelZoom className="h-full w-full">
         <TileLayer
           key={isDark ? "dark" : "light"}
@@ -139,7 +165,20 @@ export function RouteMap({ segments }: RouteMapProps) {
           </Marker>
         ))}
         <FitToSegments points={points} />
+        <GestureGate active={gestureActive} />
       </MapContainer>
+
+      {isMobile && !interacted && (
+        <button
+          type="button"
+          onClick={() => setInteracted(true)}
+          className="animate-fade-in absolute inset-0 z-[1000] flex items-center justify-center bg-black/5"
+        >
+          <span className="rounded-full bg-black/65 px-3.5 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-sm)]">
+            {tapToInteractLabel}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

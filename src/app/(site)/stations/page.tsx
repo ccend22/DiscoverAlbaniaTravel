@@ -3,6 +3,13 @@ import { StationsExplorer } from "@/components/stations-explorer";
 import { MapPinIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Bus Stations",
+  description: "Find bus stations across Albania and start a route search from the interactive station map.",
+  alternates: { canonical: "/stations" },
+};
 
 export default async function StationsPage() {
   const [stations, { dict }] = await Promise.all([listStationLocations(), getLocaleAndDictionary()]);
