@@ -8,9 +8,9 @@ interface BrandMarkProps {
 export function BrandMark({ size = 36, className }: BrandMarkProps) {
   return (
     <Image
-      src="/brand-logo.png"
+      src="/brand-logo.svg"
       alt=""
-      width={Math.round(size * (1028 / 701))}
+      width={Math.round(size * (78 / 50))}
       height={size}
       className={className}
       aria-hidden="true"
