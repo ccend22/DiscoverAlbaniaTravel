@@ -102,6 +102,15 @@ export function MapPinIcon(props: IconProps) {
   );
 }
 
+export function CompassIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m14.8 9.2-1.6 4.3a1 1 0 0 1-.6.6l-4.4 1.7 1.6-4.3a1 1 0 0 1 .6-.6z" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

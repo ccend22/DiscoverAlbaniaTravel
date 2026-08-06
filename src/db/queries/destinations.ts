@@ -13,7 +13,7 @@ export async function getDestinationById(id: number) {
 
 export async function getDestinationsByNames(names: string[]) {
   return db
-    .select({ id: destinations.id, name: destinations.name })
+    .select({ id: destinations.id, name: destinations.name, description: destinations.description })
     .from(destinations)
     .where(inArray(destinations.name, names));
 }

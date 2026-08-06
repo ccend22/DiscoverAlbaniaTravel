@@ -22,7 +22,20 @@ interface SearchWidgetProps {
   defaultReturnDate?: string;
   defaultTime?: string;
   defaultPassengers?: number;
+  /**
+   * "glass" floats the card over a photo (the homepage hero): translucent
+   * + blurred, but still opaque enough that the existing dark label/input
+   * styling stays legible unchanged. "solid" (default) is the plain surface
+   * used everywhere else, including the search-results page, where there's
+   * no rich background behind it for a blur to read against.
+   */
+  variant?: "solid" | "glass";
 }
+
+const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
+  solid: "rounded-md border border-border bg-surface shadow-[var(--shadow-lg)]",
+  glass: "rounded-xl border border-white/40 bg-surface/85 shadow-[var(--shadow-lg)] backdrop-blur-xl",
+};
 
 function RoundTripIcon(props: { width?: number; height?: number; className?: string }) {
   return (
@@ -68,6 +81,7 @@ export function SearchWidget({
   defaultReturnDate,
   defaultTime,
   defaultPassengers,
+  variant = "solid",
 }: SearchWidgetProps) {
   const sw = dict.searchWidget;
   const today = getAlbaniaDateInputValue();
@@ -112,7 +126,7 @@ export function SearchWidget({
     <form
       action="/search"
       method="get"
-      className="flex flex-col gap-5 rounded-md border border-border bg-surface p-4 shadow-[var(--shadow-lg)] sm:p-6"
+      className={`flex flex-col gap-5 p-4 sm:p-6 ${CONTAINER_STYLES[variant]}`}
     >
       <div
         className="relative inline-flex w-full rounded-lg bg-surface-sunken p-1 text-sm shadow-inner sm:w-fit"

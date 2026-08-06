@@ -21,30 +21,66 @@ export async function SiteFooter() {
   const { dict } = await getLocaleAndDictionary();
 
   return (
-    <footer className="relative border-t border-white/10 bg-brand-deep text-white">
+    <footer className="relative border-t border-white/10 bg-brand-deep font-sans text-white">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal/70 to-transparent"
         aria-hidden="true"
       />
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <BrandMark size={30} className="text-white" />
-          <div className="text-[12px] font-extrabold leading-[0.94]">
-            <p>DISCOVER</p>
-            <p>ALBANIA</p>
-          </div>
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-5 lg:gap-8 lg:py-20">
+        <div className="md:col-span-2 lg:pr-12">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <BrandMark size={42} className="text-white" />
+            <span className="whitespace-nowrap text-sm font-black leading-[0.94] tracking-tight">
+              <span className="block">DISCOVER</span>
+              <span className="block">ALBANIA TRAVEL</span>
+            </span>
+          </Link>
+          <p className="mt-7 max-w-sm text-sm leading-7 text-white/55">{dict.footer.tagline}</p>
+          <a
+            href="https://www.discoveralbania.al/tours"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-7 inline-flex rounded-full bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.16em] text-brand-deep transition-all hover:-translate-y-px hover:bg-lime"
+          >
+            Explore guided tours
+          </a>
         </div>
 
-        <nav className="flex flex-wrap gap-x-7 gap-y-3 text-sm" aria-label="Footer navigation">
-          <FooterLink href="/destinations">{dict.footer.destinations}</FooterLink>
-          <FooterLink href="/stations">{dict.footer.stations}</FooterLink>
-          <FooterLink href="/account">{dict.footer.myAccount}</FooterLink>
-        </nav>
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.24em] text-white/35">Explore</h3>
+          <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
+            <FooterLink href="/destinations">{dict.footer.destinations}</FooterLink>
+            <FooterLink href="/stations">{dict.footer.stations}</FooterLink>
+            <FooterLink href="/news">{dict.nav.news}</FooterLink>
+          </nav>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.24em] text-white/35">Travel</h3>
+          <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
+            <FooterLink href="/">{dict.nav.busTickets}</FooterLink>
+            <FooterLink href="/taxi">{dict.nav.taxi}</FooterLink>
+            <FooterLink href="/booking">Booking lookup</FooterLink>
+          </nav>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.24em] text-white/35">Account</h3>
+          <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
+            <FooterLink href="/account">{dict.footer.myAccount}</FooterLink>
+            <FooterLink href="/account/login">Sign in</FooterLink>
+            <FooterLink href="/vendor/login">Partner login</FooterLink>
+          </nav>
+        </div>
       </div>
+
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <p>{dict.footer.tagline}</p>
-          <p>{dict.footer.department}</p>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p>© {new Date().getFullYear()} Discover Albania Travel</p>
+          <div className="flex items-center gap-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-lime" />
+            <p>{dict.footer.department}</p>
+          </div>
         </div>
       </div>
     </footer>

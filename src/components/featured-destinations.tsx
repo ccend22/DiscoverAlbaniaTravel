@@ -19,6 +19,7 @@ export interface FeaturedPlace {
   image: string;
   tone: FeaturedPlaceTone;
   destinationId?: number;
+  description?: string;
 }
 
 export function FeaturedDestinations({ places, photoCredit }: { places: FeaturedPlace[]; photoCredit: string }) {
@@ -29,25 +30,36 @@ export function FeaturedDestinations({ places, photoCredit }: { places: Featured
           <Link
             key={place.name}
             href={place.destinationId ? `/destinations/${place.destinationId}` : "/destinations"}
-            className="group relative aspect-[3/4] overflow-hidden rounded-lg shadow-[var(--shadow-sm)] sm:aspect-[4/5]"
+            className="card-lift group flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]"
           >
-            <Image
-              src={place.image}
-              alt={place.name}
-              fill
-              sizes="(min-width: 640px) 33vw, 50vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/5 to-transparent transition-opacity duration-[var(--dur-base)] group-hover:from-black/90" />
-            <div className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-1.5 p-3 sm:p-4">
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] shadow-[var(--shadow-xs)] ${TAGLINE_STYLES[place.tone]}`}>
-                {place.tagline}
-              </span>
-              <p className="font-display text-lg font-bold text-white sm:text-xl">{place.name}</p>
+            <div className="relative aspect-[4/3] shrink-0 overflow-hidden">
+              <Image
+                src={place.image}
+                alt={place.name}
+                fill
+                sizes="(min-width: 640px) 33vw, 50vw"
+                className="object-cover transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] group-hover:scale-105"
+              />
+              <div className="absolute inset-x-0 top-0 flex items-start justify-between p-2.5 sm:p-3">
+                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] shadow-[var(--shadow-xs)] ${TAGLINE_STYLES[place.tone]}`}>
+                  {place.tagline}
+                </span>
+                <span className="flex h-7 w-7 translate-y-1 items-center justify-center rounded-full bg-white/85 text-foreground opacity-0 shadow-[var(--shadow-xs)] backdrop-blur-sm transition-all duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-y-0 group-hover:opacity-100 sm:hidden sm:group-hover:flex">
+                  <ArrowRightIcon width={14} height={14} />
+                </span>
+              </div>
             </div>
-            <span className="absolute right-3 top-3 flex h-8 w-8 translate-y-1 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur-sm transition-all duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-y-0 group-hover:opacity-100">
-              <ArrowRightIcon width={16} height={16} />
-            </span>
+
+            <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
+              <p className="font-display text-base font-bold text-foreground sm:text-lg">{place.name}</p>
+              {place.description && (
+                <p className="line-clamp-2 text-xs text-muted sm:text-sm">{place.description}</p>
+              )}
+              <div className="mt-auto flex items-center gap-1.5 pt-2 text-[11px] font-bold uppercase tracking-[0.06em] text-teal">
+                View destination
+                <ArrowRightIcon width={13} height={13} className="transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-0.5" />
+              </div>
+            </div>
           </Link>
         ))}
       </div>

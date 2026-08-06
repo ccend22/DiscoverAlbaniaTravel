@@ -3,23 +3,25 @@
 :root {
   color-scheme: light;
 
-  /* Discover Albania palette, sampled from the supplied teal and white lockup. */
-  --background: #f4f7f7;
+  /* Shared Discover Albania design system. */
+  --background: #ffffff;
   --surface: #ffffff;
-  --surface-sunken: #eaf0f0;
-  --foreground: #112f32;
-  --muted: #63787a;
-  --border: #d6e1e1;
+  --surface-sunken: #f7fafc;
+  --foreground: #1a202c;
+  --muted: #64748b;
+  --border: #e2e8f0;
 
-  --brand: #00575c;
-  --brand-strong: #003f43;
-  --brand-deep: #002f32;
+  --brand: #008080;
+  --brand-strong: #006b6b;
+  --brand-deep: #0b1121;
+  --brand-navy: #2e3b55;
   --brand-foreground: #ffffff;
-  --brand-soft: #e0eeee;
+  --brand-soft: #e6f5f5;
 
-  --teal: #087f84;
+  --teal: #008080;
   --teal-foreground: #ffffff;
-  --teal-soft: #dff0f0;
+  --teal-soft: #e6f5f5;
+  --cyan: #22d3ee;
 
   /* Red is reserved for errors and destructive actions. */
   --red: #bf3d45;
@@ -47,13 +49,26 @@
   --sky-foreground: #ffffff;
   --sky-soft: #e2f0f6;
 
-  --ring: #087f84;
+  /* Shared with discoveralbania.al (our sister tours brand) so the handoff
+     between the two sites reads as one brand, not a jarring domain switch.
+     --lime itself is too light/bright for small text on a white surface
+     (same reason its badge icon needs the dark foreground, not the vivid
+     hue) — --lime-strong is the readable-on-white shade for kickers/links. */
+  --lime: #bef264;
+  --lime-strong: #4d7c0f;
+  --lime-foreground: #1a2e05;
+  --lime-soft: #eefacc;
+
+  --ring: #008080;
   --radius-control: 1.25rem;
   --radius-action: 9999px;
   --radius-form: 2rem;
-  --font-app-sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-app-sans: var(--font-inter), Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-app-serif: var(--font-merriweather), Merriweather, Georgia, serif;
   --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-app-display: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-app-display: var(--font-merriweather), Merriweather, Georgia, serif;
+  --font-app-hero: var(--font-alfa-slab-one), "Arial Black", sans-serif;
+  --font-app-pixel: var(--font-vt323), monospace;
 
   /* Premium motion system: Apple-style decelerate/standard/spring curves. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -84,6 +99,7 @@
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-deep: var(--brand-deep);
+  --color-brand-navy: var(--brand-navy);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-red: var(--red);
@@ -92,6 +108,7 @@
   --color-teal: var(--teal);
   --color-teal-foreground: var(--teal-foreground);
   --color-teal-soft: var(--teal-soft);
+  --color-cyan: var(--cyan);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -105,10 +122,23 @@
   --color-sky: var(--sky);
   --color-sky-foreground: var(--sky-foreground);
   --color-sky-soft: var(--sky-soft);
+  --color-lime: var(--lime);
+  --color-lime-strong: var(--lime-strong);
+  --color-lime-foreground: var(--lime-foreground);
+  --color-lime-soft: var(--lime-soft);
   --color-ring: var(--ring);
   --font-sans: var(--font-app-sans);
+  --font-serif: var(--font-app-serif);
   --font-mono: var(--font-app-mono);
   --font-display: var(--font-app-display);
+  --font-hero: var(--font-app-hero);
+  --font-pixel: var(--font-app-pixel);
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
 }
 
 * {
@@ -117,6 +147,7 @@
 
 html {
   background: var(--background);
+  font-size: 16px;
   scroll-behavior: smooth;
 }
 
@@ -124,7 +155,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1024px) {
+  html { font-size: 15px; }
+}
+
+@media (max-width: 640px) {
+  html { font-size: 14px; }
 }
 
 ::selection {
@@ -342,12 +383,12 @@ table tbody tr:hover {
    (cheap there — far less scrolling, more compositing headroom) and fall
    back to a plain, slightly more opaque solid fill on touch-sized viewports. */
 .header-surface {
-  background-color: color-mix(in srgb, var(--brand-deep) 96%, transparent);
+  background-color: color-mix(in srgb, var(--brand-deep) 97%, transparent);
 }
 
 @media (min-width: 640px) {
   .header-surface {
-    background-color: color-mix(in srgb, var(--brand-deep) 85%, transparent);
+    background-color: color-mix(in srgb, var(--brand-deep) 93%, transparent);
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
   }
