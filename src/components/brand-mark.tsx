@@ -10,7 +10,7 @@ export function BrandMark({ size = 36, className }: BrandMarkProps) {
     <Image
       src="/brand-logo.png"
       alt=""
-      width={Math.round(size * (4 / 3))}
+      width={Math.round(size * (1028 / 701))}
       height={size}
       className={className}
       aria-hidden="true"
