@@ -48,6 +48,9 @@
   --sky-soft: #e2f0f6;
 
   --ring: #087f84;
+  --radius-control: 0.875rem;
+  --radius-action: 1rem;
+  --radius-form: 1.25rem;
   --font-app-sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --font-app-display: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -131,6 +134,21 @@ body {
 
 :where(button, input, select, textarea) {
   font: inherit;
+}
+
+/* A soft, consistent shape language across public, account, vendor, and
+   admin forms. Explicit circles stay circular for icon-only controls. */
+:where(form) {
+  border-radius: var(--radius-form) !important;
+}
+
+:where(button):not(.rounded-full) {
+  border-radius: var(--radius-action) !important;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.rounded-full) {
+  border-radius: var(--radius-control) !important;
+  box-shadow: 0 1px 2px rgba(0, 32, 34, 0.04);
 }
 
 :where(input, select, textarea)::placeholder {
