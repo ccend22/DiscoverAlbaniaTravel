@@ -5,7 +5,7 @@ type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const base =
-  "relative inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-2xl font-semibold " +
+  "relative inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold " +
   "transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] " +
   "hover:-translate-y-px active:translate-y-0 active:scale-[0.97] active:duration-75 " +
   "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100";

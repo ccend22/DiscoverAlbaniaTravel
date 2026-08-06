@@ -48,9 +48,9 @@
   --sky-soft: #e2f0f6;
 
   --ring: #087f84;
-  --radius-control: 0.875rem;
-  --radius-action: 1rem;
-  --radius-form: 1.25rem;
+  --radius-control: 1.25rem;
+  --radius-action: 9999px;
+  --radius-form: 2rem;
   --font-app-sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --font-app-display: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
