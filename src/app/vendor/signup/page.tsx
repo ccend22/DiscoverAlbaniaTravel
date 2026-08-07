@@ -11,7 +11,7 @@ export default async function VendorSignupPage({ searchParams }: VendorSignupPag
   const [operators, { mode, error }] = await Promise.all([listClaimableOperators(), searchParams]);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="public-page mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
       <Link href="/vendor/login" className="text-sm text-teal underline">
         Back to sign in
       </Link>

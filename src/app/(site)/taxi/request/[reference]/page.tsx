@@ -12,16 +12,16 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
   const tc = dict.taxiRequestConfirmation;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
-      <div className="rounded-md border border-success/30 bg-success-soft p-5 sm:p-6">
+    <main className="public-page mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="rounded-[2.5rem] border border-success/25 bg-success-soft p-7 shadow-[0_18px_45px_rgba(7,52,60,0.08)] sm:p-10">
         <p className="text-sm font-semibold text-success">{tc.received}</p>
-        <h1 className="mt-2 font-display text-3xl font-bold text-foreground">{tc.reviewing}</h1>
+        <h1 className="mt-3 font-display text-4xl font-black tracking-[-0.035em] text-brand-navy">{tc.reviewing}</h1>
         <p className="mt-3 text-muted">
           {tc.teamWillContact}{" "}
           <span className="font-mono font-semibold text-foreground">{request.requestReference}</span>.
         </p>
       </div>
-      <dl className="mt-6 grid gap-4 rounded-md border border-border bg-surface p-5 sm:grid-cols-2 sm:p-6">
+      <dl className="public-card mt-6 grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
         <div><dt className="text-xs uppercase text-muted">{tc.journey}</dt><dd className="mt-1 font-medium text-foreground">{request.pickupLocation} to {request.destination}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatDateLong(request.pickupAt.toISOString().slice(0, 10), locale)} at {request.pickupAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.passengers}</dt><dd className="mt-1 font-medium text-foreground">{request.passengers}</dd></div>

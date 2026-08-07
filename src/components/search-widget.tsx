@@ -22,17 +22,17 @@ interface SearchWidgetProps {
   defaultReturnDate?: string;
   defaultPassengers?: number;
   /**
-   * "glass" uses a single liquid-glass shell over the homepage hero.
-   * "solid" keeps the same layout on plain page backgrounds.
+   * "glass" sits on the homepage photo hero: a translucent, blurred white
+   * so the photo reads through at the edges. "solid" is a fully opaque
+   * white card for plain page backgrounds (search results toolbar, etc.).
+   * Both use the same quiet, single-accent styling underneath.
    */
   variant?: "solid" | "glass";
 }
 
 const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
-  solid:
-    "rounded-[2rem] border border-[#dce7ec] bg-white shadow-[0_24px_70px_rgba(5,43,52,0.14),0_2px_10px_rgba(5,43,52,0.06)]",
-  glass:
-    "rounded-[2rem] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(255,255,255,0.64))] shadow-[0_30px_90px_rgba(0,24,32,0.24),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.35)] backdrop-blur-[28px] backdrop-saturate-150",
+  solid: "border border-[#dce8e6] bg-white shadow-[var(--page-shadow)]",
+  glass: "border border-white/80 bg-white/95 shadow-[0_26px_64px_rgba(0,24,32,0.2)] backdrop-blur-xl",
 };
 
 function getDestinationsForOrigin(
@@ -60,21 +60,9 @@ function RoundTripIcon(props: { width?: number; height?: number; className?: str
 
 function SwapIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M7 7h11m0 0-3.5-3.5M18 7l-3.5 3.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M17 17H6m0 0 3.5 3.5M6 17l3.5-3.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 7h11m0 0-3.5-3.5M18 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 17H6m0 0 3.5 3.5M6 17l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -154,65 +142,33 @@ export function SearchWidget({
     <form
       action="/search"
       method="get"
-      className={`relative z-20 isolate flex flex-col gap-5 p-4 sm:p-6 lg:p-7 ${CONTAINER_STYLES[variant]}`}
+      className={`relative z-20 isolate overflow-visible rounded-[2rem] p-3 sm:p-4 ${CONTAINER_STYLES[variant]}`}
     >
-      <span
-        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent"
-        aria-hidden="true"
-      />
-      {variant === "glass" && (
-        <span
-          className="pointer-events-none absolute left-8 right-16 top-1 h-16 rounded-full bg-gradient-to-b from-white/35 to-transparent blur-xl"
-          aria-hidden="true"
-        />
-      )}
-      <div
-        className="relative inline-flex w-full rounded-full border border-[#dce7ec] bg-[#f1f5f7] p-1 text-sm shadow-inner sm:w-fit"
-        role="group"
-        aria-label={sw.tripTypeAria}
-      >
-        <span
-          className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-gradient-to-r from-sky via-teal to-brand-strong shadow-[0_8px_22px_rgba(0,128,128,0.28)] transition-transform duration-500 ease-[var(--ease-spring)] ${
-            tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"
-          }`}
-          aria-hidden="true"
-        />
-        <button
-          type="button"
-          onClick={() => setTripType("oneway")}
-          aria-pressed={tripType === "oneway"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
-            tripType === "oneway" ? "text-brand-foreground" : "text-muted hover:text-foreground"
-          }`}
-        >
-          <ArrowRightIcon width={14} height={14} className={tripType === "oneway" ? "opacity-90" : "opacity-60"} />
-          {sw.oneWay}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTripType("roundtrip")}
-          aria-pressed={tripType === "roundtrip"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
-            tripType === "roundtrip" ? "text-brand-foreground" : "text-muted hover:text-foreground"
-          }`}
-        >
-          <RoundTripIcon className={tripType === "roundtrip" ? "opacity-90" : "opacity-60"} />
-          {sw.roundTrip}
-        </button>
-        <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit">
+          <span
+            className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-teal shadow-sm transition-transform duration-500 ease-[var(--ease-spring)] ${tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"}`}
+            aria-hidden="true"
+          />
+          <button type="button" onClick={() => setTripType("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+            <ArrowRightIcon width={14} height={14} />
+            {sw.oneWay}
+          </button>
+          <button type="button" onClick={() => setTripType("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+            <RoundTripIcon />
+            {sw.roundTrip}
+          </button>
+          <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
+        </div>
+        <span className="hidden items-center gap-2 pr-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted lg:flex">
+          <span className="h-2 w-2 rounded-full bg-lime-strong" />
+          Discover Albania Transport
+        </span>
       </div>
 
-      <div
-        className={`grid items-end gap-3 sm:grid-cols-2 ${
-          tripType === "roundtrip"
-            ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(175px,0.9fr)_minmax(175px,0.9fr)_minmax(140px,0.62fr)]"
-            : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.88fr)_minmax(140px,0.62fr)]"
-        }`}
-      >
-        <label
-          className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
-        >
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
+      <div className={`relative grid gap-2 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] ${tripType === "roundtrip" ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.72fr)_minmax(190px,0.72fr)_150px_auto]" : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(210px,0.8fr)_150px_auto]"} lg:items-stretch`}>
+        <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+          <span className="mb-0.5 block pl-14 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
           <CityCombobox
             name="origin"
             required
@@ -222,9 +178,9 @@ export function SearchWidget({
             options={cityOptions}
             placeholder={sw.fromPlaceholder}
             noMatchesLabel={dict.cityCombobox.noMatches}
-            leadingIcon={<StartPointIcon width={18} height={18} />}
-            leadingIconClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky shadow-sm"
-            inputClassName="min-h-14 rounded-2xl border-[#cfe5ef] bg-[#eaf5fa] pl-16 font-semibold text-brand-navy hover:border-sky/50 focus:border-sky focus:bg-white focus:shadow-[0_0_0_4px_rgba(43,127,168,0.12)]"
+            leadingIcon={<StartPointIcon width={15} height={15} />}
+            leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-teal-soft text-teal"
+            inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
           />
         </label>
 
@@ -233,15 +189,13 @@ export function SearchWidget({
           onClick={handleSwap}
           aria-label={sw.swapAria}
           style={{ transform: `rotate(${swapRotation}deg)` }}
-          className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#cce5e5] bg-teal-soft text-teal shadow-[0_8px_22px_rgba(0,128,128,0.16)] transition-[transform,background-color,color,border-color,box-shadow] duration-500 ease-[var(--ease-spring)] hover:border-teal/40 hover:bg-white hover:shadow-[0_12px_28px_rgba(0,128,128,0.24)] xl:flex"
+          className="relative z-50 mx-auto flex h-10 w-10 shrink-0 items-center justify-center self-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white xl:-mx-5 [&_svg]:rotate-90"
         >
           <SwapIcon />
         </button>
 
-        <label
-          className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
-        >
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
+        <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+          <span className="mb-0.5 block pl-14 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
           <CityCombobox
             name="destination"
             required
@@ -251,87 +205,36 @@ export function SearchWidget({
             options={destinationOptions}
             placeholder={sw.toPlaceholder}
             noMatchesLabel={dict.cityCombobox.noDestinations}
-            leadingIcon={<DestinationIcon width={18} height={18} />}
-            leadingIconClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white text-coral shadow-sm"
-            inputClassName="min-h-14 rounded-2xl border-[#f2d4cc] bg-[#fdf0ec] pl-16 font-semibold text-brand-navy hover:border-coral/50 focus:border-coral focus:bg-white focus:shadow-[0_0_0_4px_rgba(226,84,60,0.11)]"
+            leadingIcon={<DestinationIcon width={15} height={15} />}
+            leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-coral-soft text-coral"
+            inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
           />
         </label>
 
-        <button
-          type="button"
-          onClick={handleSwap}
-          aria-label={sw.swapAria}
-          style={{ transform: `rotate(${swapRotation}deg)` }}
-          className="flex h-12 w-12 items-center justify-center justify-self-center rounded-full border border-[#cce5e5] bg-teal-soft text-teal shadow-[0_8px_22px_rgba(0,128,128,0.16)] transition-[transform,background-color,color,border-color,box-shadow] duration-500 ease-[var(--ease-spring)] hover:border-teal/40 hover:bg-white active:bg-brand-soft sm:col-span-2 xl:hidden [&_svg]:rotate-90 sm:[&_svg]:rotate-0"
-        >
-          <SwapIcon />
-        </button>
-
-        <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.depart}</span>
-          <DatePicker
-            name="date"
-            value={dateValue}
-            min={today}
-            onChange={handleDateChange}
-            dict={dict.datePicker}
-            locale={locale}
-            iconClassName="text-gold"
-            buttonClassName="min-h-14 rounded-2xl border-[#f0dfb7] bg-[#fff7df] font-semibold text-brand-navy hover:border-gold/50 focus:border-gold focus:bg-white"
-          />
+        <label className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+          <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.depart}</span>
+          <DatePicker name="date" value={dateValue} min={today} onChange={handleDateChange} dict={dict.datePicker} locale={locale} iconClassName="text-gold" buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent" />
         </label>
-
         {tripType === "roundtrip" && (
-          <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
-            <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.returnLabel}</span>
-            <DatePicker
-              name="returnDate"
-              value={returnDateValue}
-              min={dateValue}
-              onChange={setReturnDateValue}
-              dict={dict.datePicker}
-              locale={locale}
-              iconClassName="text-lime-strong"
-              buttonClassName="min-h-14 rounded-2xl border-[#d9e9ae] bg-[#f0f9db] font-semibold text-brand-navy hover:border-lime-strong/50 focus:border-lime-strong focus:bg-white"
-            />
+          <label className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+            <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.returnLabel}</span>
+            <DatePicker name="returnDate" value={returnDateValue} min={dateValue} onChange={setReturnDateValue} dict={dict.datePicker} locale={locale} iconClassName="text-lime-strong" buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent" />
           </label>
         )}
-
-        <div className="flex min-w-[140px] flex-1 flex-col gap-2 text-sm">
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.passengers}</span>
-          <div className="flex min-h-14 items-center justify-between rounded-2xl border border-[#dce7ec] bg-white px-2 py-1.5">
-            <button
-              type="button"
-              onClick={() => setPassengers((p) => Math.max(1, p - 1))}
-              disabled={passengers <= 1}
-              aria-label={sw.decreasePassengers}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5f7] text-lg text-teal shadow-sm transition hover:bg-teal-soft hover:shadow-md active:scale-90 disabled:opacity-30"
-            >
-              −
-            </button>
-            <span className="tabular-nums text-lg font-bold text-brand-navy">{passengers}</span>
-            <button
-              type="button"
-              onClick={() => setPassengers((p) => Math.min(9, p + 1))}
-              disabled={passengers >= 9}
-              aria-label={sw.increasePassengers}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5f7] text-lg text-teal shadow-sm transition hover:bg-teal-soft hover:shadow-md active:scale-90 disabled:opacity-30"
-            >
-              +
-            </button>
+        <div className="flex min-h-16 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+          <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.passengers}</span>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => setPassengers((p) => Math.max(1, p - 1))} disabled={passengers <= 1} aria-label={sw.decreasePassengers} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5f5] text-base text-teal transition hover:bg-teal-soft active:scale-90 disabled:opacity-30">−</button>
+            <span className="w-7 text-center text-base font-bold tabular-nums text-brand-navy">{passengers}</span>
+            <button type="button" onClick={() => setPassengers((p) => Math.min(9, p + 1))} disabled={passengers >= 9} aria-label={sw.increasePassengers} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5f5] text-base text-teal transition hover:bg-teal-soft active:scale-90 disabled:opacity-30">+</button>
           </div>
           <input type="hidden" name="passengers" value={passengers} suppressHydrationWarning />
         </div>
+        <button type="submit" aria-label={sw.searchButton} className={`flex min-h-16 items-center justify-center gap-2.5 self-stretch rounded-[1.1rem] bg-teal px-6 font-bold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[transform,box-shadow,background-color] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:translate-y-0 active:scale-[0.98] ${tripType === "roundtrip" ? "lg:col-span-3 xl:col-span-1" : ""}`}>
+          <SearchIcon width={18} height={18} />
+          <span className="whitespace-nowrap">{sw.searchButton}</span>
+        </button>
       </div>
-
-      <button
-        type="submit"
-        className="group relative inline-flex min-h-14 items-center justify-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-sky via-teal to-brand-strong px-8 py-3 font-bold text-white shadow-[0_16px_35px_rgba(0,128,128,0.3)] transition-[box-shadow,transform] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_22px_44px_rgba(0,128,128,0.38)] active:translate-y-0 active:scale-[0.98] sm:self-end xl:ml-auto xl:min-w-56"
-      >
-        <span className="absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-[120%]" aria-hidden="true" />
-        <SearchIcon width={19} height={19} className="relative" />
-        <span className="relative">{sw.searchButton}</span>
-      </button>
     </form>
   );
 }

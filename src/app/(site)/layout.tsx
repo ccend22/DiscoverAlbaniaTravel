@@ -10,7 +10,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           an in-flow sticky element — every page besides the homepage looks
           unchanged. The homepage hero cancels this out with a negative
           margin to tuck back up under the header. */}
-      <main className="flex-1 pt-20 md:pt-24">{children}</main>
+      <main className="flex-1 bg-[#f4f8f7] pt-20 md:pt-24">{children}</main>
       <SiteFooter />
     </>
   );

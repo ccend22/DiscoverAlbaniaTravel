@@ -18,7 +18,7 @@ export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale 
   const tc = dict.tripCard;
   const hasEnoughSeats = trip.freeSeats >= passengers;
   return (
-    <article className="card-lift flex flex-col gap-5 rounded-md border border-l-4 border-border border-l-sky bg-surface p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-glow-sky)] sm:flex-row sm:items-center sm:justify-between">
+    <article className="public-card card-lift flex flex-col gap-5 p-5 hover:border-teal/30 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="text-xl font-semibold tabular-nums text-foreground">

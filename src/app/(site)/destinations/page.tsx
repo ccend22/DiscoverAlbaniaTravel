@@ -43,10 +43,10 @@ export default async function DestinationsPage() {
     .slice(0, 6);
 
   return (
-    <div className="bg-[#f4f7f8] text-foreground">
-      <section className="relative isolate min-h-[560px] overflow-hidden sm:min-h-[620px]">
+    <div className="public-page">
+      <section className="relative isolate -mt-20 min-h-[640px] overflow-hidden pt-20 sm:min-h-[700px] md:-mt-24 md:pt-24">
         <Image
-          src="/images/destinations/The_best_of_south_tour.jpg"
+          src="/images/destinations/sarande.jpg"
           alt=""
           fill
           preload
@@ -148,7 +148,7 @@ export default async function DestinationsPage() {
         </section>
       )}
 
-      <section id="all-destinations" className="border-t border-[#dfe8eb] bg-white py-20 scroll-mt-24 sm:py-24">
+      <section id="all-destinations" className="scroll-mt-24 border-t border-[#dfe8eb] bg-[#f4f8f7] py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal">{dp.directoryKicker}</p>
@@ -163,7 +163,7 @@ export default async function DestinationsPage() {
                 <Link
                   key={destination.id}
                   href={`/destinations/${destination.id}`}
-                  className="relative flex min-h-56 overflow-hidden rounded-[1.75rem] border border-[#d8e9e9] bg-white p-5 shadow-[0_8px_28px_rgba(7,35,43,0.06)]"
+                  className="public-card relative flex min-h-56 overflow-hidden p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-1"
                 >
                   <div className={`absolute inset-0 ${tone.surface} opacity-65`} />
                   <div className={`absolute -right-12 -top-16 h-40 w-40 rounded-full ${tone.glow} blur-2xl`} />

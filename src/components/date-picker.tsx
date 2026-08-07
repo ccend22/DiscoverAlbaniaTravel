@@ -307,7 +307,7 @@ function QuickPicks({ dict, min, value, today, tomorrow, onSelect }: QuickPicksP
             type="button"
             disabled={disabled}
             onClick={() => onSelect(dateStr)}
-            className={`min-h-9 flex-1 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`min-h-9 flex-1 rounded-xl border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               active
                 ? "border-teal bg-teal/10 text-teal"
                 : "border-border text-foreground hover:border-teal hover:bg-brand-soft hover:text-teal"
@@ -367,14 +367,14 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
         aria-expanded={isOpen}
         aria-controls={`${name}-date-picker`}
         aria-label={`${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
-        className={`flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
+        className={`flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
       >
         <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
         <span>{formatDateLong(value, locale)}</span>
       </button>
 
       {isOpen && !sheetMode && (
-        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="overlay-scroll absolute z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top animate-fade-up overflow-y-auto overscroll-contain rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="overlay-scroll absolute right-0 z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top-right animate-fade-up overflow-y-auto overscroll-contain rounded-2xl border border-[#dce8e6] bg-white p-4 shadow-[var(--page-shadow-strong)]">
           <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
           <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
           <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />

@@ -71,7 +71,7 @@ interface LegResultsProps {
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex animate-fade-up items-start gap-3 rounded-md border border-border bg-surface p-4 text-sm shadow-[var(--shadow-xs)]">
+    <div className="public-card flex animate-fade-up items-start gap-3 p-5 text-sm">
       <AlertCircleIcon width={18} height={18} className="mt-0.5 shrink-0 text-warning" />
       <p>{children}</p>
     </div>
@@ -92,12 +92,12 @@ function LegResults({
   const sp = dict.searchPage;
   return (
     <div>
-      <h2 className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xl font-semibold">
+      <h2 className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-display text-2xl font-black tracking-[-0.025em] text-brand-navy">
         <span className="text-xs font-bold uppercase text-teal">
           {legLabel}
         </span>
         {origin} → {destination}
-        <span className="font-normal text-muted">{formatDateLong(date, locale)}</span>
+        <span className="font-sans text-sm font-normal text-muted">{formatDateLong(date, locale)}</span>
       </h2>
 
       {!outcome.originResolved && (
@@ -168,7 +168,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       : dict.searchPage.missingFields;
 
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="public-page mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
         <p className="mb-6 text-sm text-muted">{message}</p>
         <SearchWidget
           cityOptions={cityOptions}
@@ -200,7 +200,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="public-page mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
       <div className="mb-8">
         <SearchWidget
           cityOptions={cityOptions}
@@ -216,7 +216,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-10">
+      <div className="public-card-muted flex flex-col gap-12 p-5 sm:p-8">
         <LegResults
           legLabel={isRoundTrip ? dict.searchPage.outbound : dict.searchPage.depart}
           origin={origin}

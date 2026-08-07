@@ -30,7 +30,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const dd = dict.destinationDetail;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="public-page mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
       <Link
         href="/destinations"
         className="group inline-flex items-center gap-1.5 text-sm font-medium text-teal"
@@ -41,14 +41,14 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-teal transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-x-100" />
         </span>
       </Link>
-      <h1 className="mt-4 animate-fade-up font-display text-3xl font-bold">{destination.name}</h1>
-      <p className="mt-4 animate-fade-up leading-relaxed text-foreground/90 [animation-delay:60ms]">{destination.description}</p>
-      <LinkButton
-        href={`/search?destination=${encodeURIComponent(destination.name)}`}
-        className="mt-8 animate-fade-up [animation-delay:120ms]"
-      >
-        {formatMessage(dd.findBusesTo, { name: destination.name })}
-      </LinkButton>
+      <article className="public-hero-panel mt-6 animate-fade-up p-7 sm:p-12">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-lime">{dd.allDestinations}</p>
+        <h1 className="mt-4 font-display text-4xl font-black tracking-[-0.04em] sm:text-6xl">{destination.name}</h1>
+        <p className="mt-6 max-w-3xl leading-8 text-white/70">{destination.description}</p>
+        <LinkButton href={`/search?destination=${encodeURIComponent(destination.name)}`} className="mt-8 bg-lime text-brand-deep hover:bg-white">
+          {formatMessage(dd.findBusesTo, { name: destination.name })}
+        </LinkButton>
+      </article>
     </div>
   );
 }

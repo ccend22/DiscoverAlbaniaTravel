@@ -56,32 +56,43 @@ function NavLink({ href, label, dark, active }: { href: string; label: string; d
 }
 
 /**
- * The homepage's header starts fully transparent over the photo hero and
- * swaps to the same solid white style every other route uses once the hero
- * has scrolled out of view. Every other route just gets the solid style
- * permanently, no listener needed.
+ * Every public route starts with the same dark navbar and turns solid white
+ * once the visitor scrolls. Routes with their own full-bleed dark hero
+ * (home, destinations, stations) let that hero show through — the header
+ * stays truly transparent there. Every other route has no dark backdrop of
+ * its own, so the header supplies one (a solid brand-deep fill) instead of
+ * sitting invisibly over light page content.
  */
+const HERO_BACKDROP_ROUTES = ["/", "/destinations", "/stations"];
+
 export function HeaderChrome({ primaryLinks, utilityLinks, locale, openMenuLabel }: HeaderChromeProps) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    if (!isHome) return;
     function handleScroll() {
       setScrolled(window.scrollY > 80);
     }
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHome]);
 
-  const dark = isHome && !scrolled;
+    const frame = window.requestAnimationFrame(handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [pathname]);
+
+  const dark = !scrolled;
+  const hasHeroBackdrop = HERO_BACKDROP_ROUTES.includes(pathname);
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        dark ? "bg-transparent" : "bg-white border-b border-border shadow-[0_8px_30px_rgba(0,32,34,0.08)]"
+      className={`fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300 ${
+        scrolled
+          ? "border-b border-border bg-white shadow-[0_8px_30px_rgba(0,32,34,0.08)]"
+          : hasHeroBackdrop
+            ? "bg-transparent shadow-none"
+            : "bg-brand-deep shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
       }`}
     >
       <div className="relative mx-auto flex h-20 max-w-7xl items-center gap-6 px-4 sm:px-6 md:h-24">

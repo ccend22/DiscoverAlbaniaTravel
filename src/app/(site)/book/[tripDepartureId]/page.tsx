@@ -66,7 +66,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
   const profile = userId ? await getUserById(userId) : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="public-page mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <CheckoutSteps current={dateIsValid && date ? 2 : 1} steps={bp.steps} />
 
       {!date || !dateIsValid ? (
@@ -85,7 +85,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
         <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
           <div>
             <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">{bp.busReservation}</p>
-            <h1 className="mt-2 animate-fade-up font-display text-2xl font-bold text-foreground [animation-delay:60ms]">{bp.passengerDetailsHeading}</h1>
+            <h1 className="mt-2 animate-fade-up font-display text-4xl font-black tracking-[-0.035em] text-brand-navy [animation-delay:60ms]">{bp.passengerDetailsHeading}</h1>
             <p className="mt-1 text-sm text-muted">{formatMessage(bp.travelingOn, { date: formatDateLong(date, locale) })}</p>
 
             {error && (
@@ -102,7 +102,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               </div>
             )}
 
-            <form action={createBookingAction} className="mt-6 flex flex-col gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] sm:p-6">
+            <form action={createBookingAction} className="public-card mt-8 flex flex-col gap-5 p-6 sm:p-8">
               <input type="hidden" name="tripDepartureId" value={id} />
               <input type="hidden" name="travelDate" value={date} />
 
@@ -115,7 +115,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     minLength={2}
                     autoComplete="name"
                     defaultValue={profile?.name}
-                    className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+                    className="public-input min-h-13 rounded-2xl px-4 py-3"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
@@ -127,7 +127,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     minLength={6}
                     autoComplete="tel"
                     defaultValue={profile?.phone ?? undefined}
-                    className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+                    className="public-input min-h-13 rounded-2xl px-4 py-3"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
@@ -138,7 +138,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     type="email"
                     autoComplete="email"
                     defaultValue={profile?.email}
-                    className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+                    className="public-input min-h-13 rounded-2xl px-4 py-3"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
@@ -150,7 +150,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                     min={1}
                     max={9}
                     defaultValue={defaultSeats}
-                    className="w-24 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+                    className="public-input min-h-13 w-24 rounded-2xl px-4 py-3"
                   />
                 </label>
               </div>
@@ -190,7 +190,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
             </section>
           </div>
 
-          <aside className="rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-md)] lg:sticky lg:top-24">
+          <aside className="public-card p-6 lg:sticky lg:top-24">
             <p className="text-xs font-semibold uppercase text-muted">
               {bp.tripSummary}
             </p>

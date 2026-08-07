@@ -132,7 +132,7 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
           placeholder={rf.noLimit}
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-teal"
+          className="public-input w-full rounded-2xl px-3 py-2.5 text-sm"
         />
       </div>
 
@@ -154,7 +154,7 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
         <button
           type="button"
           onClick={() => setIsFiltersOpen((open) => !open)}
-          className="flex w-full items-center justify-between rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground shadow-[var(--shadow-xs)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:text-teal"
+          className="public-card flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:text-teal"
           aria-expanded={isFiltersOpen}
           aria-controls="mobile-filters"
         >
@@ -168,13 +168,13 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
           </span>
         </button>
         {isFiltersOpen && (
-          <div id="mobile-filters" className="mt-3 animate-fade-up rounded-md border border-border bg-surface p-4 shadow-[var(--shadow-sm)]">
+          <div id="mobile-filters" className="public-card mt-3 animate-fade-up rounded-2xl p-4">
             {filterContent}
           </div>
         )}
       </div>
 
-      <aside className="hidden w-64 shrink-0 rounded-md border border-border bg-surface p-4 shadow-[var(--shadow-xs)] lg:block">
+      <aside className="public-card hidden w-64 shrink-0 rounded-2xl p-5 lg:block">
         {filterContent}
       </aside>
 
@@ -183,7 +183,7 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
           {formatMessage(rf.showingResults, { shown: filtered.length, total: results.length, plural: results.length === 1 ? "" : "s" })}
         </p>
         {filtered.length === 0 ? (
-          <p className="rounded-md border border-border bg-surface p-6 text-center text-sm text-muted shadow-[var(--shadow-xs)]">
+          <p className="public-card rounded-2xl p-6 text-center text-sm text-muted">
             {rf.noResultsMatchFilters}{" "}
             <button type="button" onClick={clearFilters} className="text-teal hover:underline">
               {rf.clearFilters}

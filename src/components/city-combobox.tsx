@@ -126,9 +126,7 @@ export function CityCombobox({
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
         aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
-        className={`min-h-11 w-full rounded-md border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${
-          leadingIcon ? "pl-10" : "pl-3"
-        } ${inputClassName ?? ""}`}
+        className={`min-h-11 w-full rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
         suppressHydrationWarning
       />
 
@@ -136,7 +134,7 @@ export function CityCombobox({
         <ul
           id={`${name}-listbox`}
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1.5 max-h-[min(16rem,45dvh)] min-w-0 origin-top animate-fade-up overscroll-contain overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
+          className="absolute left-0 z-50 mt-2 max-h-[min(18rem,45dvh)] w-full min-w-0 origin-top animate-fade-up overscroll-contain overflow-y-auto rounded-2xl border border-[#dce8e6] bg-white p-2 shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))]"
         >
           {filtered.map((option, index) => (
             <li key={option} role="none">
@@ -148,7 +146,7 @@ export function CityCombobox({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectOption(option)}
                 onMouseEnter={() => setHighlighted(index)}
-                className={`flex min-h-12 w-full items-center gap-2.5 rounded px-3 py-2.5 text-left text-[15px] transition-colors duration-[var(--dur-fast)] active:bg-teal-soft sm:min-h-9 sm:py-2 sm:text-sm ${
+                className={`flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors duration-[var(--dur-fast)] active:bg-teal-soft sm:min-h-10 sm:py-2 sm:text-sm ${
                   index === highlighted ? "bg-teal-soft text-teal" : "text-foreground hover:bg-surface-sunken"
                 }`}
               >
@@ -161,7 +159,7 @@ export function CityCombobox({
       )}
 
       {isOpen && value.trim() && filtered.length === 0 && (
-        <div className="absolute left-0 right-0 z-50 mt-1.5 min-w-0 origin-top animate-fade-up rounded-md border border-border bg-surface p-3 text-sm text-muted shadow-[var(--shadow-lg)]">
+        <div className="absolute left-0 z-50 mt-2 w-full min-w-0 origin-top animate-fade-up rounded-2xl border border-[#dce8e6] bg-white p-4 text-sm text-muted shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))]">
           {noMatchesLabel ?? "No matching stations. You can still search with this text."}
         </div>
       )}

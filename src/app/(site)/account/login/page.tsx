@@ -15,9 +15,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const lp = dict.loginPage;
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6 sm:py-16">
-      <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">{lp.kicker}</p>
-      <h1 className="mt-2 animate-fade-up font-display text-2xl font-bold text-foreground [animation-delay:60ms]">{lp.title}</h1>
+    <div className="public-page mx-auto max-w-lg px-4 py-16 sm:px-6 sm:py-20">
+      <p className="animate-fade-up text-[11px] font-black uppercase tracking-[0.2em] text-teal">{lp.kicker}</p>
+      <h1 className="mt-3 animate-fade-up font-display text-4xl font-black tracking-[-0.035em] text-brand-navy [animation-delay:60ms]">{lp.title}</h1>
       <p className="mt-2 animate-fade-up text-sm text-muted [animation-delay:100ms]">{lp.subtitle}</p>
 
       {error && (
@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
       )}
 
-      <form action={loginUserAction} className="mt-6 flex animate-fade-up flex-col gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] [animation-delay:140ms] sm:p-6">
+      <form action={loginUserAction} className="public-card mt-8 flex animate-fade-up flex-col gap-5 p-6 [animation-delay:140ms] sm:p-8">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{lp.email}</span>
           <input
@@ -35,7 +35,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             required
             autoComplete="email"
             suppressHydrationWarning
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+            className="public-input min-h-13 rounded-2xl px-4 py-3"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             required
             autoComplete="current-password"
             suppressHydrationWarning
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+            className="public-input min-h-13 rounded-2xl px-4 py-3"
           />
         </label>
         <Button type="submit">{lp.signIn}</Button>

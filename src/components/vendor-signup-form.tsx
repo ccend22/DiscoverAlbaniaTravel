@@ -32,12 +32,12 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
   return (
     <div>
       <div
-        className="relative inline-flex w-full rounded-lg bg-surface-sunken p-1 text-sm shadow-inner sm:w-fit"
+        className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit"
         role="group"
         aria-label="Signup mode"
       >
         <span
-          className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-brand shadow-[var(--shadow-sm)] transition-transform duration-[var(--dur-base)] ease-[var(--ease-spring)] ${
+          className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-brand-deep shadow-sm transition-transform duration-[var(--dur-base)] ease-[var(--ease-spring)] ${
             mode === "new" ? "translate-x-full" : "translate-x-0"
           }`}
           aria-hidden="true"
@@ -73,7 +73,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
       {mode === "claim" ? (
         <form
           action={claimAction}
-          className="mt-6 flex flex-col gap-5 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] sm:p-6"
+          className="public-card mt-6 flex flex-col gap-5 p-5 sm:p-6"
         >
           <input type="hidden" name="operatorId" value={selected?.id ?? ""} suppressHydrationWarning />
 
@@ -96,7 +96,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
                 }}
                 placeholder="Search by company name or city"
                 suppressHydrationWarning
-                className="min-h-11 w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-base outline-none focus:border-teal"
+                className="public-input min-h-11 w-full py-2 pl-9 pr-3 text-base"
               />
             </label>
 
@@ -153,7 +153,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
       ) : (
         <form
           action={newOperatorAction}
-          className="mt-6 flex flex-col gap-5 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] sm:p-6"
+          className="public-card mt-6 flex flex-col gap-5 p-5 sm:p-6"
         >
           <div>
             <div className="flex items-center gap-2">

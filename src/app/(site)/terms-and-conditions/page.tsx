@@ -20,9 +20,9 @@ const listClassName = "ml-5 list-disc space-y-1.5 marker:text-teal";
 
 export default function TermsAndConditionsPage() {
   return (
-    <div className="bg-[#f4f7f8] px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
+    <div className="public-page px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-6xl">
-        <header className="rounded-[2.5rem] bg-brand-deep px-6 py-12 text-white shadow-[0_28px_70px_rgba(5,29,34,0.2)] sm:px-10 sm:py-16 lg:px-14">
+        <header className="public-hero-panel px-6 py-12 sm:px-10 sm:py-16 lg:px-14">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime">Legal information</p>
           <h1 className="mt-4 max-w-4xl font-display text-4xl font-black tracking-[-0.04em] sm:text-6xl">
             Terms &amp; Conditions
@@ -33,7 +33,7 @@ export default function TermsAndConditionsPage() {
         </header>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-          <article className="space-y-10 rounded-[2rem] border border-[#e1e9ec] bg-white p-6 shadow-[0_16px_45px_rgba(7,52,60,0.08)] sm:p-10">
+          <article className="public-card space-y-10 p-6 sm:p-10">
             <div className="space-y-4 text-[15px] leading-7 text-foreground/80">
               <p>
                 By confirming a booking with Discover Albania, you (“Client”, “Customer”, “You”) agree to the following Terms, which constitute a legally binding agreement between you and:
@@ -261,7 +261,7 @@ export default function TermsAndConditionsPage() {
             </TermsSection>
           </article>
 
-          <aside className="rounded-[2rem] border border-[#dce7e9] bg-white p-6 shadow-[0_14px_38px_rgba(7,52,60,0.08)] lg:sticky lg:top-28">
+          <aside className="public-card p-6 lg:sticky lg:top-28">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal">Company details</p>
             <dl className="mt-5 space-y-4 text-sm leading-6">
               <div>

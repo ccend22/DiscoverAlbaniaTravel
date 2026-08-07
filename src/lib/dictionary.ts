@@ -60,6 +60,8 @@ const en = {
     Berat: { tagline: "UNESCO old town" },
   },
   searchWidget: {
+    routePlanner: "Route planner",
+    buildTrip: "Build your trip",
     oneWay: "One way",
     roundTrip: "Round trip",
     tripTypeAria: "Trip type",
@@ -404,6 +406,8 @@ const al: typeof en = {
     Berat: { tagline: "Qyteti i vjetër UNESCO" },
   },
   searchWidget: {
+    routePlanner: "Planifikuesi i itinerarit",
+    buildTrip: "Ndërto udhëtimin tënd",
     oneWay: "Vajtje",
     roundTrip: "Vajtje dhe ardhje",
     tripTypeAria: "Lloji i udhëtimit",

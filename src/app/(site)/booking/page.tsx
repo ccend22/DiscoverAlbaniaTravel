@@ -13,9 +13,9 @@ export default async function BookingLookupPage({ searchParams }: BookingLookupP
   const bl = dict.bookingLookup;
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6 sm:py-16">
-      <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">{bl.kicker}</p>
-      <h1 className="mt-2 animate-fade-up font-display text-2xl font-bold text-foreground [animation-delay:60ms]">{bl.title}</h1>
+    <div className="public-page mx-auto max-w-lg px-4 py-16 sm:px-6 sm:py-20">
+      <p className="animate-fade-up text-[11px] font-black uppercase tracking-[0.2em] text-teal">{bl.kicker}</p>
+      <h1 className="mt-3 animate-fade-up font-display text-4xl font-black tracking-[-0.035em] text-brand-navy [animation-delay:60ms]">{bl.title}</h1>
       <p className="mt-2 animate-fade-up text-sm text-muted [animation-delay:120ms]">
         {bl.subtitle}
       </p>
@@ -24,12 +24,12 @@ export default async function BookingLookupPage({ searchParams }: BookingLookupP
           <Alert tone="error">{error}</Alert>
         </div>
       )}
-      <form action={lookupBookingAction} className="mt-6 flex animate-fade-up flex-col gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] [animation-delay:160ms] sm:p-6">
+      <form action={lookupBookingAction} className="public-card mt-8 flex animate-fade-up flex-col gap-5 p-6 [animation-delay:160ms] sm:p-8">
         <input
           name="reference"
           required
           placeholder={bl.referencePlaceholder}
-          className="rounded-md border border-border bg-background px-3 py-2 uppercase outline-none placeholder:normal-case focus:border-teal"
+          className="public-input min-h-14 rounded-2xl px-4 py-3 uppercase placeholder:normal-case"
         />
         <Button type="submit">{bl.findBooking}</Button>
       </form>

@@ -11,7 +11,7 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
   const { error, pending } = await searchParams;
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6 sm:py-16">
+    <div className="public-page mx-auto max-w-md px-4 py-12 sm:px-6 sm:py-16">
       <Link href="/" className="text-sm text-teal underline">
         Back to search
       </Link>
@@ -34,7 +34,7 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
         </div>
       )}
 
-      <form action={loginVendorAction} className="mt-6 flex animate-fade-up flex-col gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)] [animation-delay:140ms] sm:p-6">
+      <form action={loginVendorAction} className="public-card mt-6 flex animate-fade-up flex-col gap-4 p-5 [animation-delay:140ms] sm:p-6">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Email</span>
           <input
@@ -43,7 +43,7 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
             required
             autoComplete="email"
             suppressHydrationWarning
-            className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+            className="public-input min-h-11 px-3 py-2"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -55,7 +55,7 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
             minLength={8}
             autoComplete="current-password"
             suppressHydrationWarning
-            className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
+            className="public-input min-h-11 px-3 py-2"
           />
         </label>
         <Button type="submit">Sign in</Button>
