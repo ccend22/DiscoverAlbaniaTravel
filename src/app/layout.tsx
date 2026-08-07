@@ -48,13 +48,13 @@ export const metadata: Metadata = {
     title: "Discover Albania Transport — Buses, Taxis & Destinations",
     description: "Search buses, request taxis, and discover destinations across Albania.",
     url: "/",
-    images: [{ url: "/og-v2.png", width: 1200, height: 630, alt: "Discover Albania Transport across Albania's coast and mountains" }],
+    images: [{ url: "/og-v3.png", width: 1200, height: 630, alt: "Discover Albania Transport across Albania's coast and mountains" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Discover Albania Transport — Buses, Taxis & Destinations",
     description: "Search buses, request taxis, and discover destinations across Albania.",
-    images: ["/og-v2.png"],
+    images: ["/og-v3.png"],
   },
 };
 
