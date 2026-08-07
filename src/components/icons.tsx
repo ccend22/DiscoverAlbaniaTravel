@@ -102,6 +102,24 @@ export function MapPinIcon(props: IconProps) {
   );
 }
 
+export function StartPointIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function DestinationIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M6 21V4" />
+      <path d="M7 5h10l-2.5 3L17 11H7Z" />
+    </svg>
+  );
+}
+
 export function LocateIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

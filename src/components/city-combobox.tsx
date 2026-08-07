@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { MapPinIcon } from "./icons";
 
 interface CityComboboxProps {
@@ -11,10 +11,25 @@ interface CityComboboxProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  inputClassName?: string;
   noMatchesLabel?: string;
+  leadingIcon?: ReactNode;
+  leadingIconClassName?: string;
 }
 
-export function CityCombobox({ name, value, onChange, options, placeholder, required, className, noMatchesLabel }: CityComboboxProps) {
+export function CityCombobox({
+  name,
+  value,
+  onChange,
+  options,
+  placeholder,
+  required,
+  className,
+  inputClassName,
+  noMatchesLabel,
+  leadingIcon,
+  leadingIconClassName,
+}: CityComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +81,11 @@ export function CityCombobox({ name, value, onChange, options, placeholder, requ
 
   return (
     <div className={`relative ${className ?? ""}`} ref={containerRef}>
+      {leadingIcon && (
+        <span className={`pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 ${leadingIconClassName ?? "text-teal"}`} aria-hidden="true">
+          {leadingIcon}
+        </span>
+      )}
       <input
         type="text"
         name={name}
@@ -88,7 +108,9 @@ export function CityCombobox({ name, value, onChange, options, placeholder, requ
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
         aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
-        className="min-h-11 w-full rounded-md border border-border bg-surface px-3 py-2 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal"
+        className={`min-h-11 w-full rounded-md border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${
+          leadingIcon ? "pl-10" : "pl-3"
+        } ${inputClassName ?? ""}`}
         suppressHydrationWarning
       />
 

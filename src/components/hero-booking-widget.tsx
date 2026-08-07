@@ -33,7 +33,7 @@ export function HeroBookingWidget({
   return (
     <div className="w-full">
       <div
-        className="mx-auto mb-3 inline-flex w-full rounded-full border border-white/40 bg-surface/85 p-1 shadow-[var(--shadow-md)] backdrop-blur-xl sm:w-fit"
+        className="mx-auto mb-3 inline-flex w-full rounded-full border border-white/75 bg-white/72 p-1 shadow-[0_16px_40px_rgba(0,24,32,0.2),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-2xl backdrop-saturate-150 sm:w-fit"
         role="group"
         aria-label="Booking type"
       >

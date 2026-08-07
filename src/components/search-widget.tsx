@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { CityCombobox } from "./city-combobox";
-import { ArrowRightIcon, SearchIcon } from "./icons";
+import { ArrowRightIcon, DestinationIcon, SearchIcon, StartPointIcon } from "./icons";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
@@ -22,18 +22,17 @@ interface SearchWidgetProps {
   defaultReturnDate?: string;
   defaultPassengers?: number;
   /**
-   * "glass" floats the card over a photo (the homepage hero): translucent
-   * + blurred, but still opaque enough that the existing dark label/input
-   * styling stays legible unchanged. "solid" (default) is the plain surface
-   * used everywhere else, including the search-results page, where there's
-   * no rich background behind it for a blur to read against.
+   * "glass" uses a single liquid-glass shell over the homepage hero.
+   * "solid" keeps the same layout on plain page backgrounds.
    */
   variant?: "solid" | "glass";
 }
 
 const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
-  solid: "rounded-md border border-border bg-surface shadow-[var(--shadow-lg)]",
-  glass: "rounded-xl border border-white/40 bg-surface/85 shadow-[var(--shadow-lg)] backdrop-blur-xl",
+  solid:
+    "rounded-[2rem] border border-[#dce7ec] bg-white shadow-[0_24px_70px_rgba(5,43,52,0.14),0_2px_10px_rgba(5,43,52,0.06)]",
+  glass:
+    "rounded-[2rem] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(255,255,255,0.64))] shadow-[0_30px_90px_rgba(0,24,32,0.24),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.35)] backdrop-blur-[28px] backdrop-saturate-150",
 };
 
 function RoundTripIcon(props: { width?: number; height?: number; className?: string }) {
@@ -120,15 +119,25 @@ export function SearchWidget({
     <form
       action="/search"
       method="get"
-      className={`flex flex-col gap-5 p-4 sm:p-6 ${CONTAINER_STYLES[variant]}`}
+      className={`relative isolate flex flex-col gap-5 p-4 sm:p-6 lg:p-7 ${CONTAINER_STYLES[variant]}`}
     >
+      <span
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent"
+        aria-hidden="true"
+      />
+      {variant === "glass" && (
+        <span
+          className="pointer-events-none absolute left-8 right-16 top-1 h-16 rounded-full bg-gradient-to-b from-white/35 to-transparent blur-xl"
+          aria-hidden="true"
+        />
+      )}
       <div
-        className="relative inline-flex w-full rounded-lg bg-surface-sunken p-1 text-sm shadow-inner sm:w-fit"
+        className="relative inline-flex w-full rounded-full border border-[#dce7ec] bg-[#f1f5f7] p-1 text-sm shadow-inner sm:w-fit"
         role="group"
         aria-label={sw.tripTypeAria}
       >
         <span
-          className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-brand shadow-[var(--shadow-sm)] transition-transform duration-[var(--dur-base)] ease-[var(--ease-spring)] ${
+          className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-gradient-to-r from-sky via-teal to-brand-strong shadow-[0_8px_22px_rgba(0,128,128,0.28)] transition-transform duration-500 ease-[var(--ease-spring)] ${
             tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"
           }`}
           aria-hidden="true"
@@ -137,7 +146,7 @@ export function SearchWidget({
           type="button"
           onClick={() => setTripType("oneway")}
           aria-pressed={tripType === "oneway"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
+          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
             tripType === "oneway" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
@@ -148,7 +157,7 @@ export function SearchWidget({
           type="button"
           onClick={() => setTripType("roundtrip")}
           aria-pressed={tripType === "roundtrip"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
+          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-semibold transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
             tripType === "roundtrip" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
@@ -158,11 +167,17 @@ export function SearchWidget({
         <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
       </div>
 
-      <div className="grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(150px,0.7fr)_minmax(130px,0.55fr)]">
+      <div
+        className={`grid items-end gap-3 sm:grid-cols-2 ${
+          tripType === "roundtrip"
+            ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(175px,0.9fr)_minmax(175px,0.9fr)_minmax(140px,0.62fr)]"
+            : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.88fr)_minmax(140px,0.62fr)]"
+        }`}
+      >
         <label
-          className={`flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm transition-transform duration-300 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.03]" : "scale-100"}`}
+          className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
         >
-          <span className="font-medium">{sw.from}</span>
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky">{sw.from}</span>
           <CityCombobox
             name="origin"
             required
@@ -171,6 +186,9 @@ export function SearchWidget({
             options={cityOptions}
             placeholder={sw.fromPlaceholder}
             noMatchesLabel={dict.cityCombobox.noMatches}
+            leadingIcon={<StartPointIcon width={18} height={18} />}
+            leadingIconClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky shadow-sm"
+            inputClassName="min-h-14 rounded-2xl border-[#cfe5ef] bg-[#eaf5fa] pl-16 font-semibold text-brand-navy hover:border-sky/50 focus:border-sky focus:bg-white focus:shadow-[0_0_0_4px_rgba(43,127,168,0.12)]"
           />
         </label>
 
@@ -179,15 +197,15 @@ export function SearchWidget({
           onClick={handleSwap}
           aria-label={sw.swapAria}
           style={{ transform: `rotate(${swapRotation}deg)` }}
-          className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-muted transition-[transform,background-color,color,border-color] duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-brand-soft hover:text-teal xl:flex"
+          className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#cce5e5] bg-teal-soft text-teal shadow-[0_8px_22px_rgba(0,128,128,0.16)] transition-[transform,background-color,color,border-color,box-shadow] duration-500 ease-[var(--ease-spring)] hover:border-teal/40 hover:bg-white hover:shadow-[0_12px_28px_rgba(0,128,128,0.24)] xl:flex"
         >
           <SwapIcon />
         </button>
 
         <label
-          className={`flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm transition-transform duration-300 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.03]" : "scale-100"}`}
+          className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
         >
-          <span className="font-medium">{sw.to}</span>
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-coral">{sw.to}</span>
           <CityCombobox
             name="destination"
             required
@@ -196,6 +214,9 @@ export function SearchWidget({
             options={destinationOptions}
             placeholder={sw.toPlaceholder}
             noMatchesLabel={dict.cityCombobox.noMatches}
+            leadingIcon={<DestinationIcon width={18} height={18} />}
+            leadingIconClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white text-coral shadow-sm"
+            inputClassName="min-h-14 rounded-2xl border-[#f2d4cc] bg-[#fdf0ec] pl-16 font-semibold text-brand-navy hover:border-coral/50 focus:border-coral focus:bg-white focus:shadow-[0_0_0_4px_rgba(226,84,60,0.11)]"
           />
         </label>
 
@@ -204,19 +225,28 @@ export function SearchWidget({
           onClick={handleSwap}
           aria-label={sw.swapAria}
           style={{ transform: `rotate(${swapRotation}deg)` }}
-          className="flex h-11 w-11 items-center justify-center justify-self-center rounded-md border border-border bg-surface text-muted transition-[transform,background-color,color,border-color] duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-brand-soft hover:text-teal active:bg-brand-soft sm:col-span-2 xl:hidden [&_svg]:rotate-90 sm:[&_svg]:rotate-0"
+          className="flex h-12 w-12 items-center justify-center justify-self-center rounded-full border border-[#cce5e5] bg-teal-soft text-teal shadow-[0_8px_22px_rgba(0,128,128,0.16)] transition-[transform,background-color,color,border-color,box-shadow] duration-500 ease-[var(--ease-spring)] hover:border-teal/40 hover:bg-white active:bg-brand-soft sm:col-span-2 xl:hidden [&_svg]:rotate-90 sm:[&_svg]:rotate-0"
         >
           <SwapIcon />
         </button>
 
-        <label className="flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm">
-          <span className="font-medium">{sw.depart}</span>
-          <DatePicker name="date" value={dateValue} min={today} onChange={handleDateChange} dict={dict.datePicker} locale={locale} />
+        <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">{sw.depart}</span>
+          <DatePicker
+            name="date"
+            value={dateValue}
+            min={today}
+            onChange={handleDateChange}
+            dict={dict.datePicker}
+            locale={locale}
+            iconClassName="text-gold"
+            buttonClassName="min-h-14 rounded-2xl border-[#f0dfb7] bg-[#fff7df] font-semibold text-brand-navy hover:border-gold/50 focus:border-gold focus:bg-white"
+          />
         </label>
 
         {tripType === "roundtrip" && (
-          <label className="flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm">
-            <span className="font-medium">{sw.returnLabel}</span>
+          <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
+            <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-lime-strong">{sw.returnLabel}</span>
             <DatePicker
               name="returnDate"
               value={returnDateValue}
@@ -224,29 +254,31 @@ export function SearchWidget({
               onChange={setReturnDateValue}
               dict={dict.datePicker}
               locale={locale}
+              iconClassName="text-lime-strong"
+              buttonClassName="min-h-14 rounded-2xl border-[#d9e9ae] bg-[#f0f9db] font-semibold text-brand-navy hover:border-lime-strong/50 focus:border-lime-strong focus:bg-white"
             />
           </label>
         )}
 
-        <div className="flex min-w-[140px] flex-1 flex-col gap-1.5 text-sm">
-          <span className="font-medium">{sw.passengers}</span>
-          <div className="flex min-h-11 items-center justify-between rounded-md border border-border bg-surface px-1.5 py-1.5">
+        <div className="flex min-w-[140px] flex-1 flex-col gap-2 text-sm">
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7656b5]">{sw.passengers}</span>
+          <div className="flex min-h-14 items-center justify-between rounded-2xl border border-[#ddd2f3] bg-[#f2edff] px-2 py-1.5">
             <button
               type="button"
               onClick={() => setPassengers((p) => Math.max(1, p - 1))}
               disabled={passengers <= 1}
               aria-label={sw.decreasePassengers}
-              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-[#7656b5] shadow-sm transition hover:shadow-md active:scale-90 disabled:opacity-30"
             >
               −
             </button>
-            <span className="tabular-nums font-medium">{passengers}</span>
+            <span className="tabular-nums text-lg font-bold text-brand-navy">{passengers}</span>
             <button
               type="button"
               onClick={() => setPassengers((p) => Math.min(9, p + 1))}
               disabled={passengers >= 9}
               aria-label={sw.increasePassengers}
-              className="flex h-9 w-9 items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-[#7656b5] shadow-sm transition hover:shadow-md active:scale-90 disabled:opacity-30"
             >
               +
             </button>
@@ -257,10 +289,11 @@ export function SearchWidget({
 
       <button
         type="submit"
-        className="relative inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-brand px-5 py-2.5 font-semibold text-brand-foreground shadow-[var(--shadow-xs)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-brand-strong hover:shadow-[var(--shadow-md)] active:translate-y-0 active:scale-[0.97] sm:self-end xl:col-span-2 xl:ml-auto xl:min-w-48"
+        className="group relative inline-flex min-h-14 items-center justify-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-sky via-teal to-brand-strong px-8 py-3 font-bold text-white shadow-[0_16px_35px_rgba(0,128,128,0.3)] transition-[box-shadow,transform] duration-300 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_22px_44px_rgba(0,128,128,0.38)] active:translate-y-0 active:scale-[0.98] sm:self-end xl:ml-auto xl:min-w-56"
       >
-        <SearchIcon width={18} height={18} />
-        {sw.searchButton}
+        <span className="absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-[120%]" aria-hidden="true" />
+        <SearchIcon width={19} height={19} className="relative" />
+        <span className="relative">{sw.searchButton}</span>
       </button>
     </form>
   );

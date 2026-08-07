@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatDateLong } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
-import { CloseIcon } from "./icons";
+import { CalendarIcon, CloseIcon } from "./icons";
 import { useIsMobile } from "@/lib/use-is-mobile";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
@@ -25,6 +25,11 @@ function parseDate(value: string): { year: number; month: number; day: number } 
 
 function formatDate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function addDays(dateStr: string, days: number): string {
+  const { year, month, day } = parseDate(dateStr);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
 /** Monday-first weekday index (0 = Monday .. 6 = Sunday) for the 1st of the given month. */
@@ -210,9 +215,9 @@ function CalendarContent({ value, min, onSelectDay, dict, compact = true }: Cale
         </button>
       </div>
 
-      <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-muted">
+      <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[7px] font-medium leading-tight tracking-tight text-muted sm:text-[10px]">
         {dict.weekdayLabels.map((label, i) => (
-          <div key={`${label}-${i}`}>{label}</div>
+          <div key={`${label}-${i}`} className="flex min-h-6 items-center justify-center">{label}</div>
         ))}
       </div>
 
@@ -274,9 +279,49 @@ interface DatePickerProps {
   onChange: (value: string) => void;
   dict: Dictionary["datePicker"];
   locale?: Locale;
+  buttonClassName?: string;
+  iconClassName?: string;
 }
 
-export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: DatePickerProps) {
+interface QuickPicksProps {
+  dict: Dictionary["datePicker"];
+  min: string;
+  value: string;
+  today: string;
+  tomorrow: string;
+  onSelect: (value: string) => void;
+}
+
+function QuickPicks({ dict, min, value, today, tomorrow, onSelect }: QuickPicksProps) {
+  return (
+    <div className="mb-3 flex gap-2">
+      {[
+        { label: dict.today, dateStr: today },
+        { label: dict.tomorrow, dateStr: tomorrow },
+      ].map(({ label, dateStr }) => {
+        const disabled = dateStr < min;
+        const active = dateStr === value;
+        return (
+          <button
+            key={label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onSelect(dateStr)}
+            className={`min-h-9 flex-1 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              active
+                ? "border-teal bg-teal/10 text-teal"
+                : "border-border text-foreground hover:border-teal hover:bg-brand-soft hover:text-teal"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function DatePicker({ name, value, min, onChange, dict, locale = "en", buttonClassName, iconClassName }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -310,36 +355,7 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
   }
 
   const todayStr = getAlbaniaDateInputValue();
-  const tomorrowStr = getAlbaniaDateInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
-
-  function QuickPicks() {
-    return (
-      <div className="mb-3 flex gap-2">
-        {[
-          { label: dict.today, dateStr: todayStr },
-          { label: dict.tomorrow, dateStr: tomorrowStr },
-        ].map(({ label, dateStr }) => {
-          const disabled = dateStr < min;
-          const active = dateStr === value;
-          return (
-            <button
-              key={label}
-              type="button"
-              disabled={disabled}
-              onClick={() => selectDay(dateStr)}
-              className={`min-h-9 flex-1 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                active
-                  ? "border-teal bg-teal/10 text-teal"
-                  : "border-border text-foreground hover:border-teal hover:bg-brand-soft hover:text-teal"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
+  const tomorrowStr = addDays(todayStr, 1);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -351,14 +367,15 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
         aria-expanded={isOpen}
         aria-controls={`${name}-date-picker`}
         aria-label={`${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
-        className="min-h-11 w-full cursor-pointer rounded-md border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal"
+        className={`flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
       >
-        {formatDateLong(value, locale)}
+        <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
+        <span>{formatDateLong(value, locale)}</span>
       </button>
 
       {isOpen && !sheetMode && (
-        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="absolute z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
-          <QuickPicks />
+        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="absolute z-30 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+          <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
           <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
           <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />
         </div>
@@ -393,7 +410,7 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
               </button>
             </div>
             <div className="overlay-scroll overflow-y-auto px-4 pb-4">
-              <QuickPicks />
+              <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
               <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
               <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} compact={false} />
             </div>

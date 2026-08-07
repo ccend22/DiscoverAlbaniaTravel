@@ -118,7 +118,6 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -166,14 +165,14 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
 
   if (error || !hasGoogleMapsApiKey) {
     return (
-      <div className="flex h-[70vh] min-h-[420px] w-full items-center justify-center rounded-lg border border-border bg-surface text-sm text-muted">
+      <div className="flex h-[70vh] min-h-[420px] w-full items-center justify-center rounded-[1.9rem] border border-white/10 bg-[#eef5f6] text-sm font-medium text-muted">
         Map unavailable
       </div>
     );
   }
 
   return (
-    <div className="h-[70vh] min-h-[420px] w-full overflow-hidden rounded-lg border border-border">
+    <div className="h-[70vh] min-h-[420px] w-full overflow-hidden rounded-[1.9rem] border border-white/10">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );

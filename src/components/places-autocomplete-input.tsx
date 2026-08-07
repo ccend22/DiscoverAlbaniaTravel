@@ -22,7 +22,10 @@ interface PlacesAutocompleteInputProps {
 export function PlacesAutocompleteInput({ name, value, onChange, placeholder, required, className }: PlacesAutocompleteInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     if (!hasGoogleMapsApiKey || !inputRef.current) return;
