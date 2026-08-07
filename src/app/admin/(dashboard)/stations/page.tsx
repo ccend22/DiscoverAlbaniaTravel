@@ -23,7 +23,7 @@ export default async function AdminStationsPage({ searchParams }: { searchParams
               <tr key={station.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium text-foreground">{station.name}</td>
                 <td className="px-4 py-3 text-muted">{station.city}</td>
-                <td className="px-4 py-3 text-muted">{station.address ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">{station.address ?? "Not available"}</td>
                 <td className="px-4 py-3 tabular-nums text-muted">{station.code}</td>
                 <td className="px-4 py-3 text-right"><Link href={`/admin/stations/${station.id}`} className="text-sm font-medium text-teal hover:underline">Manage</Link></td>
               </tr>

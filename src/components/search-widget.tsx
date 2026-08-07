@@ -35,6 +35,18 @@ const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
     "rounded-[2rem] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(255,255,255,0.64))] shadow-[0_30px_90px_rgba(0,24,32,0.24),inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(255,255,255,0.35)] backdrop-blur-[28px] backdrop-saturate-150",
 };
 
+function getDestinationsForOrigin(
+  originToDestinations: Record<string, string[]>,
+  origin: string
+): string[] | null {
+  const key = origin.trim().toLowerCase();
+  if (!key) return null;
+  const matchedKey = Object.keys(originToDestinations).find(
+    (candidate) => candidate.toLowerCase() === key
+  );
+  return matchedKey ? originToDestinations[matchedKey] : null;
+}
+
 function RoundTripIcon(props: { width?: number; height?: number; className?: string }) {
   return (
     <svg width={15} height={15} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -83,7 +95,15 @@ export function SearchWidget({
   const sw = dict.searchWidget;
   const today = getAlbaniaDateInputValue();
   const [originInput, setOriginInput] = useState(defaultOrigin ?? "");
-  const [destinationInput, setDestinationInput] = useState(defaultDestination ?? "");
+  const [destinationInput, setDestinationInput] = useState(() => {
+    if (!defaultOrigin || !defaultDestination) return defaultDestination ?? "";
+    const availableDestinations = getDestinationsForOrigin(originToDestinations, defaultOrigin);
+    return availableDestinations?.some(
+      (destination) => destination.toLowerCase() === defaultDestination.trim().toLowerCase()
+    )
+      ? defaultDestination
+      : "";
+  });
   const [dateValue, setDateValue] = useState(defaultDate || today);
   const [tripType, setTripType] = useState<TripType>(defaultTripType ?? "oneway");
   const [returnDateValue, setReturnDateValue] = useState(
@@ -94,17 +114,32 @@ export function SearchWidget({
   const [swapPulse, setSwapPulse] = useState(false);
 
   const destinationOptions = useMemo(() => {
-    const key = originInput.trim().toLowerCase();
-    if (!key) return cityOptions;
-    const matchedKey = Object.keys(originToDestinations).find(
-      (candidate) => candidate.toLowerCase() === key
-    );
-    return matchedKey ? originToDestinations[matchedKey] : cityOptions;
+    if (!originInput.trim()) return cityOptions;
+    return getDestinationsForOrigin(originToDestinations, originInput) ?? [];
   }, [originInput, originToDestinations, cityOptions]);
 
+  function handleOriginChange(nextOrigin: string) {
+    setOriginInput(nextOrigin);
+    const availableDestinations = getDestinationsForOrigin(originToDestinations, nextOrigin);
+    if (
+      availableDestinations &&
+      destinationInput &&
+      !availableDestinations.some(
+        (destination) => destination.toLowerCase() === destinationInput.trim().toLowerCase()
+      )
+    ) {
+      setDestinationInput("");
+    }
+  }
+
   function handleSwap() {
-    setOriginInput(destinationInput);
-    setDestinationInput(originInput);
+    const nextOrigin = destinationInput;
+    const reverseDestinations = getDestinationsForOrigin(originToDestinations, nextOrigin);
+    const reverseRouteExists = reverseDestinations?.some(
+      (destination) => destination.toLowerCase() === originInput.trim().toLowerCase()
+    );
+    setOriginInput(nextOrigin);
+    setDestinationInput(reverseRouteExists ? originInput : "");
     setSwapRotation((r) => r + 180);
     setSwapPulse(true);
     window.setTimeout(() => setSwapPulse(false), 320);
@@ -119,7 +154,7 @@ export function SearchWidget({
     <form
       action="/search"
       method="get"
-      className={`relative isolate flex flex-col gap-5 p-4 sm:p-6 lg:p-7 ${CONTAINER_STYLES[variant]}`}
+      className={`relative z-20 isolate flex flex-col gap-5 p-4 sm:p-6 lg:p-7 ${CONTAINER_STYLES[variant]}`}
     >
       <span
         className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent"
@@ -177,12 +212,13 @@ export function SearchWidget({
         <label
           className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
         >
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky">{sw.from}</span>
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
           <CityCombobox
             name="origin"
             required
+            requireOption
             value={originInput}
-            onChange={setOriginInput}
+            onChange={handleOriginChange}
             options={cityOptions}
             placeholder={sw.fromPlaceholder}
             noMatchesLabel={dict.cityCombobox.noMatches}
@@ -205,15 +241,16 @@ export function SearchWidget({
         <label
           className={`flex min-w-[160px] flex-1 flex-col gap-2 text-sm transition-transform duration-500 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.025]" : "scale-100"}`}
         >
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-coral">{sw.to}</span>
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
           <CityCombobox
             name="destination"
             required
+            requireOption
             value={destinationInput}
             onChange={setDestinationInput}
             options={destinationOptions}
             placeholder={sw.toPlaceholder}
-            noMatchesLabel={dict.cityCombobox.noMatches}
+            noMatchesLabel={dict.cityCombobox.noDestinations}
             leadingIcon={<DestinationIcon width={18} height={18} />}
             leadingIconClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white text-coral shadow-sm"
             inputClassName="min-h-14 rounded-2xl border-[#f2d4cc] bg-[#fdf0ec] pl-16 font-semibold text-brand-navy hover:border-coral/50 focus:border-coral focus:bg-white focus:shadow-[0_0_0_4px_rgba(226,84,60,0.11)]"
@@ -231,7 +268,7 @@ export function SearchWidget({
         </button>
 
         <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">{sw.depart}</span>
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.depart}</span>
           <DatePicker
             name="date"
             value={dateValue}
@@ -246,7 +283,7 @@ export function SearchWidget({
 
         {tripType === "roundtrip" && (
           <label className="flex min-w-[160px] flex-1 flex-col gap-2 text-sm">
-            <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-lime-strong">{sw.returnLabel}</span>
+            <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.returnLabel}</span>
             <DatePicker
               name="returnDate"
               value={returnDateValue}
@@ -261,14 +298,14 @@ export function SearchWidget({
         )}
 
         <div className="flex min-w-[140px] flex-1 flex-col gap-2 text-sm">
-          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7656b5]">{sw.passengers}</span>
-          <div className="flex min-h-14 items-center justify-between rounded-2xl border border-[#ddd2f3] bg-[#f2edff] px-2 py-1.5">
+          <span className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-black">{sw.passengers}</span>
+          <div className="flex min-h-14 items-center justify-between rounded-2xl border border-[#dce7ec] bg-white px-2 py-1.5">
             <button
               type="button"
               onClick={() => setPassengers((p) => Math.max(1, p - 1))}
               disabled={passengers <= 1}
               aria-label={sw.decreasePassengers}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-[#7656b5] shadow-sm transition hover:shadow-md active:scale-90 disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5f7] text-lg text-teal shadow-sm transition hover:bg-teal-soft hover:shadow-md active:scale-90 disabled:opacity-30"
             >
               −
             </button>
@@ -278,7 +315,7 @@ export function SearchWidget({
               onClick={() => setPassengers((p) => Math.min(9, p + 1))}
               disabled={passengers >= 9}
               aria-label={sw.increasePassengers}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-[#7656b5] shadow-sm transition hover:shadow-md active:scale-90 disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5f7] text-lg text-teal shadow-sm transition hover:bg-teal-soft hover:shadow-md active:scale-90 disabled:opacity-30"
             >
               +
             </button>

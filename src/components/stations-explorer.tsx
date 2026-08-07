@@ -113,7 +113,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
                   <div className="min-w-0 flex-1">
                     <h3 className="font-display text-xl font-black tracking-[-0.02em] text-brand-navy">{station.name}</h3>
                     <p className="mt-1 text-sm font-semibold text-foreground/70">{station.city}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted">{station.address ?? "—"}</p>
+                    <p className="mt-2 text-sm leading-6 text-muted">{station.address ?? "Address unavailable"}</p>
                   </div>
                   <span className="rounded-full bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-muted shadow-sm">{station.code}</span>
                 </div>
@@ -158,7 +158,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
                       <td className="px-5 py-4">
                         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone.surface} ${tone.accent}`}>{station.city}</span>
                       </td>
-                      <td className="max-w-sm px-5 py-4 text-muted">{station.address ?? "—"}</td>
+                      <td className="max-w-sm px-5 py-4 text-muted">{station.address ?? "Address unavailable"}</td>
                       <td className="px-5 py-4">
                         <span className="rounded-full bg-[#f1f5f7] px-2.5 py-1 font-mono text-[11px] font-bold text-muted">{station.code}</span>
                       </td>

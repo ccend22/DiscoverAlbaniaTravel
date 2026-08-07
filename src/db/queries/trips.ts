@@ -196,7 +196,8 @@ export async function getOriginDestinationMap(): Promise<Record<string, string[]
     })
     .from(tripDepartures)
     .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
-    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id));
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .where(eq(tripDepartures.canBoard, true));
 
   const map: Record<string, Set<string>> = {};
   const addEdge = (fromKey: string, toValue: string) => {

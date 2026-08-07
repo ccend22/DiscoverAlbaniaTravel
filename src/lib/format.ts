@@ -8,7 +8,7 @@ export function formatWeekdays(weekdays: number[], locale: Locale = "en"): strin
 
   const isContiguous = sorted.every((w, i) => i === 0 || w === sorted[i - 1] + 1);
   if (isContiguous && sorted.length > 1) {
-    return `${names[sorted[0] - 1]}–${names[sorted[sorted.length - 1] - 1]}`;
+    return `${names[sorted[0] - 1]} to ${names[sorted[sorted.length - 1] - 1]}`;
   }
   return sorted.map((w) => names[w - 1]).join(", ");
 }

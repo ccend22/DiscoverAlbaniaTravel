@@ -37,7 +37,7 @@ export default async function AdminAdminsPage({ searchParams }: { searchParams: 
                 <Button type="submit" variant="danger" size="sm">Remove admin</Button>
               </form>
             )}
-            {admin.id === currentAdminId && <p className="mt-3 border-t border-border pt-3 text-xs text-muted">This is your account — sign in as another admin to remove it.</p>}
+            {admin.id === currentAdminId && <p className="mt-3 border-t border-border pt-3 text-xs text-muted">This is your account. Sign in as another admin to remove it.</p>}
           </div>
         ))}
       </div>

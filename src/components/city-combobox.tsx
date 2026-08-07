@@ -10,6 +10,7 @@ interface CityComboboxProps {
   options: string[];
   placeholder?: string;
   required?: boolean;
+  requireOption?: boolean;
   className?: string;
   inputClassName?: string;
   noMatchesLabel?: string;
@@ -24,6 +25,7 @@ export function CityCombobox({
   options,
   placeholder,
   required,
+  requireOption = false,
   className,
   inputClassName,
   noMatchesLabel,
@@ -33,12 +35,27 @@ export function CityCombobox({
   const [isOpen, setIsOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
     const query = value.trim().toLowerCase();
     if (!query) return options;
     return options.filter((option) => option.toLowerCase().includes(query));
   }, [value, options]);
+
+  const hasExactOption = useMemo(
+    () => options.some((option) => option.toLowerCase() === value.trim().toLowerCase()),
+    [options, value]
+  );
+
+  useEffect(() => {
+    if (!inputRef.current) return;
+    inputRef.current.setCustomValidity(
+      requireOption && value.trim() && !hasExactOption
+        ? "Select an available place from the list."
+        : ""
+    );
+  }, [hasExactOption, requireOption, value]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -87,6 +104,7 @@ export function CityCombobox({
         </span>
       )}
       <input
+        ref={inputRef}
         type="text"
         name={name}
         required={required}
@@ -118,7 +136,7 @@ export function CityCombobox({
         <ul
           id={`${name}-listbox`}
           role="listbox"
-          className="absolute z-30 mt-1.5 max-h-64 w-full min-w-[220px] origin-top animate-fade-up overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
+          className="absolute left-0 right-0 z-50 mt-1.5 max-h-[min(16rem,45dvh)] min-w-0 origin-top animate-fade-up overscroll-contain overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
         >
           {filtered.map((option, index) => (
             <li key={option} role="none">
@@ -143,8 +161,8 @@ export function CityCombobox({
       )}
 
       {isOpen && value.trim() && filtered.length === 0 && (
-        <div className="absolute z-30 mt-1.5 w-full origin-top animate-fade-up rounded-md border border-border bg-surface p-3 text-sm text-muted shadow-[var(--shadow-lg)]">
-          {noMatchesLabel ?? "No matching stations — you can still search with this text."}
+        <div className="absolute left-0 right-0 z-50 mt-1.5 min-w-0 origin-top animate-fade-up rounded-md border border-border bg-surface p-3 text-sm text-muted shadow-[var(--shadow-lg)]">
+          {noMatchesLabel ?? "No matching stations. You can still search with this text."}
         </div>
       )}
     </div>

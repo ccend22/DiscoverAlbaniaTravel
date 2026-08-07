@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "Discover Albania Transport — Buses, Taxis & Destinations",
+    default: "Discover Albania Transport, Buses, Taxis & Destinations",
     template: "%s | Discover Albania Transport",
   },
   description: "Search intercity buses, reserve seats, request scheduled taxis, and discover destinations across Albania.",
@@ -45,14 +45,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Discover Albania Transport",
-    title: "Discover Albania Transport — Buses, Taxis & Destinations",
+    title: "Discover Albania Transport, Buses, Taxis & Destinations",
     description: "Search buses, request taxis, and discover destinations across Albania.",
     url: "/",
     images: [{ url: "/og-v3.png", width: 1200, height: 630, alt: "Discover Albania Transport across Albania's coast and mountains" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Discover Albania Transport — Buses, Taxis & Destinations",
+    title: "Discover Albania Transport, Buses, Taxis & Destinations",
     description: "Search buses, request taxis, and discover destinations across Albania.",
     images: ["/og-v3.png"],
   },

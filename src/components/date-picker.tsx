@@ -374,7 +374,7 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
       </button>
 
       {isOpen && !sheetMode && (
-        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="absolute z-30 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="overlay-scroll absolute z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top animate-fade-up overflow-y-auto overscroll-contain rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
           <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
           <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
           <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />

@@ -59,8 +59,8 @@ export function AdminOperatorsTable({ operators }: { operators: AdminOperatorRow
               <tr key={operator.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium text-foreground">{operator.name}</td>
                 <td className="px-4 py-3 text-muted">{operator.vat}</td>
-                <td className="px-4 py-3 text-muted">{operator.city ?? "—"}</td>
-                <td className="px-4 py-3 text-muted">{operator.phone ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">{operator.city ?? "Not available"}</td>
+                <td className="px-4 py-3 text-muted">{operator.phone ?? "Not available"}</td>
                 <td className="px-4 py-3 tabular-nums text-foreground">{operator.routeCount}</td>
                 <td className="px-4 py-3 text-right"><Link href={`/admin/operators/${operator.id}`} className="group inline-flex items-center gap-1 text-sm font-medium text-teal"><span className="relative">Manage<span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-teal transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-x-100" /></span></Link></td>
               </tr>

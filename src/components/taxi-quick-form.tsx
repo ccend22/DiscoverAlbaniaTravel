@@ -184,7 +184,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid" }: TaxiQuic
         </div>
 
         <label className="mx-auto flex w-full max-w-sm flex-col gap-2 text-sm">
-          <span className="px-1 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[#7656b5]">{tf.phoneNumber}</span>
+          <span className="px-1 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-black">{tf.phoneNumber}</span>
           <input
             name="passengerPhone"
             type="tel"
@@ -193,7 +193,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid" }: TaxiQuic
             autoComplete="tel"
             defaultValue={user?.phone ?? ""}
             placeholder={tf.phoneNumberPlaceholder}
-            className="min-h-14 w-full rounded-2xl border border-[#ddd2f3] bg-[#f2edff] px-4 py-2 text-center text-base font-semibold text-brand-navy outline-none hover:border-[#7656b5]/50 focus:border-[#7656b5] focus:bg-white focus:shadow-[0_0_0_4px_rgba(118,86,181,0.11)]"
+            className="min-h-14 w-full rounded-2xl border border-[#dce7ec] bg-white px-4 py-2 text-center text-base font-semibold text-brand-navy outline-none hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_4px_rgba(0,128,128,0.1)]"
           />
         </label>
 

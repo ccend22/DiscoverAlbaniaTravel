@@ -52,30 +52,41 @@ export async function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="text-xs font-black uppercase tracking-[0.24em] text-muted/70">Travel</h3>
-          <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
-            <FooterLink href="/">{dict.nav.busTickets}</FooterLink>
-            <FooterLink href="/?tab=taxi#search">{dict.nav.taxi}</FooterLink>
-            <FooterLink href="/booking">Booking lookup</FooterLink>
-          </nav>
-        </div>
-
-        <div>
           <h3 className="text-xs font-black uppercase tracking-[0.24em] text-muted/70">Account</h3>
           <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
             <FooterLink href="/account">{dict.footer.myAccount}</FooterLink>
             <FooterLink href="/account/login">Sign in</FooterLink>
             <FooterLink href="/vendor/login">Partner login</FooterLink>
+            <FooterLink href="/terms-and-conditions">{dict.footer.termsAndConditions}</FooterLink>
           </nav>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.24em] text-muted/70">{dict.footer.contacts}</h3>
+          <address className="mt-6 flex flex-col items-start gap-4 text-sm not-italic leading-6 text-muted">
+            <a href="tel:+355696583870" className="transition-colors hover:text-teal">+355 69 658 3870</a>
+            <a href="mailto:info@discoveralbania.al" className="break-all transition-colors hover:text-teal">info@discoveralbania.al</a>
+            <p>Rr. Myslym Shyri, P.24, Sh 1/4, Tirana, Albania</p>
+          </address>
         </div>
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs font-bold text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>© {new Date().getFullYear()} Discover Albania Transport</p>
-          <div className="flex items-center gap-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal" />
-            <p>{dict.footer.department}</p>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p>A Licensed &amp; Bonded Travel Operator.</p>
+            <p>
+              Made by{" "}
+              <a
+                href="https://bluesquareai.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground transition-colors hover:text-teal"
+              >
+                bluesquare AI
+              </a>
+            </p>
           </div>
         </div>
       </div>
