@@ -12,7 +12,7 @@
   --border: #e2e8f0;
 
   --brand: #008080;
-  --brand-strong: #006b6b;
+  --brand-strong: #0d9488;
   --brand-deep: #0b1121;
   --brand-navy: #2e3b55;
   --brand-foreground: #ffffff;
@@ -21,17 +21,23 @@
   --teal: #008080;
   --teal-foreground: #ffffff;
   --teal-soft: #e6f5f5;
+  --teal-hover: #0d9488;
   --cyan: #22d3ee;
 
   /* Red is reserved for errors and destructive actions. */
-  --red: #bf3d45;
+  --red: #ef4444;
   --red-foreground: #ffffff;
-  --red-soft: #f9e8e9;
+  --red-soft: #fee2e2;
 
-  --success: #217a55;
-  --success-soft: #e3f1e9;
+  --success: #22c55e;
+  --success-soft: #dcfce7;
   --warning: #9b650b;
   --warning-soft: #f8efd9;
+
+  /* Official WhatsApp brand green — reserved for WhatsApp contact/chat
+     touchpoints only, never used as a generic success/action color. */
+  --whatsapp: #25d366;
+  --whatsapp-foreground: #ffffff;
 
   /* Secondary accent palette — Albanian Riviera sunset/sea tones, used for
      decorative variety (icon badges, illustrative accents) so the site
@@ -108,7 +114,10 @@
   --color-teal: var(--teal);
   --color-teal-foreground: var(--teal-foreground);
   --color-teal-soft: var(--teal-soft);
+  --color-teal-hover: var(--teal-hover);
   --color-cyan: var(--cyan);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-foreground: var(--whatsapp-foreground);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -286,6 +295,50 @@ table tbody tr:hover {
   color: var(--muted);
 }
 
+/* Google Places Autocomplete's suggestion dropdown, restyled to match the
+   site's own dropdowns/cards instead of Google's default flat white box. */
+.pac-container {
+  z-index: 70;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  animation: fade-up 180ms var(--ease-out-expo) both;
+}
+
+.pac-item {
+  padding: 10px 14px;
+  border-color: var(--border);
+  font-size: 0.875rem;
+  color: var(--foreground);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover {
+  background: var(--brand-soft);
+}
+
+.pac-item-query {
+  color: var(--foreground);
+  font-size: 0.875rem;
+}
+
+.pac-icon {
+  display: none;
+}
+
+.pac-matched {
+  color: var(--teal);
+  font-weight: 600;
+}
+
 @media print {
   header,
   footer {
@@ -374,23 +427,6 @@ table tbody tr:hover {
   .animate-fade-in,
   .animate-bounce {
     animation: none;
-  }
-}
-
-/* Sticky/fixed `backdrop-filter: blur()` is one of the most common causes of
-   scroll jank on mobile: the browser has to resample everything behind the
-   element on every scroll frame. Keep the frosted-glass look on desktop
-   (cheap there — far less scrolling, more compositing headroom) and fall
-   back to a plain, slightly more opaque solid fill on touch-sized viewports. */
-.header-surface {
-  background-color: color-mix(in srgb, var(--brand-deep) 97%, transparent);
-}
-
-@media (min-width: 640px) {
-  .header-surface {
-    background-color: color-mix(in srgb, var(--brand-deep) 93%, transparent);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
   }
 }
 

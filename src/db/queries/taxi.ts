@@ -15,9 +15,9 @@ export async function createTaxiRideRequest(input: {
   destination: string;
   pickupAt: Date;
   passengers: number;
-  passengerName: string;
+  passengerName: string | null;
   passengerPhone: string;
-  passengerEmail: string;
+  passengerEmail: string | null;
   notes: string | null;
   userId: number | null;
 }) {

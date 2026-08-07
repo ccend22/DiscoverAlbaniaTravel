@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { CityCombobox } from "./city-combobox";
 import { ArrowRightIcon, SearchIcon } from "./icons";
@@ -20,7 +20,6 @@ interface SearchWidgetProps {
   defaultDate?: string;
   defaultTripType?: TripType;
   defaultReturnDate?: string;
-  defaultTime?: string;
   defaultPassengers?: number;
   /**
    * "glass" floats the card over a photo (the homepage hero): translucent
@@ -79,7 +78,6 @@ export function SearchWidget({
   defaultDate,
   defaultTripType,
   defaultReturnDate,
-  defaultTime,
   defaultPassengers,
   variant = "solid",
 }: SearchWidgetProps) {
@@ -92,9 +90,9 @@ export function SearchWidget({
   const [returnDateValue, setReturnDateValue] = useState(
     defaultReturnDate || defaultDate || today
   );
-  const [timeValue, setTimeValue] = useState(defaultTime ?? "");
   const [passengers, setPassengers] = useState(defaultPassengers ?? 1);
-  const timeInputRef = useRef<HTMLInputElement>(null);
+  const [swapRotation, setSwapRotation] = useState(0);
+  const [swapPulse, setSwapPulse] = useState(false);
 
   const destinationOptions = useMemo(() => {
     const key = originInput.trim().toLowerCase();
@@ -108,18 +106,14 @@ export function SearchWidget({
   function handleSwap() {
     setOriginInput(destinationInput);
     setDestinationInput(originInput);
+    setSwapRotation((r) => r + 180);
+    setSwapPulse(true);
+    window.setTimeout(() => setSwapPulse(false), 320);
   }
 
   function handleDateChange(next: string) {
     setDateValue(next);
     setReturnDateValue((prev) => (prev < next ? next : prev));
-  }
-
-  function openTimePicker() {
-    const input = timeInputRef.current;
-    if (input && "showPicker" in input) {
-      (input as HTMLInputElement & { showPicker: () => void }).showPicker();
-    }
   }
 
   return (
@@ -143,7 +137,7 @@ export function SearchWidget({
           type="button"
           onClick={() => setTripType("oneway")}
           aria-pressed={tripType === "oneway"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-black/5 ${
+          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
             tripType === "oneway" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
@@ -154,7 +148,7 @@ export function SearchWidget({
           type="button"
           onClick={() => setTripType("roundtrip")}
           aria-pressed={tripType === "roundtrip"}
-          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-black/5 ${
+          className={`relative z-10 flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 py-2.5 font-medium transition-colors duration-[var(--dur-base)] active:bg-foreground/5 ${
             tripType === "roundtrip" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
@@ -164,8 +158,10 @@ export function SearchWidget({
         <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
       </div>
 
-      <div className="grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)_minmax(130px,0.55fr)]">
-        <label className="flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm">
+      <div className="grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(150px,0.7fr)_minmax(130px,0.55fr)]">
+        <label
+          className={`flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm transition-transform duration-300 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.03]" : "scale-100"}`}
+        >
           <span className="font-medium">{sw.from}</span>
           <CityCombobox
             name="origin"
@@ -182,12 +178,15 @@ export function SearchWidget({
           type="button"
           onClick={handleSwap}
           aria-label={sw.swapAria}
-          className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors hover:border-teal hover:bg-brand-soft hover:text-teal xl:flex"
+          style={{ transform: `rotate(${swapRotation}deg)` }}
+          className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-muted transition-[transform,background-color,color,border-color] duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-brand-soft hover:text-teal xl:flex"
         >
           <SwapIcon />
         </button>
 
-        <label className="flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm">
+        <label
+          className={`flex min-w-[160px] flex-1 flex-col gap-1.5 text-sm transition-transform duration-300 ease-[var(--ease-spring)] ${swapPulse ? "scale-[1.03]" : "scale-100"}`}
+        >
           <span className="font-medium">{sw.to}</span>
           <CityCombobox
             name="destination"
@@ -204,7 +203,8 @@ export function SearchWidget({
           type="button"
           onClick={handleSwap}
           aria-label={sw.swapAria}
-          className="flex h-11 w-11 items-center justify-center justify-self-center rounded-md border border-border bg-surface text-muted transition-colors hover:border-teal hover:bg-brand-soft hover:text-teal active:bg-brand-soft sm:col-span-2 xl:hidden [&_svg]:rotate-90 sm:[&_svg]:rotate-0"
+          style={{ transform: `rotate(${swapRotation}deg)` }}
+          className="flex h-11 w-11 items-center justify-center justify-self-center rounded-md border border-border bg-surface text-muted transition-[transform,background-color,color,border-color] duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-brand-soft hover:text-teal active:bg-brand-soft sm:col-span-2 xl:hidden [&_svg]:rotate-90 sm:[&_svg]:rotate-0"
         >
           <SwapIcon />
         </button>
@@ -227,22 +227,6 @@ export function SearchWidget({
             />
           </label>
         )}
-
-        <label className="flex min-w-[150px] flex-1 flex-col gap-1.5 text-sm sm:col-span-1">
-          <span className="font-medium">
-            {sw.earliestTime} <span className="font-normal text-muted">{sw.optional}</span>
-          </span>
-          <input
-            ref={timeInputRef}
-            type="time"
-            name="time"
-            value={timeValue}
-            onChange={(e) => setTimeValue(e.target.value)}
-            onClick={openTimePicker}
-            className="min-h-11 cursor-pointer rounded-md border border-border bg-surface px-3 py-2 text-base outline-none transition-colors hover:border-muted/60 focus:border-teal"
-            suppressHydrationWarning
-          />
-        </label>
 
         <div className="flex min-w-[140px] flex-1 flex-col gap-1.5 text-sm">
           <span className="font-medium">{sw.passengers}</span>

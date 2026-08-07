@@ -53,22 +53,11 @@ export const bookingFormSchema = z
     path: ["travelDate"],
   });
 
-export const taxiRideRequestSchema = z
-  .object({
-    pickupLocation: z.string().trim().min(3, "Enter a pickup location"),
-    destination: z.string().trim().min(3, "Enter a destination"),
-    pickupDate: dateString,
-    pickupTime: timeString,
-    passengers: z.coerce.number().int().min(1, "At least 1 passenger is required").max(8, "For larger groups, contact a transport provider"),
-    passengerName: z.string().trim().min(2, "Enter your full name"),
-    passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
-    passengerEmail: z.string().trim().email("Enter a valid email address"),
-    notes: z.string().trim().max(500, "Notes must be 500 characters or fewer").optional(),
-  })
-  .refine((data) => data.pickupDate >= todayInAlbania(), {
-    message: "Choose today or a future pickup date",
-    path: ["pickupDate"],
-  });
+export const taxiRideRequestSchema = z.object({
+  pickupLocation: z.string().trim().min(3, "Enter a pickup location"),
+  destination: z.string().trim().min(3, "Enter a destination"),
+  passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+});
 
 export type BookingFormInput = z.infer<typeof bookingFormSchema>;
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+import { useEffect, useRef, useState } from "react";
+import { importLibrary } from "@googlemaps/js-api-loader";
+import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { StationLocation } from "@/db/queries/stations";
 
 const ALBANIA_CENTER: google.maps.LatLngLiteral = { lat: 41.15, lng: 20.0 };
@@ -43,43 +44,6 @@ const LIGHT_STYLE: google.maps.MapTypeStyle[] = [
   { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
 ];
 
-const DARK_STYLE: google.maps.MapTypeStyle[] = [
-  { elementType: "geometry", stylers: [{ color: "#1d2226" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1d2226" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8a9198" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d4d8db" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#2b3136" }] },
-  { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3a4147" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1417" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4a5a63" }] },
-];
-
-let optionsSet = false;
-function ensureOptionsSet() {
-  if (optionsSet) return;
-  setOptions({ key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "", v: "weekly" });
-  optionsSet = true;
-}
-
-const hasApiKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
-
-function subscribeToColorScheme(callback: () => void) {
-  const query = window.matchMedia("(prefers-color-scheme: dark)");
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function getIsDarkSnapshot(): boolean {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
-function useIsDarkMode(): boolean {
-  return useSyncExternalStore(subscribeToColorScheme, getIsDarkSnapshot, () => false);
-}
-
 function buildInfoWindowContent(station: StationLocation): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "flex flex-col gap-1 text-sm";
@@ -120,21 +84,20 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const markersRef = useRef<Map<number, google.maps.Marker>>(new Map());
-  const isDark = useIsDarkMode();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!hasApiKey || !containerRef.current) return;
+    if (!hasGoogleMapsApiKey || !containerRef.current) return;
     let cancelled = false;
-    ensureOptionsSet();
+    ensureGoogleMapsOptions();
     importLibrary("maps")
       .then(({ Map }) => {
         if (cancelled || !containerRef.current) return;
         mapRef.current = new Map(containerRef.current, {
           center: ALBANIA_CENTER,
           zoom: 8,
-          styles: isDark ? DARK_STYLE : LIGHT_STYLE,
+          styles: LIGHT_STYLE,
           disableDefaultUI: true,
           zoomControl: true,
           // "greedy" lets a single-finger swipe pan the map — on a phone this
@@ -157,10 +120,6 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    mapRef.current?.setOptions({ styles: isDark ? DARK_STYLE : LIGHT_STYLE });
-  }, [isDark]);
 
   useEffect(() => {
     if (!ready || !mapRef.current) return;
@@ -205,7 +164,7 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection]);
 
-  if (error || !hasApiKey) {
+  if (error || !hasGoogleMapsApiKey) {
     return (
       <div className="flex h-[70vh] min-h-[420px] w-full items-center justify-center rounded-lg border border-border bg-surface text-sm text-muted">
         Map unavailable

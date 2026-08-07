@@ -11,8 +11,8 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   return (
     <div>
-      <h1 className="text-center text-xl font-bold text-white">Sign in to administer the platform</h1>
-      <p className="mt-2 text-center text-sm text-white/55">Restricted to Discover Albania staff.</p>
+      <h1 className="text-center text-xl font-bold text-brand-navy">Sign in to administer the platform</h1>
+      <p className="mt-2 text-center text-sm text-muted">Restricted to Discover Albania staff.</p>
 
       {error && (
         <div className="mt-5 flex items-start gap-2 rounded-md border border-red/40 bg-red-soft p-3 text-sm text-red">

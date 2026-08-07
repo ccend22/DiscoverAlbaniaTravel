@@ -17,6 +17,15 @@ interface NewsPageProps {
 
 const PAGE_SIZE = 24;
 
+// Complete literal classes per accent — Tailwind can't resolve `bg-${color}`
+// template interpolation, so each full string must appear as-is in source.
+const POST_ACCENTS = [
+  { border: "border-teal", icon: "text-teal", badge: "bg-teal-soft" },
+  { border: "border-coral", icon: "text-coral", badge: "bg-coral-soft" },
+  { border: "border-gold", icon: "text-gold", badge: "bg-gold-soft" },
+  { border: "border-sky", icon: "text-sky", badge: "bg-sky-soft" },
+] as const;
+
 export default async function NewsPage({ searchParams }: NewsPageProps) {
   const { category, page: pageParam } = await searchParams;
   const validCategory = category === "news" || category === "activity" ? category : undefined;
@@ -66,24 +75,30 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
       </div>
 
       <div className="mt-8 grid gap-4">
-        {posts.map((post) => (
-          <article
-            key={post.id}
-            className="card-lift rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)]"
-          >
-            <div className="flex items-center gap-2">
-              <Badge tone={post.category === "news" ? "info" : "success"}>
-                {post.category === "news" ? np.categoryNews : np.categoryActivity}
-              </Badge>
-              <p className="text-xs text-muted">
-                {new Intl.DateTimeFormat(locale === "al" ? "sq-AL" : "en-US", { dateStyle: "long" }).format(post.postDate)}
-              </p>
-            </div>
-            <h2 className="mt-3 font-display text-lg font-semibold text-foreground">{post.title}</h2>
-            {post.subtitle && <p className="mt-1 text-sm text-muted">{post.subtitle}</p>}
-            <p className="mt-2 line-clamp-3 text-sm text-foreground/90">{post.description}</p>
-          </article>
-        ))}
+        {posts.map((post, index) => {
+          const accent = POST_ACCENTS[index % POST_ACCENTS.length];
+          return (
+            <article
+              key={post.id}
+              className={`card-lift rounded-md border border-l-4 border-border bg-surface p-5 shadow-[var(--shadow-xs)] ${accent.border}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${accent.badge} ${accent.icon}`}>
+                  <CalendarIcon width={14} height={14} />
+                </span>
+                <Badge tone={post.category === "news" ? "info" : "success"}>
+                  {post.category === "news" ? np.categoryNews : np.categoryActivity}
+                </Badge>
+                <p className="text-xs text-muted">
+                  {new Intl.DateTimeFormat(locale === "al" ? "sq-AL" : "en-US", { dateStyle: "long" }).format(post.postDate)}
+                </p>
+              </div>
+              <h2 className="mt-3 font-display text-lg font-semibold text-foreground">{post.title}</h2>
+              {post.subtitle && <p className="mt-1 text-sm text-muted">{post.subtitle}</p>}
+              <p className="mt-2 line-clamp-3 text-sm text-foreground/90">{post.description}</p>
+            </article>
+          );
+        })}
 
         {posts.length === 0 && (
           <p className="rounded-md border border-border bg-surface p-8 text-center text-sm text-muted shadow-[var(--shadow-xs)]">

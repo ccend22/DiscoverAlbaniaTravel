@@ -91,7 +91,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
                     <button
                       type="button"
                       onClick={() => handleViewOnMap(station.id)}
-                      className="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]"
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-lime-strong hover:bg-lime-soft hover:text-lime-strong hover:shadow-[var(--shadow-xs)]"
                     >
                       {se.viewOnMap}
                     </button>

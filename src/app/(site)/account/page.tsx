@@ -139,7 +139,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <h2 className="font-display text-lg font-semibold text-foreground">{ap.taxiRequestsTitle}</h2>
             <p className="mt-1 text-sm text-muted">{ap.taxiRequestsSubtitle}</p>
           </div>
-          <Link href="/taxi" className="group shrink-0 text-sm font-medium text-teal">
+          <Link href="/?tab=taxi#search" className="group shrink-0 text-sm font-medium text-teal">
             <span className="relative">
               {ap.requestTaxi}
               <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-teal transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-x-100" />

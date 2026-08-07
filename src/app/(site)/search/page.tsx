@@ -180,7 +180,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           defaultDate={typeof raw.date === "string" ? raw.date : undefined}
           defaultTripType={raw.tripType === "roundtrip" ? "roundtrip" : undefined}
           defaultReturnDate={typeof raw.returnDate === "string" ? raw.returnDate : undefined}
-          defaultTime={typeof raw.time === "string" ? raw.time : undefined}
           defaultPassengers={typeof raw.passengers === "string" ? Number(raw.passengers) : undefined}
         />
       </div>
@@ -213,7 +212,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           defaultDate={date}
           defaultTripType={isRoundTrip ? "roundtrip" : "oneway"}
           defaultReturnDate={returnDate}
-          defaultTime={time}
           defaultPassengers={passengers}
         />
       </div>

@@ -309,6 +309,38 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
     setIsOpen(false);
   }
 
+  const todayStr = getAlbaniaDateInputValue();
+  const tomorrowStr = getAlbaniaDateInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+  function QuickPicks() {
+    return (
+      <div className="mb-3 flex gap-2">
+        {[
+          { label: dict.today, dateStr: todayStr },
+          { label: dict.tomorrow, dateStr: tomorrowStr },
+        ].map(({ label, dateStr }) => {
+          const disabled = dateStr < min;
+          const active = dateStr === value;
+          return (
+            <button
+              key={label}
+              type="button"
+              disabled={disabled}
+              onClick={() => selectDay(dateStr)}
+              className={`min-h-9 flex-1 rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                active
+                  ? "border-teal bg-teal/10 text-teal"
+                  : "border-border text-foreground hover:border-teal hover:bg-brand-soft hover:text-teal"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="relative" ref={containerRef}>
       <input type="hidden" name={name} value={value} suppressHydrationWarning />
@@ -326,6 +358,8 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
 
       {isOpen && !sheetMode && (
         <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="absolute z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top animate-fade-up rounded-md border border-border bg-surface p-3 shadow-[var(--shadow-lg)]">
+          <QuickPicks />
+          <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
           <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />
         </div>
       )}
@@ -333,7 +367,7 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
       {sheetMode && (
         <>
           <div
-            className="animate-sheet-fade touch-manipulation fixed inset-0 z-40 bg-black/40"
+            className="animate-sheet-fade touch-manipulation fixed inset-0 z-40 bg-foreground/40"
             aria-hidden="true"
             {...tapToDismiss(() => setIsOpen(false))}
           />
@@ -359,6 +393,8 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en" }: 
               </button>
             </div>
             <div className="overlay-scroll overflow-y-auto px-4 pb-4">
+              <QuickPicks />
+              <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
               <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} compact={false} />
             </div>
           </div>

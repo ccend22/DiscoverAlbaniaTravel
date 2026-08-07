@@ -71,6 +71,13 @@
       "when": 1785929711211,
       "tag": "0009_shallow_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786098888325,
+      "tag": "0010_legal_newton_destine",
+      "breakpoints": true
     }
   ]
 }

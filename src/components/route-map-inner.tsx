@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -29,27 +29,10 @@ const markerIcon = L.divIcon({
 
 const ROUTE_LINE_COLOR = "#2563eb";
 
-const TILE_LAYERS = {
-  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-};
+const LIGHT_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-
-function subscribeToColorScheme(callback: () => void) {
-  const query = window.matchMedia("(prefers-color-scheme: dark)");
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function getIsDarkSnapshot(): boolean {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
-function useIsDarkMode(): boolean {
-  return useSyncExternalStore(subscribeToColorScheme, getIsDarkSnapshot, () => false);
-}
 
 export interface RouteSegment {
   fromName: string;
@@ -109,7 +92,6 @@ export interface RouteMapProps {
 }
 
 export function RouteMap({ segments, tapToInteractLabel }: RouteMapProps) {
-  const isDark = useIsDarkMode();
   const isMobile = useIsMobile();
   const [interacted, setInteracted] = useState(false);
   const gestureActive = !isMobile || interacted;
@@ -145,11 +127,7 @@ export function RouteMap({ segments, tapToInteractLabel }: RouteMapProps) {
   return (
     <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border">
       <MapContainer center={[41.15, 20.0]} zoom={8} scrollWheelZoom className="h-full w-full">
-        <TileLayer
-          key={isDark ? "dark" : "light"}
-          url={isDark ? TILE_LAYERS.dark : TILE_LAYERS.light}
-          attribution={TILE_ATTRIBUTION}
-        />
+        <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
         {lines.map((line) => (
           <Polyline
             key={line.key}
@@ -172,9 +150,9 @@ export function RouteMap({ segments, tapToInteractLabel }: RouteMapProps) {
         <button
           type="button"
           onClick={() => setInteracted(true)}
-          className="animate-fade-in absolute inset-0 z-[1000] flex items-center justify-center bg-black/5"
+          className="animate-fade-in absolute inset-0 z-[1000] flex items-center justify-center bg-foreground/5"
         >
-          <span className="rounded-full bg-black/65 px-3.5 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-sm)]">
+          <span className="rounded-full bg-foreground/70 px-3.5 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-sm)]">
             {tapToInteractLabel}
           </span>
         </button>

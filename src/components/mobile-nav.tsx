@@ -16,14 +16,22 @@ interface MobileNavProps {
   primaryLinks: NavItem[];
   utilityLinks: NavItem[];
   openMenuLabel: string;
+  /** True when the trigger sits over a transparent, photo-backed header. */
+  transparentTrigger?: boolean;
+  /** Lets the parent header force a solid background while the drawer is open. */
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
-export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel }: MobileNavProps) {
+export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel, transparentTrigger = false, onOpenChange }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useBodyScrollLock(isOpen);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -49,7 +57,11 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel }: MobileN
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition-colors duration-[var(--dur-fast)] hover:bg-white/10 active:bg-white/15 lg:hidden"
+        className={`flex h-12 w-12 items-center justify-center rounded-full border transition-colors duration-[var(--dur-fast)] lg:hidden ${
+          transparentTrigger
+            ? "border-white/25 text-white hover:bg-white/10 active:bg-white/15"
+            : "border-border text-foreground hover:bg-surface-sunken active:bg-brand-soft"
+        }`}
         aria-label={openMenuLabel}
         aria-expanded={isOpen}
       >
@@ -57,7 +69,7 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel }: MobileN
       </button>
 
       <div
-        className={`touch-manipulation fixed inset-0 z-40 bg-brand-deep/70 backdrop-blur-sm transition-opacity duration-[var(--dur-base)] ease-[var(--ease-standard)] lg:hidden ${
+        className={`touch-manipulation fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm transition-opacity duration-[var(--dur-base)] ease-[var(--ease-standard)] lg:hidden ${
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden="true"
@@ -78,9 +90,8 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel }: MobileN
           className="flex shrink-0 items-center justify-between border-b border-border px-5 pb-4"
           style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
         >
-          <span className="flex items-center gap-3 text-brand-navy">
-            <span className="rounded-xl bg-brand-navy p-2"><BrandMark size={26} /></span>
-            <span className="font-serif text-lg font-black leading-none">Discover Albania</span>
+          <span className="inline-flex items-center gap-2">
+            <BrandMark size={32} />
           </span>
           <button
             ref={closeButtonRef}
@@ -114,7 +125,7 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel }: MobileN
               key={link.href}
               href={link.href}
               onClick={close}
-              className="block rounded-full bg-brand-navy px-6 py-4 text-center text-sm font-black uppercase tracking-[0.18em] text-white shadow-[var(--shadow-md)] transition-colors duration-[var(--dur-fast)] active:bg-brand"
+              className="block rounded-full bg-teal px-6 py-4 text-center text-sm font-black uppercase tracking-[0.18em] text-teal-foreground shadow-[var(--shadow-md)] transition-colors duration-[var(--dur-fast)] active:bg-brand-strong"
             >
               {link.label}
             </Link>

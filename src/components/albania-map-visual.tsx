@@ -126,7 +126,7 @@ export function AlbaniaMapVisual({ className = "" }: { className?: string }) {
             x={city.x}
             y={city.y - 12}
             textAnchor="middle"
-            fill="#ffffff"
+            fill="var(--foreground)"
             fillOpacity={0.92}
             className="text-[13px] font-medium"
           >
@@ -153,7 +153,7 @@ export function AlbaniaMapVisual({ className = "" }: { className?: string }) {
         x={hub.x}
         y={hub.y - 17}
         textAnchor="middle"
-        fill="#ffffff"
+        fill="var(--foreground)"
         className="text-[15px] font-bold"
         style={{ filter: "drop-shadow(0 1px 2px rgba(0,10,11,0.4))" }}
       >
