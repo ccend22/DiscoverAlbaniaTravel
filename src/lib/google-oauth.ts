@@ -15,7 +15,11 @@ export const GOOGLE_OAUTH_PKCE_COOKIE = "google_oauth_pkce";
 
 export class GoogleOAuthConfigError extends Error {}
 
-function getRedirectUri(): string {
+// Behind Cloud Run's proxy, `request.url` inside a standalone-mode Route
+// Handler reflects the container's own bind address (HOSTNAME:PORT, e.g.
+// 0.0.0.0:8080) rather than the public Host — so redirects must be built
+// from SITE_URL, never from request.url/request.nextUrl.
+export function getSiteOrigin(): string {
   const configuredSiteUrl = process.env.SITE_URL;
   if (!configuredSiteUrl) {
     if (process.env.NODE_ENV === "production") {
@@ -30,8 +34,11 @@ function getRedirectUri(): string {
     // over unencrypted transport, where it can be intercepted in transit.
     throw new GoogleOAuthConfigError("SITE_URL must use https in production");
   }
-  const baseUrl = (configuredSiteUrl ?? "http://localhost:3000").replace(/\/+$/, "");
-  return `${baseUrl}${GOOGLE_OAUTH_CALLBACK_PATH}`;
+  return (configuredSiteUrl ?? "http://localhost:3000").replace(/\/+$/, "");
+}
+
+function getRedirectUri(): string {
+  return `${getSiteOrigin()}${GOOGLE_OAUTH_CALLBACK_PATH}`;
 }
 
 // PKCE (RFC 7636): binds the authorization code to the request that started

@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   exchangeCodeForAccessToken,
   fetchGoogleUserInfo,
+  getSiteOrigin,
   GOOGLE_OAUTH_STATE_COOKIE,
   GOOGLE_OAUTH_PKCE_COOKIE,
 } from "@/lib/google-oauth";
@@ -18,7 +19,7 @@ function statesMatch(a: string, b: string): boolean {
 
 export async function GET(request: NextRequest) {
   const loginErrorUrl = (message: string) =>
-    new URL(`/account/login?error=${encodeURIComponent(message)}`, request.url);
+    new URL(`/account/login?error=${encodeURIComponent(message)}`, getSiteOrigin());
 
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     await setUserSession(result.userId);
-    return NextResponse.redirect(new URL("/account", request.url));
+    return NextResponse.redirect(new URL("/account", getSiteOrigin()));
   } catch (error) {
     console.error("[google-oauth] callback failed", error);
     return NextResponse.redirect(loginErrorUrl("Google sign-in failed, please try again"));
