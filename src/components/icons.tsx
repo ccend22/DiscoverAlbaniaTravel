@@ -88,7 +88,8 @@ export function ChevronDownIcon(props: IconProps) {
 export function ArrowRightIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
-      <path d="M5 12h14m0 0-6-6m6 6-6 6" />
+      <path d="M3.5 16c5-.5 9.5-3 12.5-8.5" />
+      <path d="M9.5 6.5 16.5 7l-1 7" />
     </svg>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TripDepartureDetail } from "@/db/queries/trips";
 import { TripResultCard } from "./trip-result-card";
 import { FilterIcon } from "./icons";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/i18n";
+
+const RESULTS_PAGE_SIZE = 4;
 
 interface ResultsFilterPanelProps {
   results: TripDepartureDetail[];
@@ -51,6 +53,23 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
       return true;
     });
   }, [results, selectedBuckets, selectedOperators, maxPrice]);
+
+  const { cheapestId, fastestId } = useMemo(() => {
+    if (filtered.length < 2) return { cheapestId: null, fastestId: null };
+    let cheapest = filtered[0];
+    let fastest = filtered[0];
+    for (const trip of filtered) {
+      if (Number(trip.basePrice) < Number(cheapest.basePrice)) cheapest = trip;
+      if (trip.durationMin < fastest.durationMin) fastest = trip;
+    }
+    return { cheapestId: cheapest.tripDepartureId, fastestId: fastest.tripDepartureId };
+  }, [filtered]);
+
+  const [visibleCount, setVisibleCount] = useState(RESULTS_PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(RESULTS_PAGE_SIZE);
+  }, [filtered]);
+  const visible = filtered.slice(0, visibleCount);
 
   function toggleBucket(bucket: TimeBucket) {
     setSelectedBuckets((prev) => {
@@ -180,7 +199,7 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <p className="text-sm text-muted">
-          {formatMessage(rf.showingResults, { shown: filtered.length, total: results.length, plural: results.length === 1 ? "" : "s" })}
+          {formatMessage(rf.showingResults, { shown: visible.length, total: results.length, plural: results.length === 1 ? "" : "s" })}
         </p>
         {filtered.length === 0 ? (
           <p className="public-card rounded-2xl p-6 text-center text-sm text-muted">
@@ -190,16 +209,29 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
             </button>
           </p>
         ) : (
-          filtered.map((trip) => (
-            <TripResultCard
-              key={trip.tripDepartureId}
-              trip={trip}
-              travelDate={travelDate}
-              passengers={passengers}
-              dict={dict}
-              locale={locale}
-            />
-          ))
+          <>
+            {visible.map((trip) => (
+              <TripResultCard
+                key={trip.tripDepartureId}
+                trip={trip}
+                travelDate={travelDate}
+                passengers={passengers}
+                dict={dict}
+                locale={locale}
+                isCheapest={trip.tripDepartureId === cheapestId}
+                isFastest={trip.tripDepartureId === fastestId}
+              />
+            ))}
+            {visibleCount < filtered.length && (
+              <button
+                type="button"
+                onClick={() => setVisibleCount((count) => count + RESULTS_PAGE_SIZE)}
+                className="public-card mt-1 flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium text-teal transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:bg-teal-soft"
+              >
+                {rf.loadMore}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

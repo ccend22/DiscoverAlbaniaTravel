@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getBookingByReference } from "@/db/queries/bookings";
-import { formatDuration, formatPrice, formatWeekdays, formatDateLong } from "@/lib/format";
+import { formatDuration, formatPrice, formatWeekdays, formatDateLong, formatTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircleIcon, XCircleIcon, MapPinIcon } from "@/components/icons";
 import { PrintButton } from "@/components/print-button";
@@ -47,7 +47,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <MapPinIcon width={16} height={16} className="mt-0.5 shrink-0 text-teal" />
             <div className="text-sm">
               <p className="font-medium text-foreground">{booking.trip.fromStationName}</p>
-              <p className="tabular-nums text-muted">{booking.trip.departureTime}</p>
+              <p className="tabular-nums text-muted">{formatTime(booking.trip.departureTime)}</p>
             </div>
           </div>
           <div className="ml-2 my-1 h-4 border-l border-dashed border-border" />
@@ -55,7 +55,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <MapPinIcon width={16} height={16} className="mt-0.5 shrink-0 text-brand" />
             <div className="text-sm">
               <p className="font-medium text-foreground">{booking.trip.toStationName}</p>
-              <p className="tabular-nums text-muted">{booking.trip.arrivalTime}</p>
+              <p className="tabular-nums text-muted">{formatTime(booking.trip.arrivalTime)}</p>
             </div>
           </div>
 

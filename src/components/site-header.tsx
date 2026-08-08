@@ -8,6 +8,7 @@ export async function SiteHeader() {
     { href: "/", label: dict.nav.home },
     { href: "/destinations", label: dict.nav.destinations },
     { href: "/stations", label: dict.nav.stations },
+    { href: "/routes", label: dict.nav.routes },
     { href: "/news", label: dict.nav.news },
   ];
   const utilityLinks = [{ href: "/account", label: dict.nav.myAccount }];

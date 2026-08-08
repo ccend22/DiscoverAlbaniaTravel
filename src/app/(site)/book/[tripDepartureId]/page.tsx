@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTripDepartureById, isDepartureValidOnDate } from "@/db/queries/trips";
-import { formatDuration, formatPrice, formatWeekdays, formatDateLong } from "@/lib/format";
+import { formatDuration, formatPrice, formatWeekdays, formatDateLong, formatTime } from "@/lib/format";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
 import { CheckCircleIcon, ClockIcon, MapPinIcon } from "@/components/icons";
@@ -198,7 +198,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               <MapPinIcon width={16} height={16} className="mt-0.5 shrink-0 text-teal" />
               <div className="text-sm">
                 <p className="font-medium text-foreground">{trip.fromStationName}</p>
-                <p className="tabular-nums text-muted">{trip.departureTime}</p>
+                <p className="tabular-nums text-muted">{formatTime(trip.departureTime)}</p>
               </div>
             </div>
             <div className="ml-2 my-1 h-4 border-l border-dashed border-border" />
@@ -206,7 +206,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               <MapPinIcon width={16} height={16} className="mt-0.5 shrink-0 text-brand" />
               <div className="text-sm">
                 <p className="font-medium text-foreground">{trip.toStationName}</p>
-                <p className="tabular-nums text-muted">{trip.arrivalTime}</p>
+                <p className="tabular-nums text-muted">{formatTime(trip.arrivalTime)}</p>
               </div>
             </div>
 

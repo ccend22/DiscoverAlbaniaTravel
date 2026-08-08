@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Alfa_Slab_One, Inter, Merriweather, VT323 } from "next/font/google";
+import { Inter, Merriweather } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,20 +12,6 @@ const merriweather = Merriweather({
   subsets: ["latin"],
   weight: ["300", "400", "700", "900"],
   variable: "--font-merriweather",
-  display: "swap",
-});
-
-const alfaSlabOne = Alfa_Slab_One({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-alfa-slab-one",
-  display: "swap",
-});
-
-const vt323 = VT323({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-vt323",
   display: "swap",
 });
 
@@ -62,6 +48,32 @@ export const viewport: Viewport = {
   themeColor: "#002f32",
 };
 
+const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Discover Albania Transport",
+  url: SITE_URL,
+  logo: `${SITE_URL}/dat-logo.png`,
+  description: "Search intercity buses, reserve seats, request scheduled taxis, and discover destinations across Albania.",
+  email: "info@discoveralbania.al",
+  telephone: "+355696583870",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Rr. Myslym Shyri, P.24, Sh 1/4",
+    addressLocality: "Tirana",
+    addressCountry: "AL",
+  },
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Discover Albania Transport",
+  url: SITE_URL,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -70,10 +82,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${inter.variable} ${merriweather.variable} ${alfaSlabOne.variable} ${vt323.variable}`}
+      className={`h-full antialiased ${inter.variable} ${merriweather.variable}`}
       data-scroll-behavior="smooth"
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+        {children}
+      </body>
     </html>
   );
 }

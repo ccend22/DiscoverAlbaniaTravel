@@ -33,9 +33,20 @@ export function CityCombobox({
   leadingIconClassName,
 }: CityComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function openDropdown() {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setOpenDirection(spaceBelow < 260 && spaceAbove > spaceBelow ? "up" : "down");
+    }
+    setIsOpen(true);
+  }
 
   const filtered = useMemo(() => {
     const query = value.trim().toLowerCase();
@@ -75,7 +86,7 @@ export function CityCombobox({
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (!isOpen && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
-      setIsOpen(true);
+      openDropdown();
       return;
     }
     if (!isOpen) return;
@@ -112,11 +123,11 @@ export function CityCombobox({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
-          setIsOpen(true);
+          openDropdown();
           setHighlighted(0);
         }}
         onFocus={() => {
-          setIsOpen(true);
+          openDropdown();
           setHighlighted(0);
         }}
         onKeyDown={handleKeyDown}
@@ -134,7 +145,9 @@ export function CityCombobox({
         <ul
           id={`${name}-listbox`}
           role="listbox"
-          className="absolute left-0 z-50 mt-2 max-h-[min(18rem,45dvh)] w-full min-w-0 origin-top animate-fade-up overscroll-contain overflow-y-auto rounded-2xl border border-[#dce8e6] bg-white p-2 shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))]"
+          className={`absolute left-0 z-50 max-h-[min(18rem,45dvh)] w-full min-w-0 animate-fade-up overscroll-contain overflow-y-auto rounded-2xl border border-[#dce8e6] bg-white p-2 shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))] ${
+            openDirection === "up" ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top"
+          }`}
         >
           {filtered.map((option, index) => (
             <li key={option} role="none">
@@ -159,7 +172,11 @@ export function CityCombobox({
       )}
 
       {isOpen && value.trim() && filtered.length === 0 && (
-        <div className="absolute left-0 z-50 mt-2 w-full min-w-0 origin-top animate-fade-up rounded-2xl border border-[#dce8e6] bg-white p-4 text-sm text-muted shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))]">
+        <div
+          className={`absolute left-0 z-50 w-full min-w-0 animate-fade-up rounded-2xl border border-[#dce8e6] bg-white p-4 text-sm text-muted shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))] ${
+            openDirection === "up" ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top"
+          }`}
+        >
           {noMatchesLabel ?? "No matching stations. You can still search with this text."}
         </div>
       )}

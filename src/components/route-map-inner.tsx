@@ -1,38 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { useIsMobile } from "@/lib/use-is-mobile";
+import { useEffect, useMemo, useRef } from "react";
+import { importLibrary } from "@googlemaps/js-api-loader";
+import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 
 const BUS_ICON_SVG = `
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="2.5" y="5" width="19" height="12.5" rx="2.5" fill="currentColor"/>
-    <rect x="5" y="7.5" width="3.2" height="4" rx="0.6" fill="white"/>
-    <rect x="9.6" y="7.5" width="3.2" height="4" rx="0.6" fill="white"/>
-    <rect x="14.2" y="7.5" width="3.2" height="4" rx="0.6" fill="white"/>
-    <rect x="18.8" y="7.5" width="1.7" height="4" rx="0.6" fill="white"/>
-    <rect x="2.5" y="14.5" width="19" height="1.6" fill="white" fill-opacity="0.35"/>
-    <circle cx="7" cy="19" r="2" fill="#20242b" stroke="white" stroke-width="0.8"/>
-    <circle cx="17" cy="19" r="2" fill="#20242b" stroke="white" stroke-width="0.8"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+    <circle cx="15" cy="15" r="14" fill="#2563eb" stroke="white" stroke-width="2"/>
+    <rect x="8.5" y="10" width="13" height="9" rx="1.8" fill="white"/>
+    <rect x="10.3" y="12" width="2.2" height="3" rx="0.4" fill="#2563eb"/>
+    <rect x="13.3" y="12" width="2.2" height="3" rx="0.4" fill="#2563eb"/>
+    <rect x="16.3" y="12" width="2.2" height="3" rx="0.4" fill="#2563eb"/>
+    <circle cx="11.5" cy="20.5" r="1.4" fill="#1e293b"/>
+    <circle cx="18.5" cy="20.5" r="1.4" fill="#1e293b"/>
   </svg>
 `;
-
-const markerIcon = L.divIcon({
-  className: "",
-  html: `<span class="station-marker">${BUS_ICON_SVG}</span>`,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -15],
-});
+const BUS_ICON_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BUS_ICON_SVG)}`;
 
 const ROUTE_LINE_COLOR = "#2563eb";
-
-const LIGHT_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 export interface RouteSegment {
   fromName: string;
@@ -45,118 +30,127 @@ export interface RouteSegment {
   path?: [number, number][];
 }
 
-interface FitToSegmentsProps {
-  points: [number, number][];
-}
-
-function FitToSegments({ points }: FitToSegmentsProps) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.setView(points[0], 12);
-      return;
-    }
-    map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points]);
-
-  return null;
-}
-
-/**
- * Unlike Google Maps, Leaflet has no built-in "cooperative" gesture mode, and
- * this map sits inline at the top of the search results — on a phone it's
- * most of the screen, so without a gate a single-finger swipe meant to
- * scroll past it pans the map instead. Requires one explicit tap before
- * enabling drag/zoom handlers; page scroll passes through until then.
- */
-function GestureGate({ active }: { active: boolean }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const handlers = [map.dragging, map.touchZoom, map.scrollWheelZoom, map.doubleClickZoom];
-    for (const handler of handlers) {
-      if (active) handler.enable();
-      else handler.disable();
-    }
-  }, [active, map]);
-
-  return null;
-}
-
 export interface RouteMapProps {
   segments: RouteSegment[];
-  tapToInteractLabel: string;
 }
 
-export function RouteMap({ segments, tapToInteractLabel }: RouteMapProps) {
-  const isMobile = useIsMobile();
-  const [interacted, setInteracted] = useState(false);
-  const gestureActive = !isMobile || interacted;
+export function RouteMap({ segments }: RouteMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
-  const { markers, lines, points } = useMemo(() => {
+  const { markers, lines } = useMemo(() => {
     const markerMap = new Map<string, { name: string; lat: number; lng: number }>();
-    const lineList: { key: string; positions: [number, number][] }[] = [];
+    const lineList: { key: string; positions: google.maps.LatLngLiteral[] }[] = [];
 
     for (const segment of segments) {
       const fromKey = `${segment.fromLat.toFixed(5)},${segment.fromLng.toFixed(5)}`;
       const toKey = `${segment.toLat.toFixed(5)},${segment.toLng.toFixed(5)}`;
       markerMap.set(fromKey, { name: segment.fromName, lat: segment.fromLat, lng: segment.fromLng });
       markerMap.set(toKey, { name: segment.toName, lat: segment.toLat, lng: segment.toLng });
+      const rawPositions =
+        segment.path && segment.path.length > 0
+          ? segment.path
+          : ([
+              [segment.fromLat, segment.fromLng],
+              [segment.toLat, segment.toLng],
+            ] as [number, number][]);
       lineList.push({
         key: `${fromKey}-${toKey}`,
-        positions:
-          segment.path && segment.path.length > 0
-            ? segment.path
-            : [
-                [segment.fromLat, segment.fromLng],
-                [segment.toLat, segment.toLng],
-              ],
+        positions: rawPositions.map(([lat, lng]) => ({ lat, lng })),
       });
     }
 
     const uniqueMarkers = Array.from(markerMap.entries()).map(([key, value]) => ({ key, ...value }));
     const uniqueLines = Array.from(new Map(lineList.map((l) => [l.key, l])).values());
-    const allPoints: [number, number][] = uniqueLines.flatMap((l) => l.positions);
 
-    return { markers: uniqueMarkers, lines: uniqueLines, points: allPoints };
+    return { markers: uniqueMarkers, lines: uniqueLines };
   }, [segments]);
 
-  return (
-    <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border">
-      <MapContainer center={[41.15, 20.0]} zoom={8} scrollWheelZoom className="h-full w-full">
-        <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
-        {lines.map((line) => (
-          <Polyline
-            key={line.key}
-            positions={line.positions}
-            pathOptions={{ color: ROUTE_LINE_COLOR, weight: 4, opacity: 0.85 }}
-          />
-        ))}
-        {markers.map((marker) => (
-          <Marker key={marker.key} position={[marker.lat, marker.lng]} icon={markerIcon}>
-            <Popup>
-              <p className="text-sm font-medium">{marker.name}</p>
-            </Popup>
-          </Marker>
-        ))}
-        <FitToSegments points={points} />
-        <GestureGate active={gestureActive} />
-      </MapContainer>
+  useEffect(() => {
+    if (!hasGoogleMapsApiKey || !containerRef.current) return;
+    let cancelled = false;
+    const overlays: (google.maps.Polyline | google.maps.Marker)[] = [];
+    let infoWindow: google.maps.InfoWindow | null = null;
 
-      {isMobile && !interacted && (
-        <button
-          type="button"
-          onClick={() => setInteracted(true)}
-          className="animate-fade-in absolute inset-0 z-[1000] flex items-center justify-center bg-foreground/5"
-        >
-          <span className="rounded-full bg-foreground/70 px-3.5 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-sm)]">
-            {tapToInteractLabel}
-          </span>
-        </button>
-      )}
-    </div>
-  );
+    async function render() {
+      ensureGoogleMapsOptions();
+      const { Map: GoogleMap } = await importLibrary("maps");
+      await importLibrary("marker");
+      if (cancelled || !containerRef.current) return;
+
+      const map =
+        mapRef.current ??
+        new GoogleMap(containerRef.current, {
+          center: { lat: 41.15, lng: 20.0 },
+          zoom: 8,
+          gestureHandling: "cooperative",
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        });
+      mapRef.current = map;
+      infoWindow = new google.maps.InfoWindow();
+
+      const bounds = new google.maps.LatLngBounds();
+
+      for (const line of lines) {
+        const polyline = new google.maps.Polyline({
+          path: line.positions,
+          strokeColor: ROUTE_LINE_COLOR,
+          strokeWeight: 4,
+          strokeOpacity: 0.85,
+          map,
+        });
+        overlays.push(polyline);
+        line.positions.forEach((point) => bounds.extend(point));
+      }
+
+      for (const marker of markers) {
+        const position = { lat: marker.lat, lng: marker.lng };
+        const mapMarker = new google.maps.Marker({
+          position,
+          map,
+          title: marker.name,
+          icon: {
+            url: BUS_ICON_URL,
+            scaledSize: new google.maps.Size(30, 30),
+            anchor: new google.maps.Point(15, 15),
+          },
+        });
+        mapMarker.addListener("click", () => {
+          infoWindow?.setContent(`<p style="margin:0;font-size:13px;font-weight:500;">${marker.name}</p>`);
+          infoWindow?.open({ map, anchor: mapMarker });
+        });
+        overlays.push(mapMarker);
+        bounds.extend(position);
+      }
+
+      if (!bounds.isEmpty()) {
+        if (markers.length === 1) {
+          map.setCenter(bounds.getCenter());
+          map.setZoom(12);
+        } else {
+          map.fitBounds(bounds, 40);
+        }
+      }
+    }
+
+    render();
+
+    return () => {
+      cancelled = true;
+      overlays.forEach((overlay) => overlay.setMap(null));
+      infoWindow?.close();
+    };
+  }, [markers, lines]);
+
+  if (!hasGoogleMapsApiKey) {
+    return (
+      <div className="flex h-[50vh] min-h-[320px] w-full items-center justify-center rounded-lg border border-border bg-surface text-sm text-muted">
+        Map unavailable
+      </div>
+    );
+  }
+
+  return <div ref={containerRef} className="h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border" />;
 }

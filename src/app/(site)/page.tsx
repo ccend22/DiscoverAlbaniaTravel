@@ -14,6 +14,7 @@ import { getDestinationsByNames } from "@/db/queries/destinations";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
+import { slugify } from "@/lib/slug";
 
 const FEATURED_PLACE_META: Omit<FeaturedPlace, "destinationId" | "tagline">[] = [
   { name: "Tiranë", image: "/images/destinations/tirana.jpg", tone: "teal" },
@@ -41,7 +42,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ]);
   const user = userId ? await getUserById(userId) : null;
   const cityOptions = Array.from(new Set(stations.flatMap((s) => [s.city, s.name]))).sort();
-  const today = new Date().toISOString().slice(0, 10);
   const featuredPlaces: FeaturedPlace[] = FEATURED_PLACE_META.map((place) => {
     const row = featuredDestinationRows.find((r) => r.name === place.name);
     return {
@@ -91,7 +91,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Brand name, not translated content — matches the header/footer
                 wordmark treatment, which keeps "Discover Albania Transport" as
                 a fixed proper noun across locales. */}
-            <h1 className="mt-7 font-hero text-5xl font-normal uppercase leading-[0.9] tracking-[-0.035em] text-white [text-shadow:0_4px_30px_rgba(0,0,0,0.3)] sm:text-7xl lg:text-[6.5rem]">
+            <h1 className="mt-7 font-display text-5xl font-black uppercase leading-[0.9] tracking-[-0.035em] text-white [text-shadow:0_4px_30px_rgba(0,0,0,0.3)] sm:text-7xl lg:text-[6.5rem]">
               <span className="block">Discover</span>
               <span className="block">Albania Transport</span>
             </h1>
@@ -121,7 +121,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 key={label}
                 className="public-card card-lift group relative overflow-hidden px-6 py-7 text-left hover:border-teal/30"
               >
-                <span className="absolute inset-y-0 left-0 w-1.5 bg-teal" aria-hidden="true" />
                 <div className="flex items-center gap-4">
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-soft text-teal transition-transform duration-[var(--dur-base)] ease-[var(--ease-spring)] group-hover:scale-105">
                     <Icon width={20} height={20} />
@@ -156,7 +155,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               return (
                 <Link
                   key={`${route.fromCity}-${route.toCity}`}
-                  href={`/search?origin=${encodeURIComponent(route.fromCity)}&destination=${encodeURIComponent(route.toCity)}&date=${today}`}
+                  href={`/routes/${slugify(route.fromCity)}/${slugify(route.toCity)}`}
                   className="public-card group flex min-h-28 items-center justify-between p-5 transition-[border-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-teal/35"
                 >
                   <div>

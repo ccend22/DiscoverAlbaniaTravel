@@ -13,6 +13,11 @@ export function formatWeekdays(weekdays: number[], locale: Locale = "en"): strin
   return sorted.map((w) => names[w - 1]).join(", ");
 }
 
+/** Postgres `time` columns come back as "HH:MM:SS" — trim the seconds nobody needs. */
+export function formatTime(time: string): string {
+  return time.slice(0, 5);
+}
+
 export function formatPrice(price: string | number, seats: number = 1): string {
   const total = Number(price) * seats;
   return `${total.toLocaleString("en-US")} ALL`;

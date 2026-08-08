@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StationsMap, type StationSelection } from "./stations-map";
 import { ArrowRightIcon, BusIcon, MapPinIcon, SearchIcon } from "./icons";
 import type { StationLocation } from "@/db/queries/stations";
@@ -16,6 +16,8 @@ const STATION_TONE = {
   surface: "bg-[#e8f6f7]",
   accent: "text-teal",
 } as const;
+
+const STATIONS_PAGE_SIZE = 12;
 
 export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
   const se = dict.stationsExplorer;
@@ -34,6 +36,12 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
     );
   }, [stations, filter]);
 
+  const [visibleCount, setVisibleCount] = useState(STATIONS_PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(STATIONS_PAGE_SIZE);
+  }, [filteredStations]);
+  const visibleStations = filteredStations.slice(0, visibleCount);
+
   function handleViewOnMap(stationId: number) {
     selectionToken.current += 1;
     setSelection({ stationId, token: selectionToken.current });
@@ -44,20 +52,20 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
     <div className="flex flex-col gap-20">
       <section
         id="stations-map"
-        className="scroll-mt-28 overflow-hidden rounded-[2.5rem] bg-brand-deep p-2 shadow-[0_32px_80px_rgba(3,28,33,0.24)] sm:p-3"
+        className="scroll-mt-28 overflow-hidden rounded-[2.5rem] border border-[#e1e9ec] bg-white p-2 shadow-[0_18px_50px_rgba(7,52,60,0.09)] sm:p-3"
       >
-        <div className="flex flex-col gap-4 px-4 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-lime">{se.mapKicker}</p>
-            <h2 className="mt-1 font-display text-2xl font-black tracking-[-0.025em] sm:text-3xl">{se.mapTitle}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">{se.mapSubtitle}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal">{se.mapKicker}</p>
+            <h2 className="mt-1 font-display text-2xl font-black tracking-[-0.025em] text-brand-navy sm:text-3xl">{se.mapTitle}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{se.mapSubtitle}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-3 self-start rounded-full border border-white/10 bg-white/8 px-4 py-2.5">
+          <div className="flex shrink-0 items-center gap-3 self-start rounded-full border border-border bg-[#f7fafb] px-4 py-2.5">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-lime" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal opacity-60" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-teal" />
             </span>
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-white/75">
+            <span className="text-xs font-bold uppercase tracking-[0.12em] text-brand-navy/75">
               {filteredStations.length} {se.visibleStations}
             </span>
           </div>
@@ -102,7 +110,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
         </div>
 
         <div className="mt-10 grid gap-4 md:hidden">
-          {filteredStations.map((station) => {
+          {visibleStations.map((station) => {
             const tone = STATION_TONE;
             return (
               <article key={station.id} className={`rounded-[1.75rem] border border-white p-5 shadow-[0_10px_30px_rgba(7,52,60,0.08)] ${tone.surface}`}>
@@ -143,7 +151,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredStations.map((station) => {
+                {visibleStations.map((station) => {
                   const tone = STATION_TONE;
                   return (
                     <tr key={station.id} className="group border-b border-[#edf1f3] transition-colors last:border-0 hover:bg-[#f8fbfc]">
@@ -179,6 +187,16 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
             </table>
           </div>
         </div>
+
+        {visibleCount < filteredStations.length && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((count) => count + STATIONS_PAGE_SIZE)}
+            className="mt-4 flex w-full items-center justify-center rounded-2xl border border-[#e1e9ec] bg-white px-4 py-3 text-sm font-semibold text-teal shadow-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-teal hover:shadow-md"
+          >
+            {se.loadMore}
+          </button>
+        )}
 
         {filteredStations.length === 0 && (
           <div className="mt-10 flex min-h-64 flex-col items-center justify-center rounded-[2rem] border border-dashed border-[#cfdde1] bg-white px-6 text-center shadow-sm">

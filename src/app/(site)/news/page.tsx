@@ -69,9 +69,10 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
       <div className="mt-10 grid gap-5 sm:grid-cols-2">
         {posts.map((post) => {
           return (
-            <article
+            <Link
               key={post.id}
-              className="public-card card-lift border-t-4 border-t-teal p-6"
+              href={`/news/${post.id}`}
+              className="public-card card-lift group relative flex flex-col border-t-4 border-t-teal p-6"
             >
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal">
@@ -87,7 +88,11 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
               <h2 className="mt-4 font-display text-xl font-black text-brand-navy">{post.title}</h2>
               {post.subtitle && <p className="mt-1 text-sm text-muted">{post.subtitle}</p>}
               <p className="mt-2 line-clamp-3 text-sm text-foreground/90">{post.description}</p>
-            </article>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-teal">
+                {np.readMore}
+                <ArrowRightIcon width={14} height={14} className="transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1" />
+              </span>
+            </Link>
           );
         })}
 

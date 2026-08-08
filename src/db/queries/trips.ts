@@ -240,6 +240,60 @@ export async function getPopularRoutes(limit = 6): Promise<PopularRoute[]> {
   return rows.map((row) => ({ ...row, tripCount: Number(row.tripCount) }));
 }
 
+export interface RoutePairSummary {
+  fromCity: string;
+  toCity: string;
+  tripCount: number;
+  operatorCount: number;
+  minPrice: number;
+  maxPrice: number;
+  minDurationMin: number;
+  maxDurationMin: number;
+  maxDistanceKm: number;
+}
+
+/**
+ * Every distinct city-to-city itinerary served by at least one scheduled
+ * departure, with aggregated price/duration/frequency stats — the data set
+ * behind the `/routes` SEO landing pages (one per city pair, both directions
+ * kept separate since "Tiranë to Durrës" and "Durrës to Tiranë" are distinct
+ * search intents).
+ */
+export async function getAllRoutePairs(): Promise<RoutePairSummary[]> {
+  const rows = await db
+    .select({
+      fromCity: fromStation.city,
+      toCity: toStation.city,
+      tripCount: sql<number>`count(*)`,
+      operatorCount: sql<number>`count(distinct ${operators.id})`,
+      minPrice: sql<number>`min(${tripDepartures.basePrice})`,
+      maxPrice: sql<number>`max(${tripDepartures.basePrice})`,
+      minDurationMin: sql<number>`min(${tripDepartures.durationMin})`,
+      maxDurationMin: sql<number>`max(${tripDepartures.durationMin})`,
+      maxDistanceKm: sql<number>`max(${tripDepartures.distanceKm})`,
+    })
+    .from(tripDepartures)
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(operators, eq(routes.operatorId, operators.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .where(and(eq(tripDepartures.canBoard, true), sql`${fromStation.city} <> ${toStation.city}`))
+    .groupBy(fromStation.city, toStation.city)
+    .orderBy(fromStation.city, toStation.city);
+
+  return rows.map((row) => ({
+    fromCity: row.fromCity,
+    toCity: row.toCity,
+    tripCount: Number(row.tripCount),
+    operatorCount: Number(row.operatorCount),
+    minPrice: Number(row.minPrice),
+    maxPrice: Number(row.maxPrice),
+    minDurationMin: Number(row.minDurationMin),
+    maxDurationMin: Number(row.maxDurationMin),
+    maxDistanceKm: Number(row.maxDistanceKm),
+  }));
+}
+
 export interface PlatformStats {
   operatorCount: number;
   stationCount: number;

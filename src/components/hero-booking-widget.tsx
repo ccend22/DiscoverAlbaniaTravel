@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { SearchWidget } from "./search-widget";
 import { TaxiQuickForm } from "./taxi-quick-form";
 import { BusIcon, MapPinIcon } from "./icons";
@@ -29,6 +29,22 @@ export function HeroBookingWidget({
   taxiError,
 }: HeroBookingWidgetProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelHeight, setPanelHeight] = useState<number | "auto">("auto");
+
+  function handleModeChange(next: Mode) {
+    if (next === mode) return;
+    const el = panelRef.current;
+    if (el) setPanelHeight(el.offsetHeight);
+    setMode(next);
+  }
+
+  useLayoutEffect(() => {
+    const nextHeight = panelRef.current?.firstElementChild?.scrollHeight;
+    if (!nextHeight) return;
+    const frame = requestAnimationFrame(() => setPanelHeight(nextHeight));
+    return () => cancelAnimationFrame(frame);
+  }, [mode]);
 
   return (
     <div className="w-full">
@@ -44,7 +60,7 @@ export function HeroBookingWidget({
         >
           <button
             type="button"
-            onClick={() => setMode("bus")}
+            onClick={() => handleModeChange("bus")}
             aria-pressed={mode === "bus"}
             className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none ${
               mode === "bus"
@@ -57,7 +73,7 @@ export function HeroBookingWidget({
           </button>
           <button
             type="button"
-            onClick={() => setMode("taxi")}
+            onClick={() => handleModeChange("taxi")}
             aria-pressed={mode === "taxi"}
             className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none ${
               mode === "taxi"
@@ -71,17 +87,28 @@ export function HeroBookingWidget({
         </div>
       </div>
 
-      {mode === "bus" ? (
-        <SearchWidget
-          cityOptions={cityOptions}
-          originToDestinations={originToDestinations}
-          dict={dict}
-          locale={locale}
-          variant="glass"
-        />
-      ) : (
-        <TaxiQuickForm dict={dict} user={user} error={taxiError} variant="glass" />
-      )}
+      <div
+        ref={panelRef}
+        style={{ height: panelHeight }}
+        onTransitionEnd={(e) => {
+          if (e.propertyName === "height") setPanelHeight("auto");
+        }}
+        className={`transition-[height] duration-500 ease-[var(--ease-out-expo)] ${panelHeight === "auto" ? "overflow-visible" : "overflow-hidden"}`}
+      >
+        <div key={mode} className="animate-fade-in">
+          {mode === "bus" ? (
+            <SearchWidget
+              cityOptions={cityOptions}
+              originToDestinations={originToDestinations}
+              dict={dict}
+              locale={locale}
+              variant="glass"
+            />
+          ) : (
+            <TaxiQuickForm dict={dict} user={user} error={taxiError} variant="glass" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -19,3 +19,13 @@ export async function listBlogPosts(
   }
   return db.select().from(blogPosts).orderBy(desc(blogPosts.postDate)).limit(limit).offset(offset);
 }
+
+export async function getBlogPostById(id: number) {
+  const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1);
+  return post ?? null;
+}
+
+/** Every post's id + date, unpaginated — for the sitemap, not user-facing listings. */
+export async function listAllBlogPostIds(): Promise<{ id: number; postDate: Date }[]> {
+  return db.select({ id: blogPosts.id, postDate: blogPosts.postDate }).from(blogPosts).orderBy(desc(blogPosts.postDate));
+}

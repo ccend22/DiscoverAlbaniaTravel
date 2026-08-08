@@ -73,8 +73,6 @@
   --font-app-serif: var(--font-merriweather), Merriweather, Georgia, serif;
   --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --font-app-display: var(--font-merriweather), Merriweather, Georgia, serif;
-  --font-app-hero: var(--font-alfa-slab-one), "Arial Black", sans-serif;
-  --font-app-pixel: var(--font-vt323), monospace;
 
   /* Premium motion system: Apple-style decelerate/standard/spring curves. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -151,8 +149,6 @@
   --font-serif: var(--font-app-serif);
   --font-mono: var(--font-app-mono);
   --font-display: var(--font-app-display);
-  --font-hero: var(--font-app-hero);
-  --font-pixel: var(--font-app-pixel);
   --radius-sm: 0.75rem;
   --radius-md: 1rem;
   --radius-lg: 1.25rem;

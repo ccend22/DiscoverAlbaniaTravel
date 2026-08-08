@@ -4,7 +4,7 @@ import { requireUserSession } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
 import { getBookingsForUser, type BookingDetail } from "@/db/queries/bookings";
 import { listTaxiRequestsForUser } from "@/db/queries/taxi";
-import { formatCurrency, formatPrice, formatDateLong } from "@/lib/format";
+import { formatCurrency, formatPrice, formatDateLong, formatTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -34,7 +34,7 @@ function BookingRow({ booking, showCancel, dict, locale }: { booking: BookingDet
           {booking.trip.fromStationName} → {booking.trip.toStationName}
         </p>
         <p className="text-sm text-muted">
-          {formatDateLong(booking.travelDate, locale)} · {booking.trip.departureTime} ·{" "}
+          {formatDateLong(booking.travelDate, locale)} · {formatTime(booking.trip.departureTime)} ·{" "}
           {booking.seats} {booking.seats > 1 ? ap.seats : ap.seat} ·{" "}
           {formatPrice(booking.priceAtBooking, booking.seats)}
         </p>

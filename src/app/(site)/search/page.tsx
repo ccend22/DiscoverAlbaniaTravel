@@ -130,7 +130,7 @@ function LegResults({
       {outcome.results.length > 0 && (
         <>
           <div className="mb-6">
-            <RouteMap segments={segments} tapToInteractLabel={dict.routeMap.tapToInteract} />
+            <RouteMap segments={segments} />
           </div>
           <ResultsFilterPanel results={outcome.results} travelDate={date} passengers={passengers} dict={dict} locale={locale} />
         </>

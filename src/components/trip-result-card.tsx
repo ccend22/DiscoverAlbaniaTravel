@@ -1,5 +1,5 @@
 import type { TripDepartureDetail } from "@/db/queries/trips";
-import { formatDuration, formatPrice, formatWeekdays } from "@/lib/format";
+import { formatDuration, formatPrice, formatTime, formatWeekdays } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { ClockIcon, MapPinIcon, BusIcon } from "@/components/icons";
@@ -12,23 +12,25 @@ interface TripResultCardProps {
   passengers?: number;
   dict: Dictionary;
   locale: Locale;
+  isCheapest?: boolean;
+  isFastest?: boolean;
 }
 
-export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale }: TripResultCardProps) {
+export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale, isCheapest, isFastest }: TripResultCardProps) {
   const tc = dict.tripCard;
   const hasEnoughSeats = trip.freeSeats >= passengers;
   return (
-    <article className="public-card card-lift flex flex-col gap-5 p-5 hover:border-teal/30 sm:flex-row sm:items-center sm:justify-between">
+    <article className="public-card card-lift flex flex-col gap-5 p-5 hover:border-teal/30 sm:flex-row sm:items-stretch sm:justify-between">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="text-xl font-semibold tabular-nums text-foreground">
-            {trip.departureTime}
+            {formatTime(trip.departureTime)}
           </span>
           <span className="text-muted" aria-hidden="true">
             →
           </span>
           <span className="text-xl font-semibold tabular-nums text-foreground">
-            {trip.arrivalTime}
+            {formatTime(trip.arrivalTime)}
           </span>
           <span className="flex items-center gap-1 text-sm text-muted">
             <ClockIcon width={14} height={14} />
@@ -40,6 +42,16 @@ export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale 
               ? formatMessage(tc.seatsAvailableCount, { count: trip.freeSeats })
               : tc.soldOut}
           </Badge>
+          {isCheapest && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-gold-soft px-2 py-0.5 text-xs font-medium text-gold ring-1 ring-inset ring-gold/15">
+              {tc.cheapest}
+            </span>
+          )}
+          {isFastest && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-sky-soft px-2 py-0.5 text-xs font-medium text-sky ring-1 ring-inset ring-sky/15">
+              {tc.fastest}
+            </span>
+          )}
         </div>
 
         <p className="flex items-center gap-1.5 truncate text-sm text-foreground/90">
@@ -63,7 +75,7 @@ export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale 
         </p>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border pt-4 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border pt-4 sm:flex-col sm:items-end sm:justify-between sm:border-t-0 sm:pt-0.5">
         <div className="text-right">
           <span className="text-lg font-semibold text-foreground">
             {formatPrice(trip.basePrice, passengers)}

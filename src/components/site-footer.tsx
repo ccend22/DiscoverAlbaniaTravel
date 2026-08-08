@@ -47,6 +47,7 @@ export async function SiteFooter() {
           <nav className="mt-6 flex flex-col items-start gap-4 text-sm">
             <FooterLink href="/destinations">{dict.footer.destinations}</FooterLink>
             <FooterLink href="/stations">{dict.footer.stations}</FooterLink>
+            <FooterLink href="/routes">{dict.nav.routes}</FooterLink>
             <FooterLink href="/news">{dict.nav.news}</FooterLink>
           </nav>
         </div>

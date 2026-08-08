@@ -145,13 +145,17 @@ export function SearchWidget({
       className={`relative z-20 isolate overflow-visible rounded-[2rem] p-3 sm:p-4 ${CONTAINER_STYLES[variant]}`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit">
+        <div
+          role="group"
+          aria-label={sw.tripTypeAria}
+          className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit"
+        >
           <span
             className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-teal shadow-sm transition-transform duration-500 ease-[var(--ease-spring)] ${tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"}`}
             aria-hidden="true"
           />
           <button type="button" onClick={() => setTripType("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
-            <ArrowRightIcon width={14} height={14} />
+            <ArrowRightIcon width={15} height={15} />
             {sw.oneWay}
           </button>
           <button type="button" onClick={() => setTripType("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
@@ -168,7 +172,7 @@ export function SearchWidget({
 
       <div className={`relative grid gap-2 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] ${tripType === "roundtrip" ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.72fr)_minmax(190px,0.72fr)_150px_auto]" : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(210px,0.8fr)_150px_auto]"} lg:items-stretch`}>
         <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="mb-0.5 block pl-14 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
+          <span className="mb-0.5 block pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
           <CityCombobox
             name="origin"
             required
@@ -195,7 +199,7 @@ export function SearchWidget({
         </button>
 
         <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="mb-0.5 block pl-14 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
+          <span className="mb-0.5 block pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
           <CityCombobox
             name="destination"
             required

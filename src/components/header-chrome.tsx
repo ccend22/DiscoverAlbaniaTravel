@@ -56,14 +56,18 @@ function NavLink({ href, label, dark, active }: { href: string; label: string; d
 }
 
 /**
- * Every public route starts with the same dark navbar and turns solid white
- * once the visitor scrolls. Routes with their own full-bleed dark hero
- * (home, destinations, stations) let that hero show through — the header
- * stays truly transparent there. Every other route has no dark backdrop of
- * its own, so the header supplies one (a solid brand-deep fill) instead of
- * sitting invisibly over light page content.
+ * Dark is reserved for the footer. Routes with their own full-bleed photo
+ * hero (home, destinations, the routes index, and every route detail page)
+ * get a transparent header with light text/icons over that hero, turning
+ * solid white once the visitor scrolls past it. Every other route — stations
+ * included, whose hero is a light tint, not a dark photo — has no dark
+ * backdrop to blend into, so its header is just solid white from the start.
  */
-const HERO_BACKDROP_ROUTES = ["/", "/destinations", "/stations"];
+const HERO_BACKDROP_ROUTES = ["/", "/destinations", "/routes"];
+
+function hasHeroBackdropFor(pathname: string) {
+  return HERO_BACKDROP_ROUTES.includes(pathname) || pathname.startsWith("/routes/");
+}
 
 export function HeaderChrome({ primaryLinks, utilityLinks, locale, openMenuLabel }: HeaderChromeProps) {
   const pathname = usePathname();
@@ -82,17 +86,15 @@ export function HeaderChrome({ primaryLinks, utilityLinks, locale, openMenuLabel
     };
   }, [pathname]);
 
-  const dark = !scrolled;
-  const hasHeroBackdrop = HERO_BACKDROP_ROUTES.includes(pathname);
+  const hasHeroBackdrop = hasHeroBackdropFor(pathname);
+  const dark = hasHeroBackdrop && !scrolled;
 
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300 ${
-        scrolled
-          ? "border-b border-border bg-white shadow-[0_8px_30px_rgba(0,32,34,0.08)]"
-          : hasHeroBackdrop
-            ? "bg-transparent shadow-none"
-            : "bg-brand-deep shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+        dark
+          ? "bg-transparent shadow-none"
+          : "border-b border-border bg-white shadow-[0_8px_30px_rgba(0,32,34,0.08)]"
       }`}
     >
       <div className="relative mx-auto flex h-20 max-w-7xl items-center gap-6 px-4 sm:px-6 md:h-24">

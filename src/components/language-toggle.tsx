@@ -14,21 +14,27 @@ export function LanguageToggle({ locale, dark = true }: { locale: Locale; dark?:
     startTransition(() => router.refresh());
   }
 
-  const base = "flex h-9 min-w-10 items-center justify-center rounded-full px-2.5 text-xs font-bold transition-colors duration-[var(--dur-fast)]";
-  const activeClass = dark ? "bg-white text-brand-deep" : "bg-brand text-brand-foreground";
+  const base = "relative z-10 flex h-9 min-w-10 items-center justify-center rounded-full px-2.5 text-xs font-bold transition-colors duration-300";
+  const activeText = dark ? "text-brand-deep" : "text-brand-foreground";
   const inactiveClass = dark ? "text-white/65 hover:text-white" : "text-muted hover:text-foreground";
 
   return (
     <div
-      className={`inline-flex items-center gap-0.5 rounded-full p-0.5 ${dark ? "border border-white/20 bg-white/5" : "border border-border bg-surface-sunken"} ${isPending ? "opacity-60" : ""}`}
+      className={`relative inline-flex items-center gap-0.5 rounded-full p-0.5 ${dark ? "border border-white/20 bg-white/5" : "border border-border bg-surface-sunken"} ${isPending ? "opacity-60" : ""}`}
       role="group"
       aria-label="Language"
     >
+      <span
+        className={`absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-full shadow-sm transition-transform duration-300 ease-[var(--ease-spring)] ${dark ? "bg-white" : "bg-brand"} ${
+          locale === "al" ? "translate-x-full" : "translate-x-0"
+        }`}
+        aria-hidden="true"
+      />
       <button
         type="button"
         onClick={() => setLocale("en")}
         aria-pressed={locale === "en"}
-        className={`${base} ${locale === "en" ? activeClass : inactiveClass}`}
+        className={`${base} ${locale === "en" ? activeText : inactiveClass}`}
       >
         EN
       </button>
@@ -36,7 +42,7 @@ export function LanguageToggle({ locale, dark = true }: { locale: Locale; dark?:
         type="button"
         onClick={() => setLocale("al")}
         aria-pressed={locale === "al"}
-        className={`${base} ${locale === "al" ? activeClass : inactiveClass}`}
+        className={`${base} ${locale === "al" ? activeText : inactiveClass}`}
       >
         AL
       </button>
