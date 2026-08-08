@@ -4,6 +4,8 @@ import { listAllBlogPostIds } from "@/db/queries/blog";
 import { getAllRoutePairs } from "@/db/queries/trips";
 import { slugify } from "@/lib/slug";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.SITE_URL ?? "http://localhost:3000";
   const now = new Date();
