@@ -19,6 +19,7 @@ interface TripResultCardProps {
 export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale, isCheapest, isFastest }: TripResultCardProps) {
   const tc = dict.tripCard;
   const hasEnoughSeats = trip.freeSeats >= passengers;
+  const isBookable = trip.basePrice !== null;
   return (
     <article className="public-card card-lift flex flex-col gap-5 p-5 hover:border-teal/30 sm:flex-row sm:items-stretch sm:justify-between">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -77,12 +78,16 @@ export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale,
 
       <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border pt-4 sm:flex-col sm:items-end sm:justify-between sm:border-t-0 sm:pt-0.5">
         <div className="text-right">
-          <span className="text-lg font-semibold text-foreground">
-            {formatPrice(trip.basePrice, passengers)}
+          <span className={isBookable ? "text-lg font-semibold text-foreground" : "text-sm font-medium text-muted"}>
+            {formatPrice(trip.basePrice, passengers, locale)}
           </span>
-          {passengers > 1 && <p className="text-xs text-muted">{formatMessage(tc.forPassengers, { count: passengers })}</p>}
+          {isBookable && passengers > 1 && (
+            <p className="text-xs text-muted">{formatMessage(tc.forPassengers, { count: passengers })}</p>
+          )}
         </div>
-        {hasEnoughSeats ? (
+        {!isBookable ? (
+          <Button disabled>{tc.noOnlineBooking}</Button>
+        ) : hasEnoughSeats ? (
           <LinkButton href={`/book/${trip.tripDepartureId}?date=${travelDate}&seats=${passengers}`}>
             {tc.book}
           </LinkButton>

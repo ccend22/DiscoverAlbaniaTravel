@@ -5,6 +5,12 @@ import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { StationLocation } from "@/db/queries/stations";
 
+declare global {
+  interface Window {
+    gm_authFailure?: () => void;
+  }
+}
+
 const ALBANIA_CENTER: google.maps.LatLngLiteral = { lat: 41.15, lng: 20.0 };
 
 export interface StationSelection {
@@ -15,6 +21,39 @@ export interface StationSelection {
 export interface StationsMapProps {
   stations: StationLocation[];
   selection?: StationSelection | null;
+}
+
+function OpenStreetMapFallback({ stations, selection }: StationsMapProps) {
+  const selectedStation = selection ? stations.find((station) => station.id === selection.stationId) : null;
+  const lat = selectedStation ? Number(selectedStation.latitude) : null;
+  const lng = selectedStation ? Number(selectedStation.longitude) : null;
+  const bbox =
+    lat !== null && lng !== null
+      ? `${lng - 0.035},${lat - 0.022},${lng + 0.035},${lat + 0.022}`
+      : "19.15,39.55,21.15,42.75";
+  const marker = lat !== null && lng !== null ? `&marker=${lat},${lng}` : "";
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik${marker}`;
+
+  return (
+    <div className="relative h-[75vh] min-h-[480px] w-full overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#eef5f6]">
+      <iframe
+        key={src}
+        src={src}
+        title={selectedStation ? `Map showing ${selectedStation.name}` : "Map of bus stations in Albania"}
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        className="h-full w-full border-0"
+      />
+      {selectedStation && (
+        <div className="pointer-events-none absolute bottom-4 left-4 right-4 max-w-sm rounded-2xl border border-white/70 bg-white/95 px-4 py-3 shadow-[0_12px_30px_rgba(7,52,60,0.16)] backdrop-blur">
+          <p className="truncate text-sm font-bold text-brand-navy">{selectedStation.name}</p>
+          <p className="mt-0.5 truncate text-xs text-muted">
+            {selectedStation.city}{selectedStation.address ? ` · ${selectedStation.address}` : ""}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const BUS_MARKER_ICON_URL =
@@ -90,6 +129,10 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
   useEffect(() => {
     if (!hasGoogleMapsApiKey || !containerRef.current) return;
     let cancelled = false;
+    const previousAuthFailure = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      if (!cancelled) setError(true);
+    };
     ensureGoogleMapsOptions();
     importLibrary("maps")
       .then(({ Map }) => {
@@ -117,6 +160,7 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
       });
     return () => {
       cancelled = true;
+      window.gm_authFailure = previousAuthFailure;
     };
   }, []);
 
@@ -164,15 +208,11 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
   }, [selection]);
 
   if (error || !hasGoogleMapsApiKey) {
-    return (
-      <div className="flex h-[70vh] min-h-[420px] w-full items-center justify-center rounded-[1.9rem] border border-white/10 bg-[#eef5f6] text-sm font-medium text-muted">
-        Map unavailable
-      </div>
-    );
+    return <OpenStreetMapFallback stations={stations} selection={selection} />;
   }
 
   return (
-    <div className="h-[70vh] min-h-[420px] w-full overflow-hidden rounded-[1.9rem] border border-white/10">
+    <div className="h-[75vh] min-h-[480px] w-full overflow-hidden rounded-[1.9rem] border border-white/10">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );

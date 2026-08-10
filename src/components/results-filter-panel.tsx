@@ -49,20 +49,23 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
         return false;
       }
       if (selectedOperators.size > 0 && !selectedOperators.has(row.operatorName)) return false;
-      if (maxPrice !== "" && Number(row.basePrice) > maxPrice) return false;
+      // Departures with no on-file price aren't excludable by a price filter — leave them in.
+      if (maxPrice !== "" && row.basePrice !== null && Number(row.basePrice) > maxPrice) return false;
       return true;
     });
   }, [results, selectedBuckets, selectedOperators, maxPrice]);
 
   const { cheapestId, fastestId } = useMemo(() => {
     if (filtered.length < 2) return { cheapestId: null, fastestId: null };
-    let cheapest = filtered[0];
+    let cheapest: TripDepartureDetail | null = null;
     let fastest = filtered[0];
     for (const trip of filtered) {
-      if (Number(trip.basePrice) < Number(cheapest.basePrice)) cheapest = trip;
+      if (trip.basePrice !== null && (cheapest === null || Number(trip.basePrice) < Number(cheapest.basePrice))) {
+        cheapest = trip;
+      }
       if (trip.durationMin < fastest.durationMin) fastest = trip;
     }
-    return { cheapestId: cheapest.tripDepartureId, fastestId: fastest.tripDepartureId };
+    return { cheapestId: cheapest?.tripDepartureId ?? null, fastestId: fastest.tripDepartureId };
   }, [filtered]);
 
   const [visibleCount, setVisibleCount] = useState(RESULTS_PAGE_SIZE);

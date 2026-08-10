@@ -58,6 +58,26 @@ npm run db:seed
 npm run db:health
 ```
 
+## Backfill ticket prices
+
+eTransport/dpshtrr.al tracks schedules, not fares — every seeded departure starts with no price on
+file. This pulls real fares from `https://travel.gjirafa.com`, a bus-ticket booking platform that
+publishes a live price per city pair, and applies them to matching departures. Routes it doesn't
+cover are left with `base_price = NULL`, which the app shows as "no online payment available"
+instead of a fabricated price.
+
+```bash
+npm run db:export-city-pairs          # data/city_pairs.json, from the live DB
+python3 scrape_gjirafa_prices.py      # data/gjirafa_prices.json (resumable; --dry-run via --limit=N first)
+npm run db:backfill-prices -- --dry-run
+npm run db:backfill-prices
+npm run db:health
+```
+
+`db:backfill-prices` only ever touches departures still at the seed placeholder, so it's safe to
+rerun after a fresh `db:seed`, and never overwrites a price an admin or vendor has since entered by
+hand. Pass `--rate=N` to override the default EUR→ALL conversion (100).
+
 ## eTransport scraper
 
 This project opens `https://www.etransport.al/` in Chromium, captures the public JSON/API responses used by the website, crawls the public operator/agency/route/contact pages, and exports:

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatDateLong } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
-import { CalendarIcon, CloseIcon } from "./icons";
+import { CalendarIcon, CloseIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
 import { useIsMobile } from "@/lib/use-is-mobile";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
@@ -35,34 +35,6 @@ function addDays(dateStr: string, days: number): string {
 /** Monday-first weekday index (0 = Monday .. 6 = Sunday) for the 1st of the given month. */
 function firstWeekdayIndex(year: number, month: number): number {
   return (new Date(year, month - 1, 1).getDay() + 6) % 7;
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M15 18l-6-6 6-6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M9 18l6-6-6-6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 interface WheelColumnProps {
@@ -196,7 +168,7 @@ function CalendarContent({ value, min, onSelectDay, dict, compact = true }: Cale
           aria-label={dict.previousMonth}
           className={`flex ${navSize} items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft disabled:opacity-30`}
         >
-          <ChevronLeftIcon />
+          <ChevronLeftIcon width={16} height={16} />
         </button>
         <button
           type="button"
@@ -211,7 +183,7 @@ function CalendarContent({ value, min, onSelectDay, dict, compact = true }: Cale
           aria-label={dict.nextMonth}
           className={`flex ${navSize} items-center justify-center rounded text-muted transition hover:bg-brand-soft hover:text-teal active:bg-brand-soft`}
         >
-          <ChevronRightIcon />
+          <ChevronRightIcon width={16} height={16} />
         </button>
       </div>
 

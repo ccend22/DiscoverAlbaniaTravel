@@ -123,7 +123,9 @@ export const tripDepartures = pgTable(
     durationMin: numeric("duration_min", { precision: 6, scale: 1 }).notNull(),
     distanceKm: numeric("distance_km", { precision: 6, scale: 1 }).notNull(),
     weekdays: smallint("weekdays").array().notNull(),
-    basePrice: numeric("base_price", { precision: 10, scale: 2 }).notNull().default("1"),
+    // Null means no verified fare is on file yet — the app shows "no online
+    // payment available" rather than a fabricated price (see scripts/backfill-prices.ts).
+    basePrice: numeric("base_price", { precision: 10, scale: 2 }),
     plannedSeats: integer("planned_seats").notNull().default(60),
     freeSeats: integer("free_seats").notNull().default(0),
     canBoard: boolean("can_board").notNull().default(true),

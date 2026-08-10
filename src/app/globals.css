@@ -531,6 +531,9 @@ table tbody tr:hover {
 }
 
 .public-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--teal);
   font-size: 0.6875rem;
   font-weight: 800;
@@ -586,6 +589,44 @@ table tbody tr:hover {
   transform: translateY(-2px);
   background: var(--teal-hover);
   box-shadow: 0 15px 30px rgba(0, 128, 128, 0.26);
+}
+
+/* Secondary/outline pill CTA — pairs with .public-primary-action wherever a
+   page needs a lower-emphasis action beside the main one. */
+.public-secondary-action {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border-radius: 999px;
+  border: 1px solid var(--page-line);
+  background: var(--page-surface);
+  color: var(--page-ink);
+  font-weight: 700;
+  transition: transform var(--dur-fast) var(--ease-out-expo), border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.public-secondary-action:hover {
+  transform: translateY(-2px);
+  border-color: var(--teal);
+  box-shadow: var(--page-shadow);
+}
+
+/* Dark/photo-hero counterpart to .public-kicker above — same plain
+   uppercase text treatment, just the light-on-dark color pairing. No
+   pill/glass background on either variant. */
+.public-kicker-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--lime);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
 @media (max-width: 640px) {

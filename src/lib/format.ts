@@ -18,7 +18,12 @@ export function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
-export function formatPrice(price: string | number, seats: number = 1): string {
+export function formatPrice(
+  price: string | number | null,
+  seats: number = 1,
+  locale: Locale = "en"
+): string {
+  if (price === null) return getDictionary(locale).common.priceUnavailable;
   const total = Number(price) * seats;
   return `${total.toLocaleString("en-US")} ALL`;
 }

@@ -17,12 +17,12 @@ import { getUserById } from "@/db/queries/users";
 import { slugify } from "@/lib/slug";
 
 const FEATURED_PLACE_META: Omit<FeaturedPlace, "destinationId" | "tagline">[] = [
-  { name: "Tiranë", image: "/images/destinations/tirana.jpg", tone: "teal" },
-  { name: "Durrës", image: "/images/destinations/durres.jpg", tone: "sky" },
-  { name: "Sarandë", image: "/images/destinations/sarande.jpg", tone: "coral" },
-  { name: "Vlorë", image: "/images/destinations/vlore.jpg", tone: "gold" },
-  { name: "Shkodër", image: "/images/destinations/shkoder.jpg", tone: "sky" },
-  { name: "Berat", image: "/images/destinations/berat.jpg", tone: "coral" },
+  { name: "Tiranë", image: "/images/destinations/tirana.jpg" },
+  { name: "Durrës", image: "/images/destinations/durres.jpg" },
+  { name: "Sarandë", image: "/images/destinations/sarande.jpg" },
+  { name: "Vlorë", image: "/images/destinations/vlore.jpg" },
+  { name: "Shkodër", image: "/images/destinations/shkoder.jpg" },
+  { name: "Berat", image: "/images/destinations/berat.jpg" },
 ];
 
 interface HomePageProps {
@@ -83,7 +83,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         <div className="relative flex flex-1 flex-col items-center justify-start px-4 pb-20 pt-40 text-center sm:px-6 sm:pt-44 md:pt-48">
           <ScrollReveal>
-            <span className="inline-flex rounded-full border border-white/25 bg-brand-deep/70 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-lime shadow-lg backdrop-blur-md">
+            <span className="public-kicker-dark">
               {dict.home.kicker}
             </span>
           </ScrollReveal>
@@ -188,7 +188,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <h2 className="mt-4 max-w-2xl font-display text-3xl font-black tracking-[-0.035em] text-brand-navy sm:text-5xl">{dict.home.popularDestinationsTitle}</h2>
                 <p className="mt-4 text-sm leading-6 text-muted sm:text-base">{dict.home.popularDestinationsSubtitle}</p>
               </div>
-              <Link href="/destinations" className="group inline-flex min-h-12 w-fit items-center gap-2 rounded-full bg-teal px-6 text-sm font-bold text-white shadow-[0_12px_28px_rgba(0,128,128,0.2)] transition hover:-translate-y-1 hover:bg-brand-strong">
+              <Link href="/destinations" className="public-primary-action group w-fit px-6 text-sm">
                 {dict.home.browseDestinations}
                 <ArrowRightIcon width={16} height={16} className="transition-transform group-hover:translate-x-1" />
               </Link>
@@ -210,15 +210,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_center,var(--teal)_0%,transparent_68%)] opacity-30"
             aria-hidden="true"
           />
-          <CompassIcon
-            aria-hidden="true"
-            strokeWidth={1}
-            className="pointer-events-none absolute -right-6 -top-10 h-56 w-56 text-white opacity-[0.08] sm:h-72 sm:w-72"
-          />
 
           <div className="relative flex flex-col gap-8 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12 lg:p-14">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-lime">
+              <span className="public-kicker-dark">
                 <CompassIcon width={13} height={13} />
                 {dict.home.toursKicker}
               </span>

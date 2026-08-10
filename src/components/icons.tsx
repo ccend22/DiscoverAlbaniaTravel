@@ -85,6 +85,42 @@ export function ChevronDownIcon(props: IconProps) {
   );
 }
 
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+export function SwapIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M7 7h11m0 0-3.5-3.5M18 7l-3.5 3.5" />
+      <path d="M17 17H6m0 0 3.5 3.5M6 17l3.5-3.5" />
+    </svg>
+  );
+}
+
+export function RoundTripIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M17 2.5 21 6.5 17 10.5" />
+      <path d="M3 13v-1.5a5 5 0 0 1 5-5h13" />
+      <path d="M7 21.5 3 17.5 7 13.5" />
+      <path d="M21 11v1.5a5 5 0 0 1-5 5H3" />
+    </svg>
+  );
+}
+
 export function ArrowRightIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

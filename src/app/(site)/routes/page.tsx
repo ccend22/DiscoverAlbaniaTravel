@@ -20,10 +20,11 @@ export default async function RoutesPage() {
     <div className="public-page">
       <section className="relative isolate -mt-20 min-h-[560px] overflow-hidden pt-20 md:-mt-24 md:pt-24">
         <Image
-          src="/Ewyd4-ZWQAIr18F.jpg"
+          src="/images/destinations/durres.jpg"
           alt=""
           fill
           priority
+          quality={90}
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -33,7 +34,7 @@ export default async function RoutesPage() {
 
         <div className="relative mx-auto flex min-h-[480px] max-w-7xl items-center px-4 py-16 sm:px-6 lg:px-8">
           <div className="max-w-3xl animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] backdrop-blur-md text-lime">
+            <div className="public-kicker-dark">
               <BusIcon width={15} height={15} />
               {rp.kicker}
             </div>
@@ -70,6 +71,7 @@ export default async function RoutesPage() {
             clearFilterAria: rp.clearFilterAria,
             tripsPerWeek: rp.tripsPerWeek,
             priceFrom: rp.priceFrom,
+            priceUnavailable: dict.common.priceUnavailable,
             viewRoute: rp.viewRoute,
             loadMore: rp.loadMore,
             noRoutesMatch: rp.noRoutesMatch,

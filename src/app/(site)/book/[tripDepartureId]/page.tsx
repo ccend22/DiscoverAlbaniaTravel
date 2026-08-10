@@ -60,6 +60,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
   if (!trip) notFound();
 
   const dateIsValid = date ? await isDepartureValidOnDate(id, date) : false;
+  const priceUnavailable = trip.basePrice === null;
   const defaultSeats = Math.min(Math.max(Number(seats) || 1, 1), 9);
 
   const userId = await getActiveUserSessionId();
@@ -80,6 +81,10 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
             </Link>{" "}
             {bp.andChooseDate}
           </p>
+        </Alert>
+      ) : priceUnavailable ? (
+        <Alert tone="warning">
+          <p>{bp.onlineBookingUnavailable}</p>
         </Alert>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
@@ -224,7 +229,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">{bp.pricePerSeat}</span>
                 <span className="font-medium text-foreground">
-                  {formatPrice(trip.basePrice)}
+                  {formatPrice(trip.basePrice, 1, locale)}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between text-sm">
@@ -234,7 +239,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
                 <span className="font-semibold text-foreground">{bp.total}</span>
                 <span className="text-lg font-semibold text-foreground">
-                  {formatPrice(trip.basePrice, defaultSeats)}
+                  {formatPrice(trip.basePrice, defaultSeats, locale)}
                 </span>
               </div>
             </div>

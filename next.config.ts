@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   // standalone server, which keeps the production container small.
   output: "standalone",
   poweredByHeader: false,
+  // 90 is used for a handful of large, dark-gradient-overlaid photo heroes
+  // (routes, destination detail) where compression artifacts are more
+  // visible than on the default 75.
+  images: {
+    qualities: [75, 90],
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },

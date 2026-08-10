@@ -16,12 +16,16 @@ export interface CreateBookingInput {
 
 export type CreateBookingResult =
   | { ok: true; reference: string }
-  | { ok: false; error: "invalid_date" | "trip_not_found" | "sold_out" };
+  | { ok: false; error: "invalid_date" | "trip_not_found" | "sold_out" | "price_unavailable" };
 
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
   const trip = await getTripDepartureById(input.tripDepartureId);
   if (!trip) {
     return { ok: false, error: "trip_not_found" };
+  }
+
+  if (trip.basePrice === null) {
+    return { ok: false, error: "price_unavailable" };
   }
 
   const validOnDate = await isDepartureValidOnDate(input.tripDepartureId, input.travelDate);

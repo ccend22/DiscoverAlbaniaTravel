@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon } from "@/components/icons";
 
-export type FeaturedPlaceTone = "teal" | "coral" | "gold" | "sky";
-
 const CARD_LAYOUTS = [
   "col-span-2 min-h-[390px] md:col-span-7 md:row-span-2 md:min-h-[540px]",
   "col-span-2 min-h-[340px] md:col-span-5 md:row-span-2 md:min-h-[540px]",
@@ -17,7 +15,6 @@ export interface FeaturedPlace {
   name: string;
   tagline: string;
   image: string;
-  tone: FeaturedPlaceTone;
   destinationId?: number;
   description?: string;
 }

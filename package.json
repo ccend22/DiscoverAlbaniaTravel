@@ -15,7 +15,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed/index.ts",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
-    "db:health": "tsx scripts/db-health.ts"
+    "db:health": "tsx scripts/db-health.ts",
+    "db:export-city-pairs": "tsx scripts/export-city-pairs.ts",
+    "db:backfill-prices": "tsx scripts/backfill-prices.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.1",

@@ -46,7 +46,7 @@ export interface TripDepartureDetail {
   arrivalTime: string;
   durationMin: string;
   distanceKm: string;
-  basePrice: string;
+  basePrice: string | null;
   plannedSeats: number;
   freeSeats: number;
   weekdays: number[];
@@ -245,8 +245,8 @@ export interface RoutePairSummary {
   toCity: string;
   tripCount: number;
   operatorCount: number;
-  minPrice: number;
-  maxPrice: number;
+  minPrice: number | null;
+  maxPrice: number | null;
   minDurationMin: number;
   maxDurationMin: number;
   maxDistanceKm: number;
@@ -266,8 +266,8 @@ export async function getAllRoutePairs(): Promise<RoutePairSummary[]> {
       toCity: toStation.city,
       tripCount: sql<number>`count(*)`,
       operatorCount: sql<number>`count(distinct ${operators.id})`,
-      minPrice: sql<number>`min(${tripDepartures.basePrice})`,
-      maxPrice: sql<number>`max(${tripDepartures.basePrice})`,
+      minPrice: sql<number | null>`min(${tripDepartures.basePrice})`,
+      maxPrice: sql<number | null>`max(${tripDepartures.basePrice})`,
       minDurationMin: sql<number>`min(${tripDepartures.durationMin})`,
       maxDurationMin: sql<number>`max(${tripDepartures.durationMin})`,
       maxDistanceKm: sql<number>`max(${tripDepartures.distanceKm})`,
@@ -286,8 +286,8 @@ export async function getAllRoutePairs(): Promise<RoutePairSummary[]> {
     toCity: row.toCity,
     tripCount: Number(row.tripCount),
     operatorCount: Number(row.operatorCount),
-    minPrice: Number(row.minPrice),
-    maxPrice: Number(row.maxPrice),
+    minPrice: row.minPrice === null ? null : Number(row.minPrice),
+    maxPrice: row.maxPrice === null ? null : Number(row.maxPrice),
     minDurationMin: Number(row.minDurationMin),
     maxDurationMin: Number(row.maxDurationMin),
     maxDistanceKm: Number(row.maxDistanceKm),

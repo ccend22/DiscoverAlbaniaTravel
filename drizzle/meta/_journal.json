@@ -78,6 +78,13 @@
       "when": 1786098888325,
       "tag": "0010_legal_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786198973937,
+      "tag": "0011_fixed_elektra",
+      "breakpoints": true
     }
   ]
 }

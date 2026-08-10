@@ -1,7 +1,6 @@
 import { listStationLocations } from "@/db/queries/stations";
 import { StationsExplorer } from "@/components/stations-explorer";
-import { AlbaniaMapVisual } from "@/components/albania-map-visual";
-import { ArrowRightIcon, BusIcon, MapPinIcon } from "@/components/icons";
+import { BusIcon, MapPinIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
 import type { Metadata } from "next";
@@ -19,49 +18,28 @@ export default async function StationsPage() {
 
   return (
     <div className="public-page">
-      <section className="relative isolate -mt-20 min-h-[640px] overflow-hidden border-b border-[#dfe8eb] bg-[linear-gradient(180deg,#eaf5f4_0%,#f4f8f7_58%)] pt-20 md:-mt-24 md:pt-24">
-        <div className="absolute -left-32 top-8 h-80 w-80 rounded-full bg-teal/10 blur-3xl" aria-hidden="true" />
-        <div className="absolute right-[5%] top-[-8rem] h-[28rem] w-[28rem] rounded-full bg-lime/15 blur-3xl" aria-hidden="true" />
+      <section className="relative isolate -mt-20 overflow-hidden border-b border-[#dfe8eb] bg-[linear-gradient(180deg,#eaf5f4_0%,#f4f8f7_58%)] pt-20 md:-mt-24 md:pt-24">
+        <div className="pointer-events-none absolute -left-32 top-8 h-80 w-80 rounded-full bg-teal/10 blur-3xl" aria-hidden="true" />
 
-        <div className="relative mx-auto grid min-h-[560px] max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
-          <div className="relative z-10 max-w-3xl animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-teal shadow-sm">
-              <MapPinIcon width={15} height={15} />
-              {sp.kicker}
-            </div>
-            <h1 className="mt-6 max-w-3xl font-display text-5xl font-black leading-[0.95] tracking-[-0.05em] text-brand-navy sm:text-6xl lg:text-7xl">
-              {sp.heroTitle}
-            </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg sm:leading-8">
-              {formatMessage(sp.subtitleCount, { count: stations.length })}
-            </p>
-
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <a
-                href="#stations-map"
-                className="public-primary-action group h-14 px-6 text-sm"
-              >
-                {sp.exploreMap}
-                <ArrowRightIcon width={16} height={16} className="transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
-              <div className="flex h-14 items-center gap-3 rounded-full border border-border bg-white px-5 shadow-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lime text-lime-foreground">
-                  <BusIcon width={16} height={16} />
-                </span>
-                <span className="text-sm font-bold text-brand-navy">{cityCount} {sp.citiesConnected}</span>
-              </div>
-            </div>
+        <div className="relative mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 sm:py-16 lg:px-8">
+          <div className="public-kicker mx-auto w-fit animate-fade-up">
+            <MapPinIcon width={15} height={15} />
+            {sp.kicker}
           </div>
-
-          <div className="relative hidden h-[500px] items-center justify-center lg:flex" aria-hidden="true">
-            <div className="absolute h-[410px] w-[410px] rounded-full border border-teal/10 bg-white/60" />
-            <div className="absolute h-[330px] w-[330px] rounded-full border border-lime/25" />
-            <AlbaniaMapVisual className="relative h-[470px] w-auto text-teal drop-shadow-[0_24px_36px_rgba(0,128,128,0.18)]" />
+          <h1 className="mx-auto mt-6 max-w-2xl font-display text-4xl font-black leading-[0.98] tracking-[-0.04em] text-brand-navy sm:text-6xl">
+            {sp.heroTitle}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-muted sm:text-lg">
+            {formatMessage(sp.subtitleCount, { count: stations.length })}
+          </p>
+          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-xs font-bold text-brand-navy shadow-sm">
+            <BusIcon width={14} height={14} className="text-teal" />
+            {cityCount} {sp.citiesConnected}
           </div>
         </div>
       </section>
 
-      <section className="relative z-10 mx-auto -mt-10 max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8">
         <StationsExplorer stations={stations} dict={dict} />
       </section>
     </div>

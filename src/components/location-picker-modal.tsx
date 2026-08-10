@@ -215,7 +215,7 @@ export function LocationPickerModal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="animate-fade-up relative flex h-[min(640px,90dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-lg)]"
+        className="animate-fade-up relative flex h-[min(640px,90dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-lg)]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
           <h2 className="font-display text-base font-bold text-foreground">{title}</h2>
@@ -272,7 +272,7 @@ export function LocationPickerModal({
             type="button"
             onClick={handleConfirm}
             disabled={!picked || resolving}
-            className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-brand px-6 py-2.5 font-semibold text-brand-foreground shadow-[var(--shadow-xs)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-brand-strong hover:shadow-[var(--shadow-md)] active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-teal px-6 font-semibold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {resolving ? resolvingLabel : confirmLabel}
           </button>

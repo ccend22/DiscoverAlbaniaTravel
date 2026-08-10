@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { CityCombobox } from "./city-combobox";
-import { ArrowRightIcon, DestinationIcon, SearchIcon, StartPointIcon } from "./icons";
+import { ArrowRightIcon, DestinationIcon, RoundTripIcon, SearchIcon, StartPointIcon, SwapIcon } from "./icons";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
@@ -45,26 +45,6 @@ function getDestinationsForOrigin(
     (candidate) => candidate.toLowerCase() === key
   );
   return matchedKey ? originToDestinations[matchedKey] : null;
-}
-
-function RoundTripIcon(props: { width?: number; height?: number; className?: string }) {
-  return (
-    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M17 2.5 21 6.5 17 10.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 13v-1.5a5 5 0 0 1 5-5h13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 21.5 3 17.5 7 13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 11v1.5a5 5 0 0 1-5 5H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function SwapIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 7h11m0 0-3.5-3.5M18 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M17 17H6m0 0 3.5 3.5M6 17l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 export function SearchWidget({
@@ -159,7 +139,7 @@ export function SearchWidget({
             {sw.oneWay}
           </button>
           <button type="button" onClick={() => setTripType("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
-            <RoundTripIcon />
+            <RoundTripIcon width={15} height={15} />
             {sw.roundTrip}
           </button>
           <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
@@ -195,7 +175,7 @@ export function SearchWidget({
           style={{ transform: `rotate(${swapRotation}deg)` }}
           className="relative z-50 mx-auto flex h-10 w-10 shrink-0 items-center justify-center self-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white xl:-mx-5 [&_svg]:rotate-90"
         >
-          <SwapIcon />
+          <SwapIcon width={16} height={16} />
         </button>
 
         <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>

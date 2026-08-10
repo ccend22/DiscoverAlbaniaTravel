@@ -31,7 +31,9 @@ export async function createBookingAction(formData: FormData) {
       ? "This departure doesn't run on the selected date."
       : result.error === "sold_out"
         ? "There are not enough seats available for this date."
-        : "This departure could not be found.";
+        : result.error === "price_unavailable"
+          ? "Online booking isn't available for this route yet."
+          : "This departure could not be found.";
     redirect(
       `/book/${parsed.data.tripDepartureId}?date=${parsed.data.travelDate}&error=${encodeURIComponent(message)}`
     );

@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { MapPinIcon } from "./icons";
+import { createPortal } from "react-dom";
+import { MapPinIcon, SearchIcon, CloseIcon } from "./icons";
+import { useIsMobile } from "@/lib/use-is-mobile";
+import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { tapToDismiss } from "@/lib/tap-to-dismiss";
+import { normalizeSearchText } from "@/lib/search-normalize";
 
 interface CityComboboxProps {
   name: string;
@@ -16,6 +21,52 @@ interface CityComboboxProps {
   noMatchesLabel?: string;
   leadingIcon?: ReactNode;
   leadingIconClassName?: string;
+}
+
+interface OptionListProps {
+  options: string[];
+  highlighted: number;
+  rowHeightClassName: string;
+  onSelect: (option: string) => void;
+  onHover: (index: number) => void;
+  idPrefix: string;
+}
+
+function OptionList({ options, highlighted, rowHeightClassName, onSelect, onHover, idPrefix }: OptionListProps) {
+  return (
+    <>
+      {options.map((option, index) => (
+        <li key={option} role="none">
+          <button
+            id={`${idPrefix}-option-${index}`}
+            role="option"
+            aria-selected={index === highlighted}
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onSelect(option)}
+            onMouseEnter={() => onHover(index)}
+            className={`flex w-full items-center gap-2.5 rounded-xl px-3 text-left text-[15px] transition-colors duration-[var(--dur-fast)] active:bg-teal-soft ${rowHeightClassName} ${
+              index === highlighted ? "bg-teal-soft text-teal ring-1 ring-inset ring-teal/15" : "text-foreground hover:bg-surface-sunken"
+            }`}
+          >
+            <MapPinIcon width={14} height={14} className="shrink-0 opacity-50" />
+            <span className="truncate">{option}</span>
+          </button>
+        </li>
+      ))}
+    </>
+  );
+}
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2.5 px-4 py-8 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken text-muted">
+        <SearchIcon width={16} height={16} />
+      </span>
+      <p className="max-w-[16rem] text-sm leading-6 text-muted">{label}</p>
+    </div>
+  );
 }
 
 export function CityCombobox({
@@ -34,50 +85,107 @@ export function CityCombobox({
 }: CityComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
+  const [panelPos, setPanelPos] = useState<{ top?: number; bottom?: number; left: number; width: number } | null>(null);
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sheetInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
+  const sheetMode = isOpen && isMobile;
+
+  useBodyScrollLock(sheetMode);
+
+  // The desktop panel is portalled to <body> (see below) and positioned in
+  // viewport coordinates, so it can render on top of ancestors that clip
+  // overflow — e.g. the homepage hero widget's height-transition wrapper —
+  // instead of being cropped by them.
+  function updatePanelPosition() {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const direction = spaceBelow < 260 && spaceAbove > spaceBelow ? "up" : "down";
+    setOpenDirection(direction);
+    setPanelPos(
+      direction === "up"
+        ? { bottom: window.innerHeight - rect.top + 8, left: rect.left, width: rect.width }
+        : { top: rect.bottom + 8, left: rect.left, width: rect.width }
+    );
+  }
 
   function openDropdown() {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (rect) {
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      setOpenDirection(spaceBelow < 260 && spaceAbove > spaceBelow ? "up" : "down");
-    }
+    updatePanelPosition();
     setIsOpen(true);
   }
 
+  useEffect(() => {
+    if (!isOpen || sheetMode) return;
+    function handleReposition() {
+      updatePanelPosition();
+    }
+    window.addEventListener("scroll", handleReposition, { capture: true, passive: true });
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [isOpen, sheetMode]);
+
   const filtered = useMemo(() => {
-    const query = value.trim().toLowerCase();
+    const query = normalizeSearchText(value);
     if (!query) return options;
-    return options.filter((option) => option.toLowerCase().includes(query));
+    return options.filter((option) => normalizeSearchText(option).includes(query));
   }, [value, options]);
 
   const hasExactOption = useMemo(
-    () => options.some((option) => option.toLowerCase() === value.trim().toLowerCase()),
+    () => options.some((option) => normalizeSearchText(option) === normalizeSearchText(value)),
     [options, value]
   );
 
+  // Finalized once the field is no longer being actively edited (dropdown
+  // closed) rather than on every keystroke, so native constraint-validation
+  // state isn't churned while the user is still typing.
   useEffect(() => {
-    if (!inputRef.current) return;
+    if (!inputRef.current || isOpen) return;
     inputRef.current.setCustomValidity(
       requireOption && value.trim() && !hasExactOption
         ? "Select an available place from the list."
         : ""
     );
-  }, [hasExactOption, requireOption, value]);
+  }, [hasExactOption, requireOption, value, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || sheetMode) return;
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // The panel is portalled to <body>, so it's outside containerRef in
+      // the DOM even while open — check it separately via its own id so a
+      // click on an option isn't mistaken for an outside click.
+      const panel = document.getElementById(`${name}-desktop-panel`);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        !(panel && panel.contains(target))
+      ) {
         setIsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, sheetMode, name]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (sheetMode) sheetInputRef.current?.focus();
+  }, [sheetMode]);
 
   function selectOption(option: string) {
     onChange(option);
@@ -107,6 +215,9 @@ export function CityCombobox({
     }
   }
 
+  const showResultCount = value.trim().length > 0 && filtered.length > 0;
+  const emptyLabel = noMatchesLabel ?? "No matching places. You can still search with this text.";
+
   return (
     <div className={`relative ${className ?? ""}`} ref={containerRef}>
       {leadingIcon && (
@@ -120,6 +231,7 @@ export function CityCombobox({
         name={name}
         required={required}
         autoComplete="off"
+        readOnly={isMobile}
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
@@ -130,6 +242,18 @@ export function CityCombobox({
           openDropdown();
           setHighlighted(0);
         }}
+        onBlur={(e) => {
+          // On open, focus programmatically moves from this field to the
+          // mobile sheet's own search input — a legitimate internal shift,
+          // not the user leaving the component, so only close when focus
+          // actually lands outside it (Tab away, click elsewhere without a
+          // mousedown for the outside-click handler to catch). The sheet is
+          // portalled to <body> for correct fixed-position behavior, so it's
+          // no longer a DOM descendant of containerRef — check it directly.
+          const related = e.relatedTarget as Node | null;
+          if (containerRef.current?.contains(related) || related === sheetInputRef.current) return;
+          setIsOpen(false);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         role="combobox"
@@ -137,49 +261,117 @@ export function CityCombobox({
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
         aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
-        className={`min-h-11 w-full rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
+        className={`min-h-11 w-full cursor-pointer rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
         suppressHydrationWarning
       />
 
-      {isOpen && filtered.length > 0 && (
-        <ul
-          id={`${name}-listbox`}
-          role="listbox"
-          className={`absolute left-0 z-50 max-h-[min(18rem,45dvh)] w-full min-w-0 animate-fade-up overscroll-contain overflow-y-auto rounded-2xl border border-[#dce8e6] bg-white p-2 shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))] ${
-            openDirection === "up" ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top"
-          }`}
-        >
-          {filtered.map((option, index) => (
-            <li key={option} role="none">
-              <button
-                id={`${name}-option-${index}`}
-                role="option"
-                aria-selected={index === highlighted}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => selectOption(option)}
-                onMouseEnter={() => setHighlighted(index)}
-                className={`flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors duration-[var(--dur-fast)] active:bg-teal-soft sm:min-h-10 sm:py-2 sm:text-sm ${
-                  index === highlighted ? "bg-teal-soft text-teal" : "text-foreground hover:bg-surface-sunken"
-                }`}
-              >
-                <MapPinIcon width={15} height={15} className="shrink-0 opacity-60" />
-                <span className="truncate">{option}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {isOpen &&
+        !sheetMode &&
+        panelPos &&
+        createPortal(
+          <div
+            id={`${name}-desktop-panel`}
+            className={`fixed z-50 animate-fade-up rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow-strong)] ${
+              openDirection === "up" ? "origin-bottom" : "origin-top"
+            }`}
+            style={{ top: panelPos.top, bottom: panelPos.bottom, left: panelPos.left, width: panelPos.width }}
+          >
+            {filtered.length > 0 ? (
+              <>
+                {showResultCount && (
+                  <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
+                    {filtered.length} {filtered.length === 1 ? "match" : "matches"}
+                  </p>
+                )}
+                <ul
+                  id={`${name}-listbox`}
+                  role="listbox"
+                  className={`overscroll-contain overflow-y-auto rounded-2xl p-2 ${showResultCount ? "max-h-[min(16rem,42dvh)] pt-0" : "max-h-[min(18rem,45dvh)]"}`}
+                >
+                  <OptionList
+                    options={filtered}
+                    highlighted={highlighted}
+                    rowHeightClassName="min-h-11 py-2"
+                    onSelect={selectOption}
+                    onHover={setHighlighted}
+                    idPrefix={name}
+                  />
+                </ul>
+              </>
+            ) : (
+              <EmptyState label={emptyLabel} />
+            )}
+          </div>,
+          document.body
+        )}
 
-      {isOpen && value.trim() && filtered.length === 0 && (
-        <div
-          className={`absolute left-0 z-50 w-full min-w-0 animate-fade-up rounded-2xl border border-[#dce8e6] bg-white p-4 text-sm text-muted shadow-[var(--page-shadow)] sm:w-[min(22rem,calc(100vw-2rem))] ${
-            openDirection === "up" ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top"
-          }`}
-        >
-          {noMatchesLabel ?? "No matching stations. You can still search with this text."}
-        </div>
-      )}
+      {sheetMode &&
+        createPortal(
+          <>
+            <div
+              className="animate-sheet-fade touch-manipulation fixed inset-0 z-40 bg-foreground/40"
+              aria-hidden="true"
+              {...tapToDismiss(() => setIsOpen(false))}
+            />
+            <div
+              id={`${name}-listbox-sheet`}
+              role="dialog"
+              aria-modal="true"
+              className="animate-sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-surface shadow-[var(--shadow-lg)]"
+              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            >
+              <div className="flex shrink-0 justify-center pb-1 pt-2.5" aria-hidden="true">
+                <span className="h-1 w-10 rounded-full bg-border" />
+              </div>
+              <div className="flex shrink-0 items-center justify-between px-4 pb-3">
+                <p className="truncate text-sm font-semibold text-foreground">{placeholder ?? "Search"}</p>
+                <button
+                  type="button"
+                  {...tapToDismiss(() => setIsOpen(false))}
+                  aria-label="Close"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors active:bg-surface-sunken"
+                >
+                  <CloseIcon width={18} height={18} />
+                </button>
+              </div>
+              <div className="shrink-0 px-4 pb-3">
+                <div className="relative">
+                  <SearchIcon width={16} height={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+                  <input
+                    ref={sheetInputRef}
+                    type="text"
+                    inputMode="search"
+                    autoComplete="off"
+                    value={value}
+                    onChange={(e) => {
+                      onChange(e.target.value);
+                      setHighlighted(0);
+                    }}
+                    placeholder={placeholder}
+                    className="min-h-12 w-full rounded-2xl border border-border bg-surface-sunken pl-11 pr-4 text-base outline-none transition-colors duration-[var(--dur-fast)] focus:border-teal focus:bg-surface"
+                  />
+                </div>
+              </div>
+              <div className="overlay-scroll overflow-y-auto px-2 pb-2">
+                {filtered.length > 0 ? (
+                  <ul id={`${name}-listbox`} role="listbox" className="p-2 pt-0">
+                    <OptionList
+                      options={filtered}
+                      highlighted={highlighted}
+                      rowHeightClassName="min-h-12 py-2.5"
+                      onSelect={selectOption}
+                      onHover={setHighlighted}
+                      idPrefix={name}
+                    />
+                  </ul>
+                ) : (
+                  <EmptyState label={emptyLabel} />
+                )}
+              </div>
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 }

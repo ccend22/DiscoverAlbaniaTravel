@@ -23,7 +23,7 @@ export interface VendorDeparture {
   departureTime: string;
   arrivalTime: string;
   weekdays: number[];
-  basePrice: string;
+  basePrice: string | null;
   plannedSeats: number;
   freeSeats: number;
   canBoard: boolean;
@@ -153,7 +153,8 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                     min="0"
                     step="0.01"
                     required
-                    defaultValue={departure.basePrice}
+                    placeholder="No price on file"
+                    defaultValue={departure.basePrice ?? ""}
                     className="w-24 rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-teal"
                   />
                 </td>

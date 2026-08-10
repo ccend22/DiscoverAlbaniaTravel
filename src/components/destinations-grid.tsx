@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon, MapPinIcon } from "./icons";
+import { getDestinationImage } from "@/lib/destination-images";
 
 interface DestinationRow {
   id: number;
@@ -16,13 +18,6 @@ interface DestinationsGridProps {
   loadMoreLabel: string;
 }
 
-const CARD_TONE = {
-  surface: "bg-[#e8f6f7]",
-  icon: "bg-teal text-white",
-  link: "text-teal",
-  glow: "bg-teal/20",
-} as const;
-
 const DESTINATIONS_PAGE_SIZE = 9;
 
 export function DestinationsGrid({ destinations, fallbackDescription, loadMoreLabel }: DestinationsGridProps) {
@@ -32,40 +27,58 @@ export function DestinationsGrid({ destinations, fallbackDescription, loadMoreLa
   return (
     <>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((destination) => (
-          <Link
-            key={destination.id}
-            href={`/destinations/${destination.id}`}
-            className="public-card group relative flex min-h-56 overflow-hidden p-5 transition-transform duration-300 ease-[var(--ease-out-expo)] will-change-transform hover:-translate-y-1"
-          >
-            <div className={`absolute inset-0 ${CARD_TONE.surface} opacity-65`} />
-            <div className={`absolute -right-12 -top-16 h-40 w-40 rounded-full ${CARD_TONE.glow} blur-2xl`} />
-
-            <div className="relative flex w-full flex-col">
-              <div className="flex items-start justify-between gap-3">
-                <span className={`flex h-11 w-11 items-center justify-center rounded-full shadow-sm transition-transform duration-300 ease-[var(--ease-spring)] group-hover:scale-110 ${CARD_TONE.icon}`}>
-                  <MapPinIcon width={18} height={18} />
-                </span>
-                <ArrowRightIcon width={18} height={18} className={`mt-2 shrink-0 transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover:translate-x-1 ${CARD_TONE.link}`} />
+        {visible.map((destination) => {
+          const image = getDestinationImage(destination.name);
+          return (
+            <Link
+              key={destination.id}
+              href={`/destinations/${destination.id}`}
+              className="public-card card-lift group flex flex-col overflow-hidden"
+            >
+              <div className="relative h-40 shrink-0 overflow-hidden">
+                {image ? (
+                  <>
+                    <Image
+                      src={image}
+                      alt={destination.name}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:scale-[1.06]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                  </>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-soft to-white">
+                    <MapPinIcon width={26} height={26} className="text-teal/35" />
+                  </div>
+                )}
               </div>
-              <div className="mt-auto pt-8">
-                <h3 className="font-display text-2xl font-black tracking-[-0.025em] text-brand-navy">
-                  {destination.name}
-                </h3>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
+
+              <div className="flex flex-1 flex-col p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-display text-xl font-black tracking-[-0.02em] text-brand-navy">
+                    {destination.name}
+                  </h3>
+                  <ArrowRightIcon
+                    width={16}
+                    height={16}
+                    className="mt-1.5 shrink-0 text-teal opacity-60 transition-all duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1 group-hover:opacity-100"
+                  />
+                </div>
+                <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-muted">
                   {destination.description || fallbackDescription}
                 </p>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {visibleCount < destinations.length && (
         <button
           type="button"
           onClick={() => setVisibleCount((count) => count + DESTINATIONS_PAGE_SIZE)}
-          className="public-card mt-4 flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-teal transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-teal hover:shadow-md"
+          className="public-secondary-action mt-4 w-full px-6 text-sm"
         >
           {loadMoreLabel}
         </button>

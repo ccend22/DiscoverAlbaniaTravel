@@ -1,64 +1,177 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { StationsMap, type StationSelection } from "./stations-map";
-import { ArrowRightIcon, BusIcon, MapPinIcon, SearchIcon } from "./icons";
+import { CityCombobox } from "./city-combobox";
+import { LocateIcon, SearchIcon } from "./icons";
 import type { StationLocation } from "@/db/queries/stations";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
+import { normalizeSearchText } from "@/lib/search-normalize";
 
 interface StationsExplorerProps {
   stations: StationLocation[];
   dict: Dictionary;
 }
 
-const STATION_TONE = {
-  badge: "bg-teal text-white",
-  surface: "bg-[#e8f6f7]",
-  accent: "text-teal",
-} as const;
-
-const STATIONS_PAGE_SIZE = 12;
+/** Great-circle distance in km — good enough to rank "nearest station" without a geocoding round trip. */
+function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
   const se = dict.stationsExplorer;
   const [selection, setSelection] = useState<StationSelection | null>(null);
-  const [filter, setFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [activeCity, setActiveCity] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locateFailed, setLocateFailed] = useState(false);
+  const [nearestName, setNearestName] = useState<string | null>(null);
   const selectionToken = useRef(0);
 
-  const filteredStations = useMemo(() => {
-    const query = filter.trim().toLowerCase();
-    if (!query) return stations;
-    return stations.filter((station) =>
-      [station.name, station.city, station.address ?? "", station.code]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [stations, filter]);
+  const cities = useMemo(() => Array.from(new Set(stations.map((s) => s.city))).sort(), [stations]);
 
-  const [visibleCount, setVisibleCount] = useState(STATIONS_PAGE_SIZE);
-  useEffect(() => {
-    setVisibleCount(STATIONS_PAGE_SIZE);
-  }, [filteredStations]);
-  const visibleStations = filteredStations.slice(0, visibleCount);
+  const searchOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          stations.flatMap((s) => [s.name, s.city, s.address, s.code].filter((value): value is string => Boolean(value)))
+        )
+      ).sort(),
+    [stations]
+  );
 
-  function handleViewOnMap(stationId: number) {
+  const filteredStations = useMemo(
+    () => (activeCity ? stations.filter((s) => s.city === activeCity) : stations),
+    [stations, activeCity]
+  );
+
+  function focusStation(station: StationLocation) {
     selectionToken.current += 1;
-    setSelection({ stationId, token: selectionToken.current });
-    document.getElementById("stations-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setSelection({ stationId: station.id, token: selectionToken.current });
+  }
+
+  function handleSearchChange(value: string) {
+    setQuery(value);
+    setNearestName(null);
+    const normalizedValue = normalizeSearchText(value);
+    const exactStation = stations.find((s) =>
+      [s.name, s.address, s.code].some((field) => field && normalizeSearchText(field) === normalizedValue)
+    );
+    if (exactStation) {
+      setActiveCity(null);
+      focusStation(exactStation);
+      return;
+    }
+    const cityMatch = cities.find((c) => normalizeSearchText(c) === normalizedValue);
+    if (cityMatch) {
+      setActiveCity(cityMatch);
+      const firstStation = stations.find((station) => station.city === cityMatch);
+      if (firstStation) focusStation(firstStation);
+      return;
+    }
+    setActiveCity(null);
+  }
+
+  function handleLocate() {
+    setLocateFailed(false);
+    if (!navigator.geolocation) {
+      setLocateFailed(true);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating(false);
+        const { latitude, longitude } = position.coords;
+        let nearest: StationLocation | null = null;
+        let nearestDistance = Infinity;
+        for (const station of stations) {
+          const d = distanceKm(latitude, longitude, Number(station.latitude), Number(station.longitude));
+          if (d < nearestDistance) {
+            nearestDistance = d;
+            nearest = station;
+          }
+        }
+        if (nearest) {
+          setQuery("");
+          setActiveCity(null);
+          setNearestName(nearest.name);
+          focusStation(nearest);
+        }
+      },
+      () => {
+        setLocating(false);
+        setLocateFailed(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   return (
-    <div className="flex flex-col gap-20">
+    <div className="flex flex-col gap-5">
+      <div className="relative overflow-hidden rounded-[2rem] border border-[#dce8e7] bg-[linear-gradient(135deg,#ffffff_0%,#f5faf9_100%)] px-5 py-6 shadow-[0_18px_50px_rgba(7,52,60,0.07)] sm:px-7 sm:py-7 lg:flex lg:items-end lg:justify-between lg:gap-12">
+        <div className="relative max-w-2xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal">{se.planKicker}</p>
+          <h2 className="mt-2 font-display text-3xl font-black tracking-[-0.035em] text-brand-navy sm:text-4xl">
+            {se.planTitle}
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted sm:text-base sm:leading-7">{se.planDescription}</p>
+        </div>
+        <div className="mt-5 flex shrink-0 items-center gap-3 lg:mt-0">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.22)]">
+            <SearchIcon width={18} height={18} />
+          </span>
+          <div>
+            <p className="text-lg font-black tracking-[-0.02em] text-brand-navy">{stations.length}</p>
+            <p className="text-xs font-semibold text-muted">{se.stationCountLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <CityCombobox
+          name="station-search"
+          value={query}
+          onChange={handleSearchChange}
+          options={searchOptions}
+          placeholder={se.searchPlaceholder}
+          noMatchesLabel={se.noMatchesLabel}
+          leadingIcon={<SearchIcon width={16} height={16} />}
+          leadingIconClassName="text-teal"
+          className="flex-1"
+          inputClassName="min-h-14 rounded-full border-[#dbe7ea] bg-white pl-12 pr-4 text-sm font-medium text-brand-navy shadow-[0_10px_30px_rgba(7,52,60,0.08)] hover:border-teal/35 focus:border-teal"
+        />
+        <button
+          type="button"
+          onClick={handleLocate}
+          disabled={locating}
+          className="public-secondary-action min-h-14 shrink-0 px-6 text-sm disabled:opacity-60"
+        >
+          <LocateIcon width={16} height={16} className={locating ? "animate-pulse" : ""} />
+          {locating ? se.locating : se.locateMe}
+        </button>
+      </div>
+
+      {(locateFailed || nearestName) && (
+        <p className={`-mt-1 text-sm ${locateFailed ? "text-red" : "text-muted"}`}>
+          {locateFailed ? se.locateError : formatMessage(se.nearestStation, { name: nearestName ?? "" })}
+        </p>
+      )}
+
       <section
         id="stations-map"
-        className="scroll-mt-28 overflow-hidden rounded-[2.5rem] border border-[#e1e9ec] bg-white p-2 shadow-[0_18px_50px_rgba(7,52,60,0.09)] sm:p-3"
+        className="scroll-mt-28 overflow-hidden rounded-[2rem] border border-[#e1e9ec] bg-white p-2 shadow-[0_18px_50px_rgba(7,52,60,0.09)] sm:p-3"
       >
-        <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-3 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal">{se.mapKicker}</p>
             <h2 className="mt-1 font-display text-2xl font-black tracking-[-0.025em] text-brand-navy sm:text-3xl">{se.mapTitle}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{se.mapSubtitle}</p>
           </div>
           <div className="flex shrink-0 items-center gap-3 self-start rounded-full border border-border bg-[#f7fafb] px-4 py-2.5">
             <span className="relative flex h-2.5 w-2.5">
@@ -71,141 +184,6 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
           </div>
         </div>
         <StationsMap stations={filteredStations} selection={selection} />
-      </section>
-
-      <section>
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-coral">{se.directoryKicker}</p>
-            <h2 className="mt-3 font-display text-3xl font-black tracking-[-0.03em] text-brand-navy sm:text-5xl">{se.allStations}</h2>
-            <p className="mt-3 leading-7 text-muted">{se.directorySubtitle}</p>
-          </div>
-
-          <div className="w-full lg:w-auto">
-            <div className="mb-2 flex items-center justify-between px-1 text-xs font-semibold text-muted">
-              <span>{se.searchLabel}</span>
-              <span className="tabular-nums">{filteredStations.length} / {stations.length}</span>
-            </div>
-            <div className="relative">
-              <SearchIcon width={18} height={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-teal" />
-              <input
-                type="text"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder={se.filterPlaceholder}
-                className="min-h-14 w-full rounded-full border border-[#dbe7ea] bg-white py-3 pl-12 pr-12 text-sm font-medium text-brand-navy shadow-[0_10px_30px_rgba(7,52,60,0.08)] outline-none transition-all hover:border-teal/35 focus:border-teal focus:shadow-[0_0_0_4px_rgba(0,128,128,0.1),0_14px_35px_rgba(7,52,60,0.1)] lg:w-96"
-              />
-              {filter && (
-                <button
-                  type="button"
-                  onClick={() => setFilter("")}
-                  aria-label={se.clearFilterAria}
-                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#f1f5f7] text-lg text-muted transition-colors hover:bg-teal-soft hover:text-teal"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-10 grid gap-4 md:hidden">
-          {visibleStations.map((station) => {
-            const tone = STATION_TONE;
-            return (
-              <article key={station.id} className={`rounded-[1.75rem] border border-white p-5 shadow-[0_10px_30px_rgba(7,52,60,0.08)] ${tone.surface}`}>
-                <div className="flex items-start gap-4">
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-sm ${tone.badge}`}>
-                    <MapPinIcon width={18} height={18} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-display text-xl font-black tracking-[-0.02em] text-brand-navy">{station.name}</h3>
-                    <p className="mt-1 text-sm font-semibold text-foreground/70">{station.city}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted">{station.address ?? "Address unavailable"}</p>
-                  </div>
-                  <span className="rounded-full bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-muted shadow-sm">{station.code}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleViewOnMap(station.id)}
-                  className={`mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-bold uppercase tracking-[0.08em] shadow-sm transition-all active:scale-[0.98] ${tone.accent}`}
-                >
-                  {se.viewOnMap}
-                  <ArrowRightIcon width={14} height={14} />
-                </button>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className="mt-10 hidden overflow-hidden rounded-[2rem] border border-[#e1e9ec] bg-white shadow-[0_18px_50px_rgba(7,52,60,0.09)] md:block">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-[#e6edef] bg-[#f7fafb] text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
-                  <th className="px-6 py-4">{se.columnStation}</th>
-                  <th className="px-5 py-4">{se.columnCity}</th>
-                  <th className="px-5 py-4">{se.columnAddress}</th>
-                  <th className="px-5 py-4">{se.columnCode}</th>
-                  <th className="px-6 py-4"><span className="sr-only">{se.columnActions}</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleStations.map((station) => {
-                  const tone = STATION_TONE;
-                  return (
-                    <tr key={station.id} className="group border-b border-[#edf1f3] transition-colors last:border-0 hover:bg-[#f8fbfc]">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform duration-300 group-hover:scale-110 ${tone.badge}`}>
-                            <MapPinIcon width={15} height={15} />
-                          </span>
-                          <span className="font-semibold text-brand-navy">{station.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone.surface} ${tone.accent}`}>{station.city}</span>
-                      </td>
-                      <td className="max-w-sm px-5 py-4 text-muted">{station.address ?? "Address unavailable"}</td>
-                      <td className="px-5 py-4">
-                        <span className="rounded-full bg-[#f1f5f7] px-2.5 py-1 font-mono text-[11px] font-bold text-muted">{station.code}</span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleViewOnMap(station.id)}
-                          className={`inline-flex min-h-10 items-center gap-2 rounded-full border border-[#e2eaed] bg-white px-4 text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:border-transparent hover:shadow-md ${tone.accent}`}
-                        >
-                          {se.viewOnMap}
-                          <ArrowRightIcon width={13} height={13} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {visibleCount < filteredStations.length && (
-          <button
-            type="button"
-            onClick={() => setVisibleCount((count) => count + STATIONS_PAGE_SIZE)}
-            className="mt-4 flex w-full items-center justify-center rounded-2xl border border-[#e1e9ec] bg-white px-4 py-3 text-sm font-semibold text-teal shadow-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-teal hover:shadow-md"
-          >
-            {se.loadMore}
-          </button>
-        )}
-
-        {filteredStations.length === 0 && (
-          <div className="mt-10 flex min-h-64 flex-col items-center justify-center rounded-[2rem] border border-dashed border-[#cfdde1] bg-white px-6 text-center shadow-sm">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-soft text-teal">
-              <BusIcon width={23} height={23} />
-            </span>
-            <p className="mt-4 max-w-md font-semibold text-brand-navy">{formatMessage(se.noStationsMatch, { filter })}</p>
-          </div>
-        )}
       </section>
     </div>
   );

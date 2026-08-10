@@ -15,6 +15,7 @@ interface RoutesGridProps {
     clearFilterAria: string;
     tripsPerWeek: string;
     priceFrom: string;
+    priceUnavailable: string;
     viewRoute: string;
     loadMore: string;
     noRoutesMatch: string;
@@ -83,7 +84,9 @@ export function RoutesGrid({ pairs, dict }: RoutesGridProps) {
             </p>
             <p className="text-xs text-muted">{formatMessage(dict.tripsPerWeek, { count: pair.tripCount })}</p>
             <p className="mt-auto text-sm font-semibold text-teal">
-              {formatMessage(dict.priceFrom, { price: `${Math.round(pair.minPrice).toLocaleString("en-US")} ALL` })}
+              {pair.minPrice === null
+                ? dict.priceUnavailable
+                : formatMessage(dict.priceFrom, { price: `${Math.round(pair.minPrice).toLocaleString("en-US")} ALL` })}
             </p>
           </Link>
         ))}

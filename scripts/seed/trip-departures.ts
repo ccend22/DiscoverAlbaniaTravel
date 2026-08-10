@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { db } from "../../src/db";
 import { tripDepartures } from "../../src/db/schema";
 import { readCsv } from "./csv";
@@ -59,7 +60,7 @@ export async function seedTripDepartures(
         durationMin: row.duration_min || "0",
         distanceKm: row.distance_km || "0",
         weekdays,
-        basePrice: row.ticket_price || "1",
+        basePrice: row.ticket_price && row.ticket_price !== "1" ? row.ticket_price : null,
         plannedSeats,
         freeSeats,
         canBoard,
@@ -76,7 +77,11 @@ export async function seedTripDepartures(
           durationMin: row.duration_min || "0",
           distanceKm: row.distance_km || "0",
           weekdays,
-          basePrice: row.ticket_price || "1",
+          // Never overwrite a real price (backfilled or hand-entered) with the
+          // source CSV's lack of one — only fill it in if it's still empty.
+          basePrice: sql`coalesce(${tripDepartures.basePrice}, ${
+            row.ticket_price && row.ticket_price !== "1" ? row.ticket_price : null
+          })`,
           plannedSeats,
           freeSeats,
           canBoard,

@@ -25,7 +25,11 @@ export async function generateMetadata({ params }: RouteDetailPageProps): Promis
   if (!pair) return { title: "Route Not Found", robots: { index: false } };
 
   const title = `${pair.fromCity} to ${pair.toCity} Bus Tickets — Schedule & Prices`;
-  const description = `Compare ${pair.tripCount} weekly departures from ${pair.fromCity} to ${pair.toCity}. Tickets from ${Math.round(pair.minPrice).toLocaleString("en-US")} ALL, ${pair.minDurationMin}–${pair.maxDurationMin} min journey, run by ${pair.operatorCount} operator${pair.operatorCount === 1 ? "" : "s"}.`;
+  const priceClause =
+    pair.minPrice === null
+      ? "no online payment available"
+      : `tickets from ${Math.round(pair.minPrice).toLocaleString("en-US")} ALL`;
+  const description = `Compare ${pair.tripCount} weekly departures from ${pair.fromCity} to ${pair.toCity}. ${priceClause[0].toUpperCase()}${priceClause.slice(1)}, ${pair.minDurationMin}–${pair.maxDurationMin} min journey, run by ${pair.operatorCount} operator${pair.operatorCount === 1 ? "" : "s"}.`;
 
   return {
     title,
@@ -68,10 +72,13 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
     {
       Icon: BusIcon,
       label: rd.statPrice,
-      value: formatMessage(rd.priceRange, {
-        min: Math.round(pair.minPrice).toLocaleString("en-US"),
-        max: Math.round(pair.maxPrice).toLocaleString("en-US"),
-      }),
+      value:
+        pair.minPrice === null || pair.maxPrice === null
+          ? rd.priceRangeUnavailable
+          : formatMessage(rd.priceRange, {
+              min: Math.round(pair.minPrice).toLocaleString("en-US"),
+              max: Math.round(pair.maxPrice).toLocaleString("en-US"),
+            }),
       tone: "teal" as const,
     },
     {
@@ -97,10 +104,11 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
 
       <section className="relative isolate -mt-20 overflow-hidden pt-20 md:-mt-24 md:pt-24">
         <Image
-          src="/Ewyd4-ZWQAIr18F.jpg"
+          src="/images/destinations/durres.jpg"
           alt=""
           fill
           priority
+          quality={90}
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -116,7 +124,7 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
             <span className="text-white/85">{pair.fromCity} → {pair.toCity}</span>
           </nav>
 
-          <div className="mt-6 inline-flex animate-fade-up items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-lime">
+          <div className="public-kicker-dark mt-6 animate-fade-up">
             <BusIcon width={15} height={15} />
             {rd.kicker}
           </div>

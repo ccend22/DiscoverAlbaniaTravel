@@ -4,6 +4,7 @@ import { listDestinations } from "@/db/queries/destinations";
 import { ArrowRightIcon, BusIcon, CompassIcon, MapPinIcon } from "@/components/icons";
 import { DestinationsGrid } from "@/components/destinations-grid";
 import { getLocaleAndDictionary } from "@/lib/i18n";
+import { DESTINATION_IMAGES, normalizeDestinationName } from "@/lib/destination-images";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,23 +12,6 @@ export const metadata: Metadata = {
   description: "Explore destinations across Albania and find intercity bus connections for your trip.",
   alternates: { canonical: "/destinations" },
 };
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  berat: "/images/destinations/berat.jpg",
-  durres: "/images/destinations/durres.jpg",
-  sarande: "/images/destinations/sarande.jpg",
-  shkoder: "/images/destinations/shkoder.jpg",
-  tirane: "/images/destinations/tirana.jpg",
-  vlore: "/images/destinations/vlore.jpg",
-};
-
-function normalizeDestinationName(name: string) {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
 
 export default async function DestinationsPage() {
   const [destinations, { dict }] = await Promise.all([listDestinations(), getLocaleAndDictionary()]);
@@ -53,8 +37,8 @@ export default async function DestinationsPage() {
 
         <div className="relative mx-auto flex min-h-[560px] max-w-7xl items-center px-4 py-16 sm:min-h-[620px] sm:px-6 lg:px-8">
           <div className="max-w-3xl animate-fade-up text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] backdrop-blur-md">
-              <CompassIcon width={15} height={15} className="text-lime" />
+            <div className="public-kicker-dark">
+              <CompassIcon width={15} height={15} />
               {dp.kicker}
             </div>
             <h1 className="mt-6 max-w-2xl font-display text-5xl font-black leading-[0.95] tracking-[-0.045em] text-white sm:text-6xl lg:text-8xl">
