@@ -12,9 +12,10 @@ import { ResultsFilterPanel } from "@/components/results-filter-panel";
 import { RouteMap, type RouteSegment } from "@/components/route-map";
 import type { TripDepartureDetail } from "@/db/queries/trips";
 import { getRoadRoute } from "@/lib/routing";
-import { AlertCircleIcon } from "@/components/icons";
+import { AlertCircleIcon, ArrowRightIcon, MapPinIcon } from "@/components/icons";
 import { getLocaleAndDictionary, type Locale } from "@/lib/i18n";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
+import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -75,6 +76,58 @@ function EmptyState({ children }: { children: React.ReactNode }) {
       <AlertCircleIcon width={18} height={18} className="mt-0.5 shrink-0 text-warning" />
       <p>{children}</p>
     </div>
+  );
+}
+
+function TaxiAlternative({
+  origin,
+  destination,
+  segment,
+  dict,
+}: {
+  origin: string;
+  destination: string;
+  segment?: RouteSegment;
+  dict: Dictionary;
+}) {
+  if (
+    segment &&
+    calculateDistanceKm(
+      { lat: segment.fromLat, lng: segment.fromLng },
+      { lat: segment.toLat, lng: segment.toLng }
+    ) < MIN_INTERCITY_TAXI_DISTANCE_KM
+  ) {
+    return null;
+  }
+
+  const params = new URLSearchParams({ tab: "taxi", taxiFrom: origin, taxiTo: destination });
+  if (segment) {
+    params.set("pickupLat", String(segment.fromLat));
+    params.set("pickupLng", String(segment.fromLng));
+    params.set("destinationLat", String(segment.toLat));
+    params.set("destinationLng", String(segment.toLng));
+  }
+  const sp = dict.searchPage;
+
+  return (
+    <aside className="mb-8 flex flex-col gap-5 overflow-hidden rounded-[2rem] border border-teal/15 bg-[linear-gradient(120deg,#ffffff_0%,#f0f8f6_100%)] p-5 shadow-[0_14px_38px_rgba(7,52,60,0.07)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <div className="flex min-w-0 gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.2)]">
+          <MapPinIcon width={18} height={18} />
+        </span>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-teal">{sp.taxiAlternativeKicker}</p>
+          <h2 className="mt-1 font-display text-xl font-black tracking-[-0.025em] text-brand-navy">{sp.taxiAlternativeTitle}</h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
+            {formatMessage(sp.taxiAlternativeCopy, { origin, destination })}
+          </p>
+        </div>
+      </div>
+      <Link href={`/?${params.toString()}#search`} className="public-secondary-action min-h-12 shrink-0 px-5 text-sm">
+        {sp.taxiAlternativeCta}
+        <ArrowRightIcon width={15} height={15} />
+      </Link>
+    </aside>
   );
 }
 
@@ -215,6 +268,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           defaultPassengers={passengers}
         />
       </div>
+
+      <TaxiAlternative
+        origin={origin}
+        destination={destination}
+        segment={outboundSegments[0]}
+        dict={dict}
+      />
 
       <div className="public-card-muted flex flex-col gap-12 p-5 sm:p-8">
         <LegResults

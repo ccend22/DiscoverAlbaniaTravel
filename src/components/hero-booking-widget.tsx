@@ -17,6 +17,14 @@ interface HeroBookingWidgetProps {
   user: { name: string; phone: string | null; email: string } | null;
   initialMode?: Mode;
   taxiError?: string;
+  taxiDefaults?: {
+    pickup?: string;
+    destination?: string;
+    pickupLat?: number;
+    pickupLng?: number;
+    destinationLat?: number;
+    destinationLng?: number;
+  };
 }
 
 export function HeroBookingWidget({
@@ -27,6 +35,7 @@ export function HeroBookingWidget({
   user,
   initialMode = "bus",
   taxiError,
+  taxiDefaults,
 }: HeroBookingWidgetProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -62,7 +71,7 @@ export function HeroBookingWidget({
             type="button"
             onClick={() => handleModeChange("bus")}
             aria-pressed={mode === "bus"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none sm:px-6 ${
               mode === "bus"
                 ? "bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.22)]"
                 : "text-muted hover:bg-surface-sunken hover:text-foreground"
@@ -75,7 +84,7 @@ export function HeroBookingWidget({
             type="button"
             onClick={() => handleModeChange("taxi")}
             aria-pressed={mode === "taxi"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-[var(--dur-base)] sm:flex-none sm:px-6 ${
               mode === "taxi"
                 ? "bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.22)]"
                 : "text-muted hover:bg-surface-sunken hover:text-foreground"
@@ -105,7 +114,7 @@ export function HeroBookingWidget({
               variant="glass"
             />
           ) : (
-            <TaxiQuickForm dict={dict} user={user} error={taxiError} variant="glass" />
+            <TaxiQuickForm dict={dict} user={user} error={taxiError} variant="glass" defaults={taxiDefaults} />
           )}
         </div>
       </div>

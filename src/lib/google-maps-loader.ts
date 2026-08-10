@@ -41,15 +41,53 @@ export function pinAutocompleteDropdownBelow(input: HTMLInputElement): () => voi
   function reposition() {
     if (!container) return;
     const rect = input.getBoundingClientRect();
-    const top = `${rect.bottom + 8}px`;
-    const left = `${rect.left}px`;
-    const width = `${rect.width}px`;
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
+    const viewport = window.visualViewport;
+    const viewportTop = viewport?.offsetTop ?? 0;
+    const viewportLeft = viewport?.offsetLeft ?? 0;
+    const viewportWidth = viewport?.width ?? window.innerWidth;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportBottom = viewportTop + viewportHeight;
+
+    let top: string;
+    let left: string;
+    let width: string;
+    let maxHeight: string;
+
+    if (isMobile) {
+      // Keep the suggestion surface inside the *visual* viewport (the area
+      // above the software keyboard). A fixed target height prevents Google
+      // from repeatedly flipping the list above/below the field as results
+      // change, which otherwise makes the whole page appear to jump.
+      const horizontalInset = 12;
+      const panelHeight = Math.min(256, Math.max(156, viewportHeight * 0.42));
+      const belowTop = rect.bottom + 8;
+      const availableBelow = viewportBottom - belowTop - 12;
+      const stableTop =
+        availableBelow >= panelHeight
+          ? belowTop
+          : Math.max(viewportTop + 12, rect.top - panelHeight - 8);
+      top = `${stableTop}px`;
+      left = `${viewportLeft + horizontalInset}px`;
+      width = `${Math.max(0, viewportWidth - horizontalInset * 2)}px`;
+      maxHeight = `${Math.max(120, viewportBottom - stableTop - 12)}px`;
+      container.dataset.mobilePlaces = "true";
+    } else {
+      top = `${rect.bottom + 8}px`;
+      left = `${rect.left}px`;
+      width = `${rect.width}px`;
+      maxHeight = "none";
+      delete container.dataset.mobilePlaces;
+    }
+
     if (
       container.style.position === "fixed" &&
       container.style.top === top &&
       container.style.left === left &&
       container.style.width === width &&
-      container.style.bottom === "auto"
+      container.style.bottom === "auto" &&
+      container.style.maxHeight === maxHeight &&
+      container.style.marginTop === "0px"
     ) {
       return;
     }
@@ -58,6 +96,8 @@ export function pinAutocompleteDropdownBelow(input: HTMLInputElement): () => voi
     container.style.setProperty("left", left, "important");
     container.style.setProperty("width", width, "important");
     container.style.setProperty("bottom", "auto", "important");
+    container.style.setProperty("max-height", maxHeight, "important");
+    container.style.setProperty("margin-top", "0", "important");
   }
 
   function claimContainer() {
@@ -83,11 +123,15 @@ export function pinAutocompleteDropdownBelow(input: HTMLInputElement): () => voi
   input.addEventListener("input", handleActivity);
   window.addEventListener("resize", reposition);
   window.addEventListener("scroll", reposition, true);
+  window.visualViewport?.addEventListener("resize", reposition);
+  window.visualViewport?.addEventListener("scroll", reposition);
 
   return () => {
     input.removeEventListener("input", handleActivity);
     window.removeEventListener("resize", reposition);
     window.removeEventListener("scroll", reposition, true);
+    window.visualViewport?.removeEventListener("resize", reposition);
+    window.visualViewport?.removeEventListener("scroll", reposition);
     styleObserver?.disconnect();
   };
 }

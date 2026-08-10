@@ -82,7 +82,7 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel, transpare
         aria-label={openMenuLabel}
         aria-hidden={!isOpen}
         inert={!isOpen ? true : undefined}
-        className={`fixed inset-0 z-50 flex flex-col bg-surface text-foreground transition-transform duration-500 ease-[var(--ease-out-expo)] lg:hidden ${
+        className={`fixed inset-0 z-50 flex h-[100dvh] max-w-full flex-col overflow-hidden bg-surface text-foreground transition-transform duration-500 ease-[var(--ease-out-expo)] lg:hidden ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -113,10 +113,9 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel, transpare
               key={link.href}
               href={link.href}
               onClick={close}
-              className="group flex min-h-16 items-center justify-between border-b border-border py-4 font-serif text-3xl font-black tracking-tight text-brand-navy transition-colors duration-[var(--dur-fast)] active:text-brand"
+              className="flex min-h-14 items-center border-b border-border py-3 font-serif text-2xl font-black tracking-tight text-brand-navy transition-colors duration-[var(--dur-fast)] active:text-brand sm:min-h-16 sm:py-4 sm:text-3xl"
             >
               {link.label}
-              <span className="font-sans text-xl font-normal text-brand">→</span>
             </Link>
           ))}
           <div className="my-6" />

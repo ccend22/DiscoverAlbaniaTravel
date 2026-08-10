@@ -26,7 +26,16 @@ const FEATURED_PLACE_META: Omit<FeaturedPlace, "destinationId" | "tagline">[] = 
 ];
 
 interface HomePageProps {
-  searchParams: Promise<{ tab?: string; taxiError?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    taxiError?: string;
+    taxiFrom?: string;
+    taxiTo?: string;
+    pickupLat?: string;
+    pickupLng?: string;
+    destinationLat?: string;
+    destinationLng?: string;
+  }>;
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
@@ -108,6 +117,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               user={user}
               initialMode={params.tab === "taxi" ? "taxi" : "bus"}
               taxiError={params.taxiError}
+              taxiDefaults={{
+                pickup: params.taxiFrom,
+                destination: params.taxiTo,
+                pickupLat: params.pickupLat ? Number(params.pickupLat) : undefined,
+                pickupLng: params.pickupLng ? Number(params.pickupLng) : undefined,
+                destinationLat: params.destinationLat ? Number(params.destinationLat) : undefined,
+                destinationLng: params.destinationLng ? Number(params.destinationLng) : undefined,
+              }}
             />
           </ScrollReveal>
         </div>

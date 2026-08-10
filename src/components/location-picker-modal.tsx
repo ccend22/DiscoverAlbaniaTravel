@@ -39,7 +39,6 @@ function pinDataUrl(scale: number) {
 // Hotspot near the pin's bottom tip, scaled with the icon, so the cursor and
 // marker both "touch down" exactly where the point renders, not centered.
 function pinCursor(scale: number) {
-  const size = Math.round(24 * scale);
   const tipX = Math.round(12 * scale);
   const tipY = Math.round(22 * scale);
   return `url("${pinDataUrl(scale)}") ${tipX} ${tipY}, pointer`;
@@ -208,22 +207,28 @@ export function LocationPickerModal({
   // so without the portal this dialog would center against that ancestor's
   // box instead of the real viewport.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="animate-sheet-fade fixed inset-0 bg-foreground/50" aria-hidden="true" {...tapToDismiss(onClose)} />
+    <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-5">
+      <div className="animate-sheet-fade fixed inset-0 bg-brand-deep/55 backdrop-blur-[3px]" aria-hidden="true" {...tapToDismiss(onClose)} />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="animate-fade-up relative flex h-[min(640px,90dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-lg)]"
+        className="animate-sheet-up relative flex h-[min(680px,100dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.5rem] border border-white/70 bg-surface shadow-[0_32px_90px_rgba(0,24,32,0.34)] sm:animate-fade-up sm:h-[min(680px,92dvh)] sm:rounded-[2rem]"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-display text-base font-bold text-foreground">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-[linear-gradient(135deg,#f1f9f7_0%,#ffffff_80%)] px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal text-white shadow-[0_8px_18px_rgba(0,128,128,0.18)]">
+              <MapPinIcon width={17} height={17} />
+            </span>
+            <h2 className="font-display text-lg font-black tracking-[-0.02em] text-brand-navy">{title}</h2>
+          </div>
           <button
             type="button"
             {...tapToDismiss(onClose)}
             aria-label={closeLabel}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-sunken"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#dfe8e7] bg-white text-muted shadow-sm transition-colors hover:text-brand-navy"
           >
             <CloseIcon width={18} height={18} />
           </button>
@@ -243,7 +248,7 @@ export function LocationPickerModal({
                     ref={searchInputRef}
                     type="text"
                     placeholder={searchPlaceholder}
-                    className="min-h-11 w-full rounded-full border border-white/60 bg-surface/95 py-2 pl-10 pr-4 text-sm shadow-[var(--shadow-lg)] outline-none backdrop-blur-md transition-all focus:border-teal focus:shadow-[var(--shadow-glow-teal)]"
+                    className="min-h-12 w-full rounded-2xl border border-white/70 bg-surface/95 py-2.5 pl-10 pr-4 text-sm font-medium shadow-[0_12px_32px_rgba(7,52,60,0.16)] outline-none backdrop-blur-md transition-all focus:border-teal focus:shadow-[var(--shadow-glow-teal)]"
                   />
                 </div>
               </div>
@@ -260,7 +265,7 @@ export function LocationPickerModal({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border p-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-white p-4 sm:px-6 sm:py-5">
           <p className="min-w-0 truncate text-xs text-muted">
             {picked && (
               <>

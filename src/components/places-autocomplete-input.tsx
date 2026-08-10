@@ -11,6 +11,7 @@ interface PlacesAutocompleteInputProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  onPlaceSelect?: (place: { address: string; lat: number; lng: number }) => void;
 }
 
 /**
@@ -19,13 +20,18 @@ interface PlacesAutocompleteInputProps {
  * the full map picker at all — the map stays there as the fallback for
  * addresses that don't resolve to a named place.
  */
-export function PlacesAutocompleteInput({ name, value, onChange, placeholder, required, className }: PlacesAutocompleteInputProps) {
+export function PlacesAutocompleteInput({ name, value, onChange, placeholder, required, className, onPlaceSelect }: PlacesAutocompleteInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const onChangeRef = useRef(onChange);
+  const onPlaceSelectRef = useRef(onPlaceSelect);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    onPlaceSelectRef.current = onPlaceSelect;
+  }, [onPlaceSelect]);
 
   useEffect(() => {
     if (!hasGoogleMapsApiKey || !inputRef.current) return;
@@ -37,12 +43,17 @@ export function PlacesAutocompleteInput({ name, value, onChange, placeholder, re
         if (cancelled || !inputRef.current) return;
         const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
           componentRestrictions: { country: "al" },
-          fields: ["formatted_address"],
+          fields: ["formatted_address", "geometry"],
         });
         unpin = pinAutocompleteDropdownBelow(inputRef.current);
         autocomplete.addListener("place_changed", () => {
-          const address = autocomplete.getPlace().formatted_address;
+          const place = autocomplete.getPlace();
+          const address = place.formatted_address;
+          const location = place.geometry?.location;
           if (address) onChangeRef.current(address);
+          if (address && location) {
+            onPlaceSelectRef.current?.({ address, lat: location.lat(), lng: location.lng() });
+          }
         });
       })
       .catch(() => {
@@ -60,6 +71,10 @@ export function PlacesAutocompleteInput({ name, value, onChange, placeholder, re
       type="text"
       name={name}
       required={required}
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+      enterKeyHint="search"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

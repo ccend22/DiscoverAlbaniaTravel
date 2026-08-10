@@ -53,9 +53,20 @@ export const bookingFormSchema = z
     path: ["travelDate"],
   });
 
+const taxiCoordinate = z
+  .string()
+  .trim()
+  .min(1, "Choose both locations from the suggestions or map")
+  .transform(Number)
+  .pipe(z.number().finite("Choose a valid location"));
+
 export const taxiRideRequestSchema = z.object({
   pickupLocation: z.string().trim().min(3, "Enter a pickup location"),
   destination: z.string().trim().min(3, "Enter a destination"),
+  pickupLatitude: taxiCoordinate.pipe(z.number().min(-90).max(90)),
+  pickupLongitude: taxiCoordinate.pipe(z.number().min(-180).max(180)),
+  destinationLatitude: taxiCoordinate.pipe(z.number().min(-90).max(90)),
+  destinationLongitude: taxiCoordinate.pipe(z.number().min(-180).max(180)),
   passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
 });
 

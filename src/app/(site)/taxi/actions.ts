@@ -5,6 +5,7 @@ import { createTaxiRideRequest } from "@/db/queries/taxi";
 import { getUserById } from "@/db/queries/users";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { taxiRideRequestSchema } from "@/lib/validation";
+import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
 
 const REQUEST_DISPATCH_BUFFER_MS = 30 * 60 * 1000;
 
@@ -12,11 +13,27 @@ export async function requestTaxiAction(formData: FormData) {
   const parsed = taxiRideRequestSchema.safeParse({
     pickupLocation: formData.get("pickupLocation"),
     destination: formData.get("destination"),
+    pickupLatitude: formData.get("pickupLatitude"),
+    pickupLongitude: formData.get("pickupLongitude"),
+    destinationLatitude: formData.get("destinationLatitude"),
+    destinationLongitude: formData.get("destinationLongitude"),
     passengerPhone: formData.get("passengerPhone"),
   });
 
   if (!parsed.success) {
     redirect(`/?tab=taxi&taxiError=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Please check the form")}#search`);
+  }
+
+  const distanceKm = calculateDistanceKm(
+    { lat: parsed.data.pickupLatitude, lng: parsed.data.pickupLongitude },
+    { lat: parsed.data.destinationLatitude, lng: parsed.data.destinationLongitude }
+  );
+  if (distanceKm < MIN_INTERCITY_TAXI_DISTANCE_KM) {
+    redirect(
+      `/?tab=taxi&taxiError=${encodeURIComponent(
+        `Intercity taxi requests require a journey of at least ${MIN_INTERCITY_TAXI_DISTANCE_KM} km.`
+      )}#search`
+    );
   }
 
   const userId = await getActiveUserSessionId();
