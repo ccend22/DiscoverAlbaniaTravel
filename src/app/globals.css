@@ -264,6 +264,12 @@ body {
   transition: outline-offset var(--dur-fast) var(--ease-standard);
 }
 
+/* Text fields already receive a border and soft focus shadow below. Avoid a
+   second outer outline, which becomes an oversized triple ring on iOS. */
+:where(input, select, textarea):focus-visible {
+  outline: none;
+}
+
 :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 14%, transparent);

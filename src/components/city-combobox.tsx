@@ -7,6 +7,7 @@ import { useIsMobile } from "@/lib/use-is-mobile";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { normalizeSearchText } from "@/lib/search-normalize";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 
 interface CityComboboxProps {
   name: string;
@@ -92,6 +93,7 @@ export function CityCombobox({
   const sheetInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const sheetMode = isOpen && isMobile;
+  const visualViewport = useVisualViewport(sheetMode);
 
   useBodyScrollLock(sheetMode);
 
@@ -217,6 +219,19 @@ export function CityCombobox({
 
   const showResultCount = value.trim().length > 0 && filtered.length > 0;
   const emptyLabel = noMatchesLabel ?? "No matching places. You can still search with this text.";
+  const mobileSheetStyle = visualViewport
+    ? (() => {
+        const verticalGap = 8;
+        const height = Math.max(0, visualViewport.height - verticalGap);
+        return {
+          top: visualViewport.top + verticalGap,
+          bottom: "auto",
+          height,
+          maxHeight: height,
+          paddingBottom: visualViewport.keyboardOpen ? "0.5rem" : "max(1rem, env(safe-area-inset-bottom))",
+        };
+      })()
+    : { paddingBottom: "max(1rem, env(safe-area-inset-bottom))" };
 
   return (
     <div className={`relative ${className ?? ""}`} ref={containerRef}>
@@ -317,25 +332,14 @@ export function CityCombobox({
               id={`${name}-listbox-sheet`}
               role="dialog"
               aria-modal="true"
-              className="animate-sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-surface shadow-[var(--shadow-lg)]"
-              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+              className="animate-fade-in fixed inset-x-0 bottom-0 z-50 flex min-h-0 max-h-[calc(100dvh-0.5rem)] flex-col overflow-hidden rounded-t-[1.5rem] bg-surface shadow-[var(--shadow-lg)]"
+              style={mobileSheetStyle}
             >
               <div className="flex shrink-0 justify-center pb-1 pt-2.5" aria-hidden="true">
                 <span className="h-1 w-10 rounded-full bg-border" />
               </div>
-              <div className="flex shrink-0 items-center justify-between px-4 pb-3">
-                <p className="truncate text-sm font-semibold text-foreground">{placeholder ?? "Search"}</p>
-                <button
-                  type="button"
-                  {...tapToDismiss(() => setIsOpen(false))}
-                  aria-label="Close"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors active:bg-surface-sunken"
-                >
-                  <CloseIcon width={18} height={18} />
-                </button>
-              </div>
-              <div className="shrink-0 px-4 pb-3">
-                <div className="relative">
+              <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-4">
+                <div className="relative min-w-0 flex-1">
                   <SearchIcon width={16} height={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
                   <input
                     ref={sheetInputRef}
@@ -347,12 +351,21 @@ export function CityCombobox({
                       onChange(e.target.value);
                       setHighlighted(0);
                     }}
+                    onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="min-h-12 w-full rounded-2xl border border-border bg-surface-sunken pl-11 pr-4 text-base outline-none transition-colors duration-[var(--dur-fast)] focus:border-teal focus:bg-surface"
+                    className="min-h-12 w-full appearance-none rounded-2xl border border-border bg-surface-sunken pl-11 pr-4 text-base outline-none transition-colors duration-[var(--dur-fast)] focus:border-teal focus:bg-surface"
                   />
                 </div>
+                <button
+                  type="button"
+                  {...tapToDismiss(() => setIsOpen(false))}
+                  aria-label="Close"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-surface-sunken text-muted transition-colors active:bg-brand-soft"
+                >
+                  <CloseIcon width={18} height={18} />
+                </button>
               </div>
-              <div className="overlay-scroll overflow-y-auto px-2 pb-2">
+              <div className="overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2">
                 {filtered.length > 0 ? (
                   <ul id={`${name}-listbox`} role="listbox" className="p-2 pt-0">
                     <OptionList
