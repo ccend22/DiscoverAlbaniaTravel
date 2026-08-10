@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDateLong } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
@@ -9,6 +9,7 @@ import { useIsMobile } from "@/lib/use-is-mobile";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 
 const ITEM_HEIGHT = 36;
 const VISIBLE_ITEMS = 5;
@@ -113,11 +114,21 @@ interface CalendarContentProps {
   min: string;
   onSelectDay: (dateStr: string) => void;
   dict: Dictionary["datePicker"];
+  rangeStart?: string;
+  rangeEnd?: string;
   /** Larger day cells for thumb-friendly tapping in the mobile bottom sheet. */
   compact?: boolean;
 }
 
-function CalendarContent({ value, min, onSelectDay, dict, compact = true }: CalendarContentProps) {
+function CalendarContent({
+  value,
+  min,
+  onSelectDay,
+  dict,
+  rangeStart,
+  rangeEnd,
+  compact = true,
+}: CalendarContentProps) {
   const selected = parseDate(value);
   const minParsed = parseDate(min);
   const [mode, setMode] = useState<"calendar" | "wheel">("calendar");
@@ -199,7 +210,11 @@ function CalendarContent({ value, min, onSelectDay, dict, compact = true }: Cale
         ))}
         {dayCells.map((day) => {
           const dateStr = formatDate(viewYear, viewMonth, day);
-          const isSelected = dateStr === value;
+          const isRangeStart = !!rangeStart && dateStr === rangeStart;
+          const isRangeEnd = !!rangeEnd && dateStr === rangeEnd;
+          const isRangeEdge = isRangeStart || isRangeEnd;
+          const isInRange = !!rangeStart && !!rangeEnd && dateStr > rangeStart && dateStr < rangeEnd;
+          const isSelected = rangeStart ? isRangeEdge : dateStr === value;
           const isToday = dateStr === todayStr;
           const isDisabled = dateStr < min;
           return (
@@ -208,14 +223,16 @@ function CalendarContent({ value, min, onSelectDay, dict, compact = true }: Cale
               type="button"
               disabled={isDisabled}
               {...tapToDismiss(() => onSelectDay(dateStr))}
-              className={`flex ${cellSize} items-center justify-center justify-self-center rounded-full text-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-spring)] ${
+              className={`relative flex ${cellSize} items-center justify-center justify-self-center text-sm transition-all duration-[var(--dur-fast)] ease-[var(--ease-spring)] ${
                 isSelected
-                  ? "scale-110 bg-teal font-semibold text-teal-foreground shadow-[var(--shadow-glow-teal)]"
+                  ? "z-10 scale-105 rounded-full bg-teal font-semibold text-teal-foreground shadow-[var(--shadow-glow-teal)]"
                   : isDisabled
-                    ? "cursor-not-allowed text-muted/40"
+                    ? "cursor-not-allowed rounded-full text-muted/40"
+                    : isInRange
+                      ? "rounded-xl bg-teal/12 font-medium text-brand-navy"
                     : isToday
-                      ? "border border-teal text-teal"
-                      : "hover:scale-110 hover:bg-teal/10 active:bg-teal/15"
+                      ? "rounded-full border border-teal text-teal"
+                      : "rounded-full hover:scale-110 hover:bg-teal/10 active:bg-teal/15"
               }`}
             >
               {day}
@@ -253,6 +270,15 @@ interface DatePickerProps {
   locale?: Locale;
   buttonClassName?: string;
   iconClassName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  closeOnSelect?: boolean;
+  rangeStart?: string;
+  rangeEnd?: string;
+  rangeStartLabel?: string;
+  rangeEndLabel?: string;
+  activeRangeBoundary?: "start" | "end";
+  dialogLabel?: string;
 }
 
 interface QuickPicksProps {
@@ -293,11 +319,74 @@ function QuickPicks({ dict, min, value, today, tomorrow, onSelect }: QuickPicksP
   );
 }
 
-export function DatePicker({ name, value, min, onChange, dict, locale = "en", buttonClassName, iconClassName }: DatePickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+interface RangeSummaryProps {
+  start: string;
+  end: string;
+  startLabel: string;
+  endLabel: string;
+  activeBoundary: "start" | "end";
+  locale: Locale;
+}
+
+function RangeSummary({ start, end, startLabel, endLabel, activeBoundary, locale }: RangeSummaryProps) {
+  return (
+    <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center rounded-2xl bg-surface-sunken p-1">
+      <div className={`min-w-0 rounded-xl px-3 py-2 transition-colors ${activeBoundary === "start" ? "bg-white shadow-sm" : ""}`}>
+        <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{startLabel}</span>
+        <span className={`block truncate text-sm font-semibold ${activeBoundary === "start" ? "text-teal" : "text-brand-navy"}`}>
+          {formatDateLong(start, locale)}
+        </span>
+      </div>
+      <ArrowRange />
+      <div className={`min-w-0 rounded-xl px-3 py-2 text-right transition-colors ${activeBoundary === "end" ? "bg-white shadow-sm" : ""}`}>
+        <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{endLabel}</span>
+        <span className={`block truncate text-sm font-semibold ${activeBoundary === "end" ? "text-teal" : "text-brand-navy"}`}>
+          {formatDateLong(end, locale)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ArrowRange() {
+  return (
+    <span aria-hidden="true" className="flex items-center gap-0.5 px-1 text-teal/60">
+      <span className="h-px w-2 bg-current" />
+      <ChevronRightIcon width={12} height={12} />
+    </span>
+  );
+}
+
+export function DatePicker({
+  name,
+  value,
+  min,
+  onChange,
+  dict,
+  locale = "en",
+  buttonClassName,
+  iconClassName,
+  open,
+  onOpenChange,
+  closeOnSelect = true,
+  rangeStart,
+  rangeEnd,
+  rangeStartLabel,
+  rangeEndLabel,
+  activeRangeBoundary,
+  dialogLabel,
+}: DatePickerProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = open ?? internalOpen;
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const sheetMode = isOpen && isMobile;
+  const visualViewport = useVisualViewport(sheetMode);
+
+  const setIsOpen = useCallback((next: boolean) => {
+    if (open === undefined) setInternalOpen(next);
+    onOpenChange?.(next);
+  }, [onOpenChange, open]);
 
   useBodyScrollLock(sheetMode);
 
@@ -310,7 +399,7 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, sheetMode]);
+  }, [isOpen, setIsOpen, sheetMode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -319,22 +408,36 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
     }
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   function selectDay(dateStr: string) {
     onChange(dateStr);
-    setIsOpen(false);
+    if (closeOnSelect) setIsOpen(false);
   }
 
   const todayStr = getAlbaniaDateInputValue();
   const tomorrowStr = addDays(todayStr, 1);
+  const showRange = !!rangeStart && !!rangeEnd && !!rangeStartLabel && !!rangeEndLabel && !!activeRangeBoundary;
+  const mobileSheetStyle = visualViewport
+    ? (() => {
+        const verticalGap = 8;
+        const height = Math.max(0, Math.min(640, visualViewport.height - verticalGap));
+        return {
+          top: visualViewport.top + visualViewport.height - height,
+          bottom: "auto",
+          height,
+          maxHeight: height,
+          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+        };
+      })()
+    : { paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" };
 
   return (
     <div className="relative" ref={containerRef}>
       <input type="hidden" name={name} value={value} suppressHydrationWarning />
       <button
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls={`${name}-date-picker`}
@@ -346,10 +449,27 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
       </button>
 
       {isOpen && !sheetMode && (
-        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" className="overlay-scroll absolute right-0 z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top-right animate-fade-up overflow-y-auto overscroll-contain rounded-2xl border border-[#dce8e6] bg-white p-4 shadow-[var(--page-shadow-strong)]">
+        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" aria-label={dialogLabel ?? dict.chooseDate} className="overlay-scroll absolute right-0 z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top-right animate-fade-up overflow-y-auto overscroll-contain rounded-2xl border border-[#dce8e6] bg-white p-4 shadow-[var(--page-shadow-strong)]">
+          {showRange && (
+            <RangeSummary
+              start={rangeStart}
+              end={rangeEnd}
+              startLabel={rangeStartLabel}
+              endLabel={rangeEndLabel}
+              activeBoundary={activeRangeBoundary}
+              locale={locale}
+            />
+          )}
           <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
-          <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
-          <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} />
+          <p className="mb-1.5 text-xs font-medium text-muted">{dialogLabel ?? dict.chooseDate}</p>
+          <CalendarContent
+            value={value}
+            min={min}
+            onSelectDay={selectDay}
+            dict={dict}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+          />
         </div>
       )}
 
@@ -364,14 +484,15 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
             id={`${name}-date-picker`}
             role="dialog"
             aria-modal="true"
-            className="animate-sheet-up fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-surface shadow-[var(--shadow-lg)]"
-            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            aria-label={dialogLabel ?? dict.chooseDate}
+            className="animate-fade-in fixed inset-x-0 bottom-0 z-50 flex min-h-0 max-h-[calc(100dvh-0.5rem)] flex-col overflow-hidden rounded-t-[1.5rem] bg-surface shadow-[var(--shadow-lg)]"
+            style={mobileSheetStyle}
           >
             <div className="flex shrink-0 justify-center pb-1 pt-2.5" aria-hidden="true">
               <span className="h-1 w-10 rounded-full bg-border" />
             </div>
             <div className="flex shrink-0 items-center justify-between px-4 pb-3">
-              <p className="text-sm font-semibold text-foreground">{dict.jumpToMonth}</p>
+              <p className="text-sm font-semibold text-foreground">{dialogLabel ?? dict.chooseDate}</p>
               <button
                 type="button"
                 {...tapToDismiss(() => setIsOpen(false))}
@@ -381,10 +502,28 @@ export function DatePicker({ name, value, min, onChange, dict, locale = "en", bu
                 <CloseIcon width={18} height={18} />
               </button>
             </div>
-            <div className="overlay-scroll overflow-y-auto px-4 pb-4">
+            <div className="overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-2">
+              {showRange && (
+                <RangeSummary
+                  start={rangeStart}
+                  end={rangeEnd}
+                  startLabel={rangeStartLabel}
+                  endLabel={rangeEndLabel}
+                  activeBoundary={activeRangeBoundary}
+                  locale={locale}
+                />
+              )}
               <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
-              <p className="mb-1.5 text-xs font-medium text-muted">{dict.chooseDate}</p>
-              <CalendarContent value={value} min={min} onSelectDay={selectDay} dict={dict} compact={false} />
+              <p className="mb-1.5 text-xs font-medium text-muted">{dialogLabel ?? dict.chooseDate}</p>
+              <CalendarContent
+                value={value}
+                min={min}
+                onSelectDay={selectDay}
+                dict={dict}
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
+                compact={false}
+              />
             </div>
           </div>
         </>

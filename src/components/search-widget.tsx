@@ -9,6 +9,7 @@ import type { Locale } from "@/lib/locale";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
 type TripType = "oneway" | "roundtrip";
+type ActiveDateField = "depart" | "return" | null;
 
 interface SearchWidgetProps {
   cityOptions: string[];
@@ -80,6 +81,7 @@ export function SearchWidget({
   const [passengers, setPassengers] = useState(defaultPassengers ?? 1);
   const [swapRotation, setSwapRotation] = useState(0);
   const [swapPulse, setSwapPulse] = useState(false);
+  const [activeDateField, setActiveDateField] = useState<ActiveDateField>(null);
 
   const destinationOptions = useMemo(() => {
     if (!originInput.trim()) return cityOptions;
@@ -116,6 +118,14 @@ export function SearchWidget({
   function handleDateChange(next: string) {
     setDateValue(next);
     setReturnDateValue((prev) => (prev < next ? next : prev));
+    if (tripType === "roundtrip") setActiveDateField("return");
+  }
+
+  function handleTripTypeChange(next: TripType) {
+    setTripType(next);
+    if (next === "oneway" && activeDateField === "return") {
+      setActiveDateField(null);
+    }
   }
 
   return (
@@ -134,11 +144,11 @@ export function SearchWidget({
             className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-teal shadow-sm transition-transform duration-500 ease-[var(--ease-spring)] ${tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"}`}
             aria-hidden="true"
           />
-          <button type="button" onClick={() => setTripType("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+          <button type="button" onClick={() => handleTripTypeChange("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
             <ArrowRightIcon width={15} height={15} />
             {sw.oneWay}
           </button>
-          <button type="button" onClick={() => setTripType("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+          <button type="button" onClick={() => handleTripTypeChange("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
             <RoundTripIcon width={15} height={15} />
             {sw.roundTrip}
           </button>
@@ -195,15 +205,50 @@ export function SearchWidget({
           />
         </label>
 
-        <label className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+        <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
           <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.depart}</span>
-          <DatePicker name="date" value={dateValue} min={today} onChange={handleDateChange} dict={dict.datePicker} locale={locale} iconClassName="text-gold" buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent" />
-        </label>
+          <DatePicker
+            name="date"
+            value={dateValue}
+            min={today}
+            onChange={handleDateChange}
+            dict={dict.datePicker}
+            locale={locale}
+            iconClassName="text-gold"
+            buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
+            open={activeDateField === "depart"}
+            onOpenChange={(open) => setActiveDateField(open ? "depart" : null)}
+            closeOnSelect={tripType !== "roundtrip"}
+            rangeStart={tripType === "roundtrip" ? dateValue : undefined}
+            rangeEnd={tripType === "roundtrip" ? returnDateValue : undefined}
+            rangeStartLabel={sw.depart}
+            rangeEndLabel={sw.returnLabel}
+            activeRangeBoundary={tripType === "roundtrip" ? "start" : undefined}
+            dialogLabel={sw.depart}
+          />
+        </div>
         {tripType === "roundtrip" && (
-          <label className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+          <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
             <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.returnLabel}</span>
-            <DatePicker name="returnDate" value={returnDateValue} min={dateValue} onChange={setReturnDateValue} dict={dict.datePicker} locale={locale} iconClassName="text-lime-strong" buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent" />
-          </label>
+            <DatePicker
+              name="returnDate"
+              value={returnDateValue}
+              min={dateValue}
+              onChange={setReturnDateValue}
+              dict={dict.datePicker}
+              locale={locale}
+              iconClassName="text-lime-strong"
+              buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
+              open={activeDateField === "return"}
+              onOpenChange={(open) => setActiveDateField(open ? "return" : null)}
+              rangeStart={dateValue}
+              rangeEnd={returnDateValue}
+              rangeStartLabel={sw.depart}
+              rangeEndLabel={sw.returnLabel}
+              activeRangeBoundary="end"
+              dialogLabel={sw.returnLabel}
+            />
+          </div>
         )}
         <div className="flex min-h-16 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
           <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.passengers}</span>
