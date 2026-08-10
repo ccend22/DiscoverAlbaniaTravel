@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatDateLong } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
@@ -136,7 +137,7 @@ function CalendarContent({
   const [viewMonth, setViewMonth] = useState(selected.month);
 
   const isAtMinMonth = viewYear === minParsed.year && viewMonth === minParsed.month;
-  const cellSize = compact ? "h-9 w-9" : "h-11 w-11";
+  const cellSize = compact ? "h-9 w-9" : "aspect-square w-full max-w-11";
   const navSize = compact ? "h-9 w-9" : "h-11 w-11";
 
   function goPrevMonth() {
@@ -200,11 +201,14 @@ function CalendarContent({
 
       <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[7px] font-medium leading-tight tracking-tight text-muted sm:text-[10px]">
         {dict.weekdayLabels.map((label, i) => (
-          <div key={`${label}-${i}`} className="flex min-h-6 items-center justify-center">{label}</div>
+          <div key={`${label}-${i}`} className="flex min-h-6 items-center justify-center">
+            <span className="sm:hidden">{label.slice(0, 2)}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {leadingBlanks.map((_, i) => (
           <div key={`blank-${i}`} />
         ))}
@@ -473,8 +477,9 @@ export function DatePicker({
         </div>
       )}
 
-      {sheetMode && (
-        <>
+      {sheetMode &&
+        createPortal(
+          <>
           <div
             className="animate-sheet-fade touch-manipulation fixed inset-0 z-40 bg-foreground/40"
             aria-hidden="true"
@@ -502,7 +507,7 @@ export function DatePicker({
                 <CloseIcon width={18} height={18} />
               </button>
             </div>
-            <div className="overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-2">
+            <div className="overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2 sm:px-4">
               {showRange && (
                 <RangeSummary
                   start={rangeStart}
@@ -526,8 +531,9 @@ export function DatePicker({
               />
             </div>
           </div>
-        </>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 }

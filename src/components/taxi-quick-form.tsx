@@ -14,6 +14,7 @@ import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, type Coordinates } from "@/lib/taxi-service";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
+import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
 
 interface TaxiDefaults {
   pickup?: string;
@@ -159,6 +160,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [locating, setLocating] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationFailure, setLocationFailure] = useState<GeolocationFailureReason | null>(null);
   const [eligibilityModal, setEligibilityModal] = useState<"too-short" | "unverified" | null>(null);
 
   const distanceKm = useMemo(
@@ -182,32 +184,45 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
     setActivePicker(null);
   }
 
-  function handleUseCurrentLocation() {
-    if (!navigator.geolocation) return;
+  async function handleUseCurrentLocation() {
+    setLocationFailure(null);
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setPickupCoordinates({ lat: latitude, lng: longitude });
-        if (!hasGoogleMapsApiKey) {
-          setPickupLocation(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-          setLocating(false);
-          setLocationEnabled(true);
-          return;
-        }
-        ensureGoogleMapsOptions();
-        await importLibrary("geocoding");
-        new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-          setLocating(false);
-          const address = status === "OK" && results?.[0] ? results[0].formatted_address : `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    try {
+      const position = await getReliableCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      const coordinateLabel = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      setPickupCoordinates({ lat: latitude, lng: longitude });
+      setPickupLocation(coordinateLabel);
+      setLocationEnabled(true);
+
+      if (hasGoogleMapsApiKey) {
+        try {
+          ensureGoogleMapsOptions();
+          await importLibrary("geocoding");
+          const address = await new Promise<string>((resolve) => {
+            new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+              resolve(status === "OK" && results?.[0] ? results[0].formatted_address : coordinateLabel);
+            });
+          });
           setPickupLocation(address);
-          setLocationEnabled(true);
-        });
-      },
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+        } catch {
+          // Coordinates are already a valid, usable fallback.
+        }
+      }
+    } catch (error) {
+      setLocationEnabled(false);
+      setLocationFailure(error instanceof GeolocationFailure ? error.reason : "unavailable");
+    } finally {
+      setLocating(false);
+    }
   }
+
+  const currentLocationError =
+    locationFailure === "denied"
+      ? tq.currentLocationDenied
+      : locationFailure === "insecure"
+        ? tq.currentLocationInsecure
+        : tq.currentLocationError;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     if (!pickupCoordinates || !destinationCoordinates) {
@@ -305,16 +320,16 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
                 <button
                   type="button"
                   onClick={() => {
-                    if (pickupLocation) {
+                    if (pickupLocation && hasGoogleMapsApiKey) {
                       setPickupLocation("");
                       setPickupCoordinates(null);
                       setLocationEnabled(false);
                     } else setActivePicker("pickup");
                   }}
-                  aria-label={pickupLocation ? tq.clearAria : tq.mapPickerAria}
+                  aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
                   className="flex h-10 w-10 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
                 >
-                  {pickupLocation ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
+                  {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
                 </button>
               </div>
             </div>
@@ -345,19 +360,25 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
               <button
                 type="button"
                 onClick={() => {
-                  if (destination) {
+                  if (destination && hasGoogleMapsApiKey) {
                     setDestination("");
                     setDestinationCoordinates(null);
                   } else setActivePicker("destination");
                 }}
-                aria-label={destination ? tq.clearAria : tq.mapPickerAria}
+                aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
                 className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
               >
-                {destination ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
+                {destination && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
               </button>
             </div>
           </label>
         </div>
+
+        {locationFailure && (
+          <p role="alert" className="mt-2 text-xs font-medium text-red">
+            {currentLocationError}
+          </p>
+        )}
 
         <div
           aria-live="polite"

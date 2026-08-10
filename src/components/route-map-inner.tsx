@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
+import type { Map as LeafletMap } from "leaflet";
 
 const BUS_ICON_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
@@ -34,9 +35,85 @@ export interface RouteMapProps {
   segments: RouteSegment[];
 }
 
+interface MapMarkerData {
+  key: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+interface MapLineData {
+  key: string;
+  positions: google.maps.LatLngLiteral[];
+}
+
+function OpenStreetRouteMap({ markers, lines }: { markers: MapMarkerData[]; lines: MapLineData[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    let resizeObserver: ResizeObserver | undefined;
+
+    import("leaflet").then((leaflet) => {
+      if (cancelled || !containerRef.current) return;
+      const map = leaflet.map(containerRef.current, {
+        center: [41.15, 20],
+        zoom: 8,
+        scrollWheelZoom: false,
+      });
+      leaflet
+        .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        })
+        .addTo(map);
+      const bounds = leaflet.latLngBounds([]);
+
+      for (const line of lines) {
+        const positions = line.positions.map((point) => [point.lat, point.lng] as [number, number]);
+        leaflet.polyline(positions, { color: ROUTE_LINE_COLOR, weight: 4, opacity: 0.85 }).addTo(map);
+        positions.forEach((point) => bounds.extend(point));
+      }
+
+      const icon = leaflet.divIcon({
+        className: "dat-leaflet-station-marker",
+        html: '<span class="dat-leaflet-station-dot"></span>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -13],
+      });
+      for (const markerData of markers) {
+        const label = document.createElement("p");
+        label.className = "m-0 text-sm font-semibold text-brand-navy";
+        label.textContent = markerData.name;
+        leaflet.marker([markerData.lat, markerData.lng], { icon, title: markerData.name }).bindPopup(label).addTo(map);
+        bounds.extend([markerData.lat, markerData.lng]);
+      }
+
+      if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 });
+      mapRef.current = map;
+      resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+      resizeObserver.observe(containerRef.current);
+      requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    });
+
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [lines, markers]);
+
+  return <div ref={containerRef} className="dat-leaflet-map h-[52dvh] min-h-[300px] max-h-[520px] w-full overflow-hidden rounded-lg border border-border sm:h-[50vh] sm:min-h-[320px] sm:max-h-none" />;
+}
+
 export function RouteMap({ segments }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapError, setMapError] = useState(false);
 
   const { markers, lines } = useMemo(() => {
     const markerMap = new Map<string, { name: string; lat: number; lng: number }>();
@@ -71,6 +148,10 @@ export function RouteMap({ segments }: RouteMapProps) {
     let cancelled = false;
     const overlays: (google.maps.Polyline | google.maps.Marker)[] = [];
     let infoWindow: google.maps.InfoWindow | null = null;
+    const previousAuthFailure = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      if (!cancelled) setMapError(true);
+    };
 
     async function render() {
       ensureGoogleMapsOptions();
@@ -135,22 +216,21 @@ export function RouteMap({ segments }: RouteMapProps) {
       }
     }
 
-    render();
+    render().catch(() => {
+      if (!cancelled) setMapError(true);
+    });
 
     return () => {
       cancelled = true;
+      window.gm_authFailure = previousAuthFailure;
       overlays.forEach((overlay) => overlay.setMap(null));
       infoWindow?.close();
     };
   }, [markers, lines]);
 
-  if (!hasGoogleMapsApiKey) {
-    return (
-      <div className="flex h-[50vh] min-h-[320px] w-full items-center justify-center rounded-lg border border-border bg-surface text-sm text-muted">
-        Map unavailable
-      </div>
-    );
+  if (!hasGoogleMapsApiKey || mapError) {
+    return <OpenStreetRouteMap markers={markers} lines={lines} />;
   }
 
-  return <div ref={containerRef} className="h-[50vh] min-h-[320px] w-full overflow-hidden rounded-lg border border-border" />;
+  return <div ref={containerRef} className="h-[52dvh] min-h-[300px] max-h-[520px] w-full overflow-hidden rounded-lg border border-border sm:h-[50vh] sm:min-h-[320px] sm:max-h-none" />;
 }

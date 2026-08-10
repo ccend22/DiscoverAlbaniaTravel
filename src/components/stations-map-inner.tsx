@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { StationLocation } from "@/db/queries/stations";
+import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
 
 declare global {
   interface Window {
@@ -12,6 +13,7 @@ declare global {
 }
 
 const ALBANIA_CENTER: google.maps.LatLngLiteral = { lat: 41.15, lng: 20.0 };
+const MAP_SIZE = "h-[58dvh] min-h-[360px] max-h-[620px] sm:h-[70vh] sm:min-h-[480px] sm:max-h-none";
 
 export interface StationSelection {
   stationId: number;
@@ -24,32 +26,91 @@ export interface StationsMapProps {
 }
 
 function OpenStreetMapFallback({ stations, selection }: StationsMapProps) {
-  const selectedStation = selection ? stations.find((station) => station.id === selection.stationId) : null;
-  const lat = selectedStation ? Number(selectedStation.latitude) : null;
-  const lng = selectedStation ? Number(selectedStation.longitude) : null;
-  const bbox =
-    lat !== null && lng !== null
-      ? `${lng - 0.035},${lat - 0.022},${lng + 0.035},${lat + 0.022}`
-      : "19.15,39.55,21.15,42.75";
-  const marker = lat !== null && lng !== null ? `&marker=${lat},${lng}` : "";
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik${marker}`;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markersRef = useRef<Map<number, LeafletMarker>>(new Map());
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [mapVersion, setMapVersion] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    let resizeObserver: ResizeObserver | undefined;
+    const markerStore = new Map<number, LeafletMarker>();
+    markersRef.current = markerStore;
+
+    import("leaflet")
+      .then((leaflet) => {
+        if (cancelled || !containerRef.current) return;
+        const map = leaflet.map(containerRef.current, {
+          center: [ALBANIA_CENTER.lat, ALBANIA_CENTER.lng],
+          zoom: 8,
+          zoomControl: true,
+          attributionControl: true,
+          scrollWheelZoom: false,
+        });
+        leaflet
+          .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          })
+          .addTo(map);
+
+        const icon = leaflet.divIcon({
+          className: "dat-leaflet-station-marker",
+          html: '<span class="dat-leaflet-station-dot"></span>',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -13],
+        });
+        const bounds = leaflet.latLngBounds([]);
+
+        for (const station of stations) {
+          const lat = Number(station.latitude);
+          const lng = Number(station.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+          const marker = leaflet.marker([lat, lng], { icon, title: station.name, riseOnHover: true });
+          marker.bindPopup(buildInfoWindowContent(station), { maxWidth: 280, minWidth: 190 });
+          marker.addTo(map);
+          markerStore.set(station.id, marker);
+          bounds.extend([lat, lng]);
+        }
+
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 10 });
+        mapRef.current = map;
+        setMapVersion((version) => version + 1);
+        resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+        resizeObserver.observe(containerRef.current);
+        requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+      markerStore.clear();
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [stations]);
+
+  useEffect(() => {
+    if (!selection || !mapRef.current) return;
+    const station = stations.find((item) => item.id === selection.stationId);
+    const marker = markersRef.current.get(selection.stationId);
+    if (!station || !marker) return;
+    mapRef.current.flyTo([Number(station.latitude), Number(station.longitude)], 14, { duration: 0.65 });
+    marker.openPopup();
+  }, [mapVersion, selection, stations]);
 
   return (
-    <div className="relative h-[75vh] min-h-[480px] w-full overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#eef5f6]">
-      <iframe
-        key={src}
-        src={src}
-        title={selectedStation ? `Map showing ${selectedStation.name}` : "Map of bus stations in Albania"}
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-        className="h-full w-full border-0"
-      />
-      {selectedStation && (
-        <div className="pointer-events-none absolute bottom-4 left-4 right-4 max-w-sm rounded-2xl border border-white/70 bg-white/95 px-4 py-3 shadow-[0_12px_30px_rgba(7,52,60,0.16)] backdrop-blur">
-          <p className="truncate text-sm font-bold text-brand-navy">{selectedStation.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted">
-            {selectedStation.city}{selectedStation.address ? ` · ${selectedStation.address}` : ""}
-          </p>
+    <div className={`relative ${MAP_SIZE} w-full overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#eef5f6]`}>
+      <div ref={containerRef} aria-label="Map of bus stations in Albania" className="dat-leaflet-map h-full w-full" />
+      {loadFailed && (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken px-6 text-center text-sm font-medium text-muted">
+          The map could not load. Search above to find a station.
         </div>
       )}
     </div>
@@ -212,7 +273,7 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
   }
 
   return (
-    <div className="h-[75vh] min-h-[480px] w-full overflow-hidden rounded-[1.9rem] border border-white/10">
+    <div className={`${MAP_SIZE} w-full overflow-hidden rounded-[1.9rem] border border-white/10`}>
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );

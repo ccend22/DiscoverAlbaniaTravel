@@ -7,6 +7,7 @@ import { LocateIcon, SearchIcon } from "./icons";
 import type { StationLocation } from "@/db/queries/stations";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { normalizeSearchText } from "@/lib/search-normalize";
+import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
 
 interface StationsExplorerProps {
   stations: StationLocation[];
@@ -30,7 +31,7 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
   const [query, setQuery] = useState("");
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
-  const [locateFailed, setLocateFailed] = useState(false);
+  const [locateFailure, setLocateFailure] = useState<GeolocationFailureReason | null>(null);
   const [nearestName, setNearestName] = useState<string | null>(null);
   const selectionToken = useRef(0);
 
@@ -78,40 +79,42 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
     setActiveCity(null);
   }
 
-  function handleLocate() {
-    setLocateFailed(false);
-    if (!navigator.geolocation) {
-      setLocateFailed(true);
-      return;
-    }
+  async function handleLocate() {
+    setLocateFailure(null);
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocating(false);
-        const { latitude, longitude } = position.coords;
-        let nearest: StationLocation | null = null;
-        let nearestDistance = Infinity;
-        for (const station of stations) {
-          const d = distanceKm(latitude, longitude, Number(station.latitude), Number(station.longitude));
-          if (d < nearestDistance) {
-            nearestDistance = d;
-            nearest = station;
-          }
+    try {
+      const position = await getReliableCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      let nearest: StationLocation | null = null;
+      let nearestDistance = Infinity;
+      for (const station of stations) {
+        const d = distanceKm(latitude, longitude, Number(station.latitude), Number(station.longitude));
+        if (d < nearestDistance) {
+          nearestDistance = d;
+          nearest = station;
         }
-        if (nearest) {
-          setQuery("");
-          setActiveCity(null);
-          setNearestName(nearest.name);
-          focusStation(nearest);
-        }
-      },
-      () => {
-        setLocating(false);
-        setLocateFailed(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      }
+      if (nearest) {
+        setQuery("");
+        setActiveCity(null);
+        setNearestName(nearest.name);
+        focusStation(nearest);
+      }
+    } catch (error) {
+      setLocateFailure(error instanceof GeolocationFailure ? error.reason : "unavailable");
+    } finally {
+      setLocating(false);
+    }
   }
+
+  const locateErrorMessage =
+    locateFailure === "denied"
+      ? se.locateDenied
+      : locateFailure === "insecure"
+        ? se.locateInsecure
+        : locateFailure === "timeout"
+          ? se.locateTimeout
+          : se.locateError;
 
   return (
     <div className="flex flex-col gap-5">
@@ -158,9 +161,9 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
         </button>
       </div>
 
-      {(locateFailed || nearestName) && (
-        <p className={`-mt-1 text-sm ${locateFailed ? "text-red" : "text-muted"}`}>
-          {locateFailed ? se.locateError : formatMessage(se.nearestStation, { name: nearestName ?? "" })}
+      {(locateFailure || nearestName) && (
+        <p role={locateFailure ? "alert" : "status"} className={`-mt-1 text-sm ${locateFailure ? "text-red" : "text-muted"}`}>
+          {locateFailure ? locateErrorMessage : formatMessage(se.nearestStation, { name: nearestName ?? "" })}
         </p>
       )}
 

@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { networkInterfaces } from "node:os";
+
+const localDevOrigins = Object.values(networkInterfaces())
+  .flatMap((entries) => entries ?? [])
+  .filter((entry) => entry.family === "IPv4" && !entry.internal)
+  .map((entry) => entry.address);
 
 const nextConfig: NextConfig = {
   agentRules: false,
@@ -24,7 +30,7 @@ const nextConfig: NextConfig = {
   // the dev server's HMR websocket. Without this, Next.js blocks it as
   // cross-origin, which can leave the page rendered but not fully hydrated —
   // it looks fine but taps on buttons/dropdowns silently do nothing.
-  allowedDevOrigins: ["192.168.1.56"],
+  allowedDevOrigins: localDevOrigins,
   async headers() {
     return [
       {

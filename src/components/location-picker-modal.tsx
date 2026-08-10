@@ -7,6 +7,7 @@ import { CloseIcon, MapPinIcon, SearchIcon } from "./icons";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey, pinAutocompleteDropdownBelow } from "@/lib/google-maps-loader";
+import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
 
 const ALBANIA_CENTER: google.maps.LatLngLiteral = { lat: 41.15, lng: 20.0 };
 const PICKED_ZOOM = 15;
@@ -76,6 +77,96 @@ interface LocationPickerModalProps {
   onClose: () => void;
 }
 
+interface OpenStreetLocationPickerProps {
+  value: google.maps.LatLngLiteral | null;
+  unavailableLabel: string;
+  onPick: (position: google.maps.LatLngLiteral) => void;
+}
+
+function OpenStreetLocationPicker({ value, unavailableLabel, onPick }: OpenStreetLocationPickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerRef = useRef<LeafletMarker | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [mapVersion, setMapVersion] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    let resizeObserver: ResizeObserver | undefined;
+
+    import("leaflet")
+      .then((leaflet) => {
+        if (cancelled || !containerRef.current) return;
+        const map = leaflet.map(containerRef.current, {
+          center: [ALBANIA_CENTER.lat, ALBANIA_CENTER.lng],
+          zoom: 8,
+          zoomControl: true,
+          attributionControl: true,
+          scrollWheelZoom: false,
+        });
+        leaflet
+          .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          })
+          .addTo(map);
+        map.on("click", (event) => onPick({ lat: event.latlng.lat, lng: event.latlng.lng }));
+        mapRef.current = map;
+        setMapVersion((version) => version + 1);
+        resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+        resizeObserver.observe(containerRef.current);
+        requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+      markerRef.current = null;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [onPick]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !value) return;
+    let cancelled = false;
+    import("leaflet").then((leaflet) => {
+      if (cancelled || !mapRef.current) return;
+      if (!markerRef.current) {
+        const icon = leaflet.divIcon({
+          className: "dat-leaflet-pin-marker",
+          html: '<span class="dat-leaflet-pin-dot"></span>',
+          iconSize: [28, 28],
+          iconAnchor: [14, 27],
+        });
+        markerRef.current = leaflet.marker([value.lat, value.lng], { icon }).addTo(map);
+      } else {
+        markerRef.current.setLatLng([value.lat, value.lng]);
+      }
+      map.flyTo([value.lat, value.lng], Math.max(map.getZoom(), 14), { duration: 0.55 });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mapVersion, value]);
+
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="dat-leaflet-map h-full w-full cursor-crosshair" />
+      {loadFailed && (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken px-6 text-center text-sm text-muted">
+          {unavailableLabel}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LocationPickerModal({
   title,
   searchPlaceholder,
@@ -113,6 +204,10 @@ export function LocationPickerModal({
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
     let unpinSearch: (() => void) | undefined;
+    const previousAuthFailure = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      if (!cancelled) setMapError(true);
+    };
     ensureGoogleMapsOptions();
 
     function placePin(map: google.maps.Map, position: google.maps.LatLngLiteral, animateDrop: boolean) {
@@ -185,13 +280,18 @@ export function LocationPickerModal({
       });
     return () => {
       cancelled = true;
+      window.gm_authFailure = previousAuthFailure;
       resizeObserver?.disconnect();
       unpinSearch?.();
     };
   }, []);
 
   function handleConfirm() {
-    if (!picked || !geocoderRef.current) return;
+    if (!picked) return;
+    if (!geocoderRef.current) {
+      onConfirm({ address: `${picked.lat.toFixed(5)}, ${picked.lng.toFixed(5)}`, lat: picked.lat, lng: picked.lng });
+      return;
+    }
     setResolving(true);
     geocoderRef.current.geocode({ location: picked }, (results, status) => {
       setResolving(false);
@@ -236,7 +336,7 @@ export function LocationPickerModal({
 
         <div className="relative min-h-[240px] w-full flex-1">
           {!hasGoogleMapsApiKey || mapError ? (
-            <div className="flex h-full w-full items-center justify-center bg-surface-sunken text-sm text-muted">{unavailableLabel}</div>
+            <OpenStreetLocationPicker value={picked} unavailableLabel={unavailableLabel} onPick={setPicked} />
           ) : (
             <>
               <div ref={containerRef} className="h-full w-full" />
@@ -262,6 +362,14 @@ export function LocationPickerModal({
                 </div>
               )}
             </>
+          )}
+          {(!hasGoogleMapsApiKey || mapError) && !picked && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-[400] flex justify-center px-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-center text-xs font-medium text-foreground shadow-[var(--shadow-sm)]">
+                <MapPinIcon width={13} height={13} className="text-coral" />
+                {hintLabel}
+              </span>
+            </div>
           )}
         </div>
 

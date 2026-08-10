@@ -234,6 +234,9 @@ const en = {
     mapPickerAria: "Choose on map",
     clearAria: "Clear",
     useCurrentLocationAria: "Use my current location",
+    currentLocationDenied: "Allow location access in your browser settings, then try again.",
+    currentLocationInsecure: "Live location works on the secure HTTPS website.",
+    currentLocationError: "We couldn't find your location. Try again or choose it on the map.",
   },
   locationPicker: {
     pickupTitle: "Choose pickup location",
@@ -347,6 +350,9 @@ const en = {
     locateMe: "Use my location",
     locating: "Locating…",
     locateError: "Couldn't get your location",
+    locateDenied: "Location access is blocked. Allow it in your browser settings and try again.",
+    locateInsecure: "Live location requires the secure website. Open the HTTPS version to continue.",
+    locateTimeout: "Location took too long. Move near a window or try again.",
     nearestStation: "Nearest to you: {name}",
   },
   newsPage: {
@@ -650,6 +656,9 @@ const al: typeof en = {
     mapPickerAria: "Zgjidh në hartë",
     clearAria: "Pastro",
     useCurrentLocationAria: "Përdor vendndodhjen time",
+    currentLocationDenied: "Lejo vendndodhjen te cilësimet e browser-it, pastaj provo përsëri.",
+    currentLocationInsecure: "Vendndodhja live funksionon në faqen e sigurt HTTPS.",
+    currentLocationError: "Nuk e gjetëm vendndodhjen. Provo përsëri ose zgjidhe në hartë.",
   },
   locationPicker: {
     pickupTitle: "Zgjidh vendndodhjen e marrjes",
@@ -763,6 +772,9 @@ const al: typeof en = {
     locateMe: "Përdor vendndodhjen time",
     locating: "Duke gjetur…",
     locateError: "Nuk u gjet vendndodhja jote",
+    locateDenied: "Qasja te vendndodhja është bllokuar. Lejoje te cilësimet e browser-it dhe provo përsëri.",
+    locateInsecure: "Vendndodhja live kërkon faqen e sigurt. Hape versionin HTTPS për të vazhduar.",
+    locateTimeout: "Vendndodhja po zgjat shumë. Afrohu pranë një dritareje ose provo përsëri.",
     nearestStation: "Më i afërti: {name}",
   },
   newsPage: {

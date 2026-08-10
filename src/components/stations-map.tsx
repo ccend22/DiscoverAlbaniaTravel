@@ -10,7 +10,7 @@ const StationsMapInner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[75vh] min-h-[480px] w-full items-center justify-center rounded-[1.9rem] border border-white/10 bg-[#eef5f6] text-sm font-medium text-muted">
+      <div className="flex h-[58dvh] min-h-[360px] max-h-[620px] w-full items-center justify-center rounded-[1.9rem] border border-white/10 bg-[#eef5f6] text-sm font-medium text-muted sm:h-[70vh] sm:min-h-[480px] sm:max-h-none">
         Loading map…
       </div>
     ),
