@@ -24,8 +24,45 @@ interface CityComboboxProps {
   leadingIconClassName?: string;
 }
 
+// Per-character normalization only (never the whole-string `.trim()` in
+// normalizeSearchText, which collapses a lone space character to "" and
+// would desync the index mapping below for multi-word names).
+function normalizeChar(ch: string): string {
+  return ch.toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+/** Locates the query within the option's original (accented, cased) text so the match can be bolded without altering displayed spelling. */
+function findHighlightRange(text: string, query: string): { start: number; end: number } | null {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return null;
+  let normalized = "";
+  const originalIndexAt: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    for (const c of normalizeChar(text[i])) {
+      normalized += c;
+      originalIndexAt.push(i);
+    }
+  }
+  const matchIndex = normalized.indexOf(normalizedQuery);
+  if (matchIndex === -1) return null;
+  return { start: originalIndexAt[matchIndex], end: originalIndexAt[matchIndex + normalizedQuery.length - 1] + 1 };
+}
+
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  const range = findHighlightRange(text, query);
+  if (!range) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, range.start)}
+      <strong className="font-bold text-teal">{text.slice(range.start, range.end)}</strong>
+      {text.slice(range.end)}
+    </>
+  );
+}
+
 interface OptionListProps {
   options: string[];
+  query: string;
   highlighted: number;
   rowHeightClassName: string;
   onSelect: (option: string) => void;
@@ -33,7 +70,7 @@ interface OptionListProps {
   idPrefix: string;
 }
 
-function OptionList({ options, highlighted, rowHeightClassName, onSelect, onHover, idPrefix }: OptionListProps) {
+function OptionList({ options, query, highlighted, rowHeightClassName, onSelect, onHover, idPrefix }: OptionListProps) {
   return (
     <>
       {options.map((option, index) => (
@@ -51,7 +88,9 @@ function OptionList({ options, highlighted, rowHeightClassName, onSelect, onHove
             }`}
           >
             <MapPinIcon width={14} height={14} className="shrink-0 opacity-50" />
-            <span className="truncate">{option}</span>
+            <span className="truncate">
+              <HighlightedText text={option} query={query} />
+            </span>
           </button>
         </li>
       ))}
@@ -276,7 +315,7 @@ export function CityCombobox({
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
         aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
-        className={`min-h-11 w-full cursor-pointer rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
+        className={`min-h-11 w-full cursor-pointer truncate rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
         suppressHydrationWarning
       />
 
@@ -305,6 +344,7 @@ export function CityCombobox({
                 >
                   <OptionList
                     options={filtered}
+                    query={value}
                     highlighted={highlighted}
                     rowHeightClassName="min-h-11 py-2"
                     onSelect={selectOption}
@@ -370,6 +410,7 @@ export function CityCombobox({
                   <ul id={`${name}-listbox`} role="listbox" className="p-2 pt-0">
                     <OptionList
                       options={filtered}
+                      query={value}
                       highlighted={highlighted}
                       rowHeightClassName="min-h-12 py-2.5"
                       onSelect={selectOption}

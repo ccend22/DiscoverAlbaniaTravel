@@ -64,19 +64,6 @@ export interface PickedLocation {
   lng: number;
 }
 
-interface LocationPickerModalProps {
-  title: string;
-  searchPlaceholder: string;
-  hintLabel: string;
-  coordinatesLabel: string;
-  confirmLabel: string;
-  closeLabel: string;
-  resolvingLabel: string;
-  unavailableLabel: string;
-  onConfirm: (location: PickedLocation) => void;
-  onClose: () => void;
-}
-
 interface OpenStreetLocationPickerProps {
   value: google.maps.LatLngLiteral | null;
   unavailableLabel: string;
@@ -167,18 +154,33 @@ function OpenStreetLocationPicker({ value, unavailableLabel, onPick }: OpenStree
   );
 }
 
-export function LocationPickerModal({
-  title,
+interface LocationPickerPanelProps {
+  searchPlaceholder: string;
+  hintLabel: string;
+  coordinatesLabel: string;
+  confirmLabel: string;
+  resolvingLabel: string;
+  unavailableLabel: string;
+  onConfirm: (location: PickedLocation) => void;
+  /** Height utility classes for the map area — full-screen modal and inline embeds size this differently. */
+  mapHeightClassName?: string;
+}
+
+/**
+ * The map + search + confirm core, with no opinion on how it's framed —
+ * used both full-screen inside LocationPickerModal and embedded directly in
+ * the page (see TaxiQuickForm's inline picker).
+ */
+export function LocationPickerPanel({
   searchPlaceholder,
   hintLabel,
   coordinatesLabel,
   confirmLabel,
-  closeLabel,
   resolvingLabel,
   unavailableLabel,
   onConfirm,
-  onClose,
-}: LocationPickerModalProps) {
+  mapHeightClassName = "min-h-[240px] flex-1",
+}: LocationPickerPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -187,17 +189,6 @@ export function LocationPickerModal({
   const [picked, setPicked] = useState<google.maps.LatLngLiteral | null>(null);
   const [resolving, setResolving] = useState(false);
   const [mapError, setMapError] = useState(false);
-
-  useBodyScrollLock(true);
-
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!hasGoogleMapsApiKey || !containerRef.current) return;
@@ -240,13 +231,14 @@ export function LocationPickerModal({
         mapRef.current = map;
         geocoderRef.current = new google.maps.Geocoder();
 
-        // This dialog sizes its map area with flexbox (so the whole modal
-        // fits any viewport height — see the fit fix below), which means
-        // the container's true pixel size isn't known at construction time.
-        // Google Maps only tiles correctly for the size it saw when built,
-        // and never watches for later resizes on its own, so without this
-        // it silently renders blank. Re-measuring on every observed resize
-        // (dialog open, window resize, etc.) keeps it painted correctly.
+        // This panel sizes its map area with flexbox/explicit height classes
+        // (so it fits both a full-screen modal and a bounded inline card),
+        // which means the container's true pixel size isn't known at
+        // construction time. Google Maps only tiles correctly for the size
+        // it saw when built, and never watches for later resizes on its
+        // own, so without this it silently renders blank. Re-measuring on
+        // every observed resize (dialog open, window resize, etc.) keeps it
+        // painted correctly.
         const center = map.getCenter();
         resizeObserver = new ResizeObserver(() => {
           google.maps.event.trigger(map, "resize");
@@ -300,6 +292,85 @@ export function LocationPickerModal({
     });
   }
 
+  return (
+    <>
+      <div className={`relative w-full ${mapHeightClassName}`}>
+        {!hasGoogleMapsApiKey || mapError ? (
+          <OpenStreetLocationPicker value={picked} unavailableLabel={unavailableLabel} onPick={setPicked} />
+        ) : (
+          <>
+            <div ref={containerRef} className="h-full w-full" />
+
+            <div className="absolute inset-x-3 top-3 z-10 sm:inset-x-4 sm:top-4">
+              <div className="relative">
+                <SearchIcon width={16} height={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  className="min-h-12 w-full rounded-2xl border border-white/70 bg-surface/95 py-2.5 pl-10 pr-4 text-sm font-medium shadow-[0_12px_32px_rgba(7,52,60,0.16)] outline-none backdrop-blur-md transition-all focus:border-teal focus:shadow-[var(--shadow-glow-teal)]"
+                />
+              </div>
+            </div>
+
+            {!picked && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-center text-xs font-medium text-foreground shadow-[var(--shadow-sm)]">
+                  <MapPinIcon width={13} height={13} className="text-coral" />
+                  {hintLabel}
+                </span>
+              </div>
+            )}
+          </>
+        )}
+        {(!hasGoogleMapsApiKey || mapError) && !picked && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-[400] flex justify-center px-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-center text-xs font-medium text-foreground shadow-[var(--shadow-sm)]">
+              <MapPinIcon width={13} height={13} className="text-coral" />
+              {hintLabel}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-white p-4 sm:px-6 sm:py-5">
+        <p className="min-w-0 truncate text-xs text-muted">
+          {picked && (
+            <>
+              <span className="font-medium text-foreground">{coordinatesLabel}:</span> {picked.lat.toFixed(5)}, {picked.lng.toFixed(5)}
+            </>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={!picked || resolving}
+          className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-teal px-6 font-semibold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          {resolving ? resolvingLabel : confirmLabel}
+        </button>
+      </div>
+    </>
+  );
+}
+
+interface LocationPickerModalProps extends Omit<LocationPickerPanelProps, "mapHeightClassName"> {
+  title: string;
+  closeLabel: string;
+  onClose: () => void;
+}
+
+export function LocationPickerModal({ title, closeLabel, onClose, ...panelProps }: LocationPickerModalProps) {
+  useBodyScrollLock(true);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   // Portalled to <body>: this opens from inside the hero's ScrollReveal
   // wrapper, which leaves a lingering `transform` on itself after its
   // entrance animation (fill-mode "both"). Any transform on an ancestor
@@ -334,62 +405,7 @@ export function LocationPickerModal({
           </button>
         </div>
 
-        <div className="relative min-h-[240px] w-full flex-1">
-          {!hasGoogleMapsApiKey || mapError ? (
-            <OpenStreetLocationPicker value={picked} unavailableLabel={unavailableLabel} onPick={setPicked} />
-          ) : (
-            <>
-              <div ref={containerRef} className="h-full w-full" />
-
-              <div className="absolute inset-x-3 top-3 z-10 sm:inset-x-4 sm:top-4">
-                <div className="relative">
-                  <SearchIcon width={16} height={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder={searchPlaceholder}
-                    className="min-h-12 w-full rounded-2xl border border-white/70 bg-surface/95 py-2.5 pl-10 pr-4 text-sm font-medium shadow-[0_12px_32px_rgba(7,52,60,0.16)] outline-none backdrop-blur-md transition-all focus:border-teal focus:shadow-[var(--shadow-glow-teal)]"
-                  />
-                </div>
-              </div>
-
-              {!picked && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-center text-xs font-medium text-foreground shadow-[var(--shadow-sm)]">
-                    <MapPinIcon width={13} height={13} className="text-coral" />
-                    {hintLabel}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
-          {(!hasGoogleMapsApiKey || mapError) && !picked && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-[400] flex justify-center px-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-center text-xs font-medium text-foreground shadow-[var(--shadow-sm)]">
-                <MapPinIcon width={13} height={13} className="text-coral" />
-                {hintLabel}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-white p-4 sm:px-6 sm:py-5">
-          <p className="min-w-0 truncate text-xs text-muted">
-            {picked && (
-              <>
-                <span className="font-medium text-foreground">{coordinatesLabel}:</span> {picked.lat.toFixed(5)}, {picked.lng.toFixed(5)}
-              </>
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={!picked || resolving}
-            className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-teal px-6 font-semibold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          >
-            {resolving ? resolvingLabel : confirmLabel}
-          </button>
-        </div>
+        <LocationPickerPanel {...panelProps} />
       </div>
     </div>,
     document.body

@@ -7,7 +7,7 @@ import { importLibrary } from "@googlemaps/js-api-loader";
 import { requestTaxiAction } from "@/app/(site)/taxi/actions";
 import { Alert } from "@/components/ui/alert";
 import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, CloseIcon, LocateIcon, MapPinIcon } from "./icons";
-import { LocationPickerModal, type PickedLocation } from "./location-picker-modal";
+import { LocationPickerPanel, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
@@ -31,6 +31,12 @@ interface TaxiQuickFormProps {
   error?: string;
   variant?: "solid" | "glass";
   defaults?: TaxiDefaults;
+  /**
+   * Skips this form's own border/background/shadow/padding so a parent can
+   * own one persistent card shell around it — used by HeroBookingWidget so
+   * switching bus/taxi swaps only the fields, not the whole card.
+   */
+  bare?: boolean;
 }
 
 const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
@@ -145,7 +151,7 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
   );
 }
 
-export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }: TaxiQuickFormProps) {
+export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, bare = false }: TaxiQuickFormProps) {
   const tq = dict.taxiQuickForm;
   const tf = dict.taxiForm;
   const lp = dict.locationPicker;
@@ -236,30 +242,20 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
     }
   }
 
-  const routeStatus = (() => {
-    if (distanceKm === null) {
-      return { tone: "neutral", Icon: MapPinIcon, title: tq.selectLocationsHint };
-    }
-    if (routeIsEligible) {
-      return {
-        tone: "success",
-        Icon: CheckCircleIcon,
-        title: tq.routeReadyTitle,
-      };
-    }
-    return {
-      tone: "danger",
-      Icon: AlertCircleIcon,
-      title: tq.routeTooShortTitle,
-    };
-  })();
+  const routeStatus = routeIsEligible
+    ? { tone: "success" as const, Icon: CheckCircleIcon, title: tq.routeReadyTitle }
+    : { tone: "danger" as const, Icon: AlertCircleIcon, title: tq.routeTooShortTitle };
 
   return (
     <>
       <form
         action={requestTaxiAction}
         onSubmit={handleSubmit}
-        className={`relative isolate mx-auto w-full max-w-5xl overflow-hidden rounded-[1.5rem] border p-4 sm:rounded-[2rem] sm:p-7 ${CONTAINER_STYLES[variant]}`}
+        className={
+          bare
+            ? "relative isolate mx-auto w-full max-w-5xl"
+            : `relative isolate mx-auto w-full max-w-5xl overflow-hidden rounded-[1.5rem] border p-4 sm:rounded-[2rem] sm:p-7 ${CONTAINER_STYLES[variant]}`
+        }
       >
         <input type="hidden" name="pickupLatitude" value={pickupCoordinates?.lat ?? ""} />
         <input type="hidden" name="pickupLongitude" value={pickupCoordinates?.lng ?? ""} />
@@ -271,7 +267,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
             <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] sm:flex">
               <MapPinIcon width={19} height={19} aria-hidden="true" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 text-left">
               <h2 className="font-display text-xl font-black tracking-[-0.03em] text-brand-navy sm:text-2xl">{tq.title}</h2>
               <p className="mt-0.5 text-xs leading-5 text-muted sm:text-sm">{tq.subtitle}</p>
             </div>
@@ -374,34 +370,61 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
           </label>
         </div>
 
+        {activePicker && (
+          <div className="mt-4 animate-fade-up overflow-hidden rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow)]">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-[linear-gradient(135deg,#f1f9f7_0%,#ffffff_80%)] px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal text-white shadow-[0_8px_18px_rgba(0,128,128,0.18)]">
+                  <MapPinIcon width={15} height={15} />
+                </span>
+                <p className="text-sm font-bold text-brand-navy">{activePicker === "pickup" ? lp.pickupTitle : lp.destinationTitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActivePicker(null)}
+                aria-label={lp.close}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#dfe8e7] bg-white text-muted shadow-sm transition-colors hover:text-brand-navy"
+              >
+                <CloseIcon width={16} height={16} />
+              </button>
+            </div>
+            <LocationPickerPanel
+              searchPlaceholder={lp.searchPlaceholder}
+              hintLabel={lp.hint}
+              coordinatesLabel={lp.coordinatesLabel}
+              confirmLabel={lp.confirm}
+              resolvingLabel={lp.resolving}
+              unavailableLabel={lp.unavailable}
+              onConfirm={handlePicked}
+              mapHeightClassName="h-[320px] sm:h-[380px]"
+            />
+          </div>
+        )}
+
         {locationFailure && (
           <p role="alert" className="mt-2 text-xs font-medium text-red">
             {currentLocationError}
           </p>
         )}
 
-        <div
-          aria-live="polite"
-          className={`mt-3 rounded-2xl border px-4 py-3 ${
-            routeStatus.tone === "success"
-              ? "border-success/20 bg-success-soft/70"
-              : routeStatus.tone === "danger"
-                ? "border-coral/20 bg-[#fff7f4]"
-                : "border-[#dfe8e7] bg-[#f7faf9]"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-              routeStatus.tone === "success" ? "bg-white text-success" : routeStatus.tone === "danger" ? "bg-white text-coral" : "bg-white text-teal"
-            }`}>
-              <routeStatus.Icon width={16} height={16} />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-bold text-brand-navy">{routeStatus.title}</p>
-              {distanceKm !== null && <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black tabular-nums text-brand-navy shadow-sm">{Math.round(distanceKm)} km</span>}
+        {distanceKm !== null && (
+          <div
+            aria-live="polite"
+            className={`mt-3 rounded-2xl border px-4 py-3 ${
+              routeStatus.tone === "success" ? "border-success/20 bg-success-soft/70" : "border-coral/20 bg-[#fff7f4]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                routeStatus.tone === "success" ? "bg-white text-success" : "bg-white text-coral"
+              }`}>
+                <routeStatus.Icon width={16} height={16} />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-brand-navy">{routeStatus.title}</p>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black tabular-nums text-brand-navy shadow-sm">{Math.round(distanceKm)} km</span>
+              </div>
             </div>
-          </div>
-          {distanceKm !== null && (
             <div className="mt-2.5 pl-11">
               <div className="h-1.5 overflow-hidden rounded-full bg-white">
                 <div
@@ -410,8 +433,8 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
                 />
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="mt-5 grid gap-4 border-t border-[#e5edec] pt-5 md:grid-cols-[minmax(14rem,1fr)_auto] md:items-end">
           <label className="block max-w-md">
@@ -437,21 +460,6 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults }
           </button>
         </div>
       </form>
-
-      {activePicker && (
-        <LocationPickerModal
-          title={activePicker === "pickup" ? lp.pickupTitle : lp.destinationTitle}
-          searchPlaceholder={lp.searchPlaceholder}
-          hintLabel={lp.hint}
-          coordinatesLabel={lp.coordinatesLabel}
-          confirmLabel={lp.confirm}
-          closeLabel={lp.close}
-          resolvingLabel={lp.resolving}
-          unavailableLabel={lp.unavailable}
-          onClose={() => setActivePicker(null)}
-          onConfirm={handlePicked}
-        />
-      )}
 
       {eligibilityModal && (
         <EligibilityModal

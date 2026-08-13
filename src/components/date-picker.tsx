@@ -283,6 +283,8 @@ interface DatePickerProps {
   rangeEndLabel?: string;
   activeRangeBoundary?: "start" | "end";
   dialogLabel?: string;
+  /** Shown inline before the date inside the button, replacing a separate caption above the field. */
+  inlineLabel?: string;
 }
 
 interface QuickPicksProps {
@@ -379,6 +381,7 @@ export function DatePicker({
   rangeEndLabel,
   activeRangeBoundary,
   dialogLabel,
+  inlineLabel,
 }: DatePickerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open ?? internalOpen;
@@ -437,7 +440,7 @@ export function DatePicker({
     : { paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative min-w-0 flex-1" ref={containerRef}>
       <input type="hidden" name={name} value={value} suppressHydrationWarning />
       <button
         type="button"
@@ -445,11 +448,14 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls={`${name}-date-picker`}
-        aria-label={`${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
-        className={`flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
+        aria-label={`${inlineLabel ? `${inlineLabel}: ` : ""}${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
+        className={`flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
       >
         <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
-        <span>{formatDateLong(value, locale)}</span>
+        <span className="min-w-0 leading-tight">
+          {inlineLabel && <span className="mr-1 font-bold uppercase tracking-[0.08em] text-black/60">{inlineLabel}</span>}
+          {formatDateLong(value, locale)}
+        </span>
       </button>
 
       {isOpen && !sheetMode && (

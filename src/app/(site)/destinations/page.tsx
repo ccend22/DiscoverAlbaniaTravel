@@ -27,7 +27,7 @@ export default async function DestinationsPage() {
           src="/images/destinations/sarande.jpg"
           alt=""
           fill
-          preload
+          priority
           sizes="100vw"
           className="object-cover object-center"
         />

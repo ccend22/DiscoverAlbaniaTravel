@@ -7,6 +7,7 @@ import { ArrowRightIcon, DestinationIcon, RoundTripIcon, SearchIcon, StartPointI
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { useSlidingIndicator } from "@/lib/use-sliding-indicator";
 
 type TripType = "oneway" | "roundtrip";
 type ActiveDateField = "depart" | "return" | null;
@@ -29,6 +30,12 @@ interface SearchWidgetProps {
    * Both use the same quiet, single-accent styling underneath.
    */
   variant?: "solid" | "glass";
+  /**
+   * Skips this form's own border/background/shadow/padding so a parent can
+   * own one persistent card shell around it — used by HeroBookingWidget so
+   * switching bus/taxi swaps only the fields, not the whole card.
+   */
+  bare?: boolean;
 }
 
 const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
@@ -60,6 +67,7 @@ export function SearchWidget({
   defaultReturnDate,
   defaultPassengers,
   variant = "solid",
+  bare = false,
 }: SearchWidgetProps) {
   const sw = dict.searchWidget;
   const today = getAlbaniaDateInputValue();
@@ -82,6 +90,7 @@ export function SearchWidget({
   const [swapRotation, setSwapRotation] = useState(0);
   const [swapPulse, setSwapPulse] = useState(false);
   const [activeDateField, setActiveDateField] = useState<ActiveDateField>(null);
+  const { registerRef: registerTripTypeRef, style: tripTypeIndicatorStyle } = useSlidingIndicator(tripType);
 
   const destinationOptions = useMemo(() => {
     if (!originInput.trim()) return cityOptions;
@@ -132,7 +141,11 @@ export function SearchWidget({
     <form
       action="/search"
       method="get"
-      className={`relative z-20 isolate overflow-visible rounded-[2rem] p-3 sm:p-4 ${CONTAINER_STYLES[variant]}`}
+      className={
+        bare
+          ? "relative z-20 isolate overflow-visible"
+          : `relative z-20 isolate overflow-visible rounded-[2rem] p-3 sm:p-4 ${CONTAINER_STYLES[variant]}`
+      }
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div
@@ -141,14 +154,15 @@ export function SearchWidget({
           className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit"
         >
           <span
-            className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-teal shadow-sm transition-transform duration-500 ease-[var(--ease-spring)] ${tripType === "roundtrip" ? "translate-x-full" : "translate-x-0"}`}
+            className="absolute inset-y-1 rounded-full bg-teal shadow-sm transition-[left,width] duration-500 ease-[var(--ease-spring)]"
+            style={tripTypeIndicatorStyle ? { left: tripTypeIndicatorStyle.left, width: tripTypeIndicatorStyle.width } : { left: 4, width: 0 }}
             aria-hidden="true"
           />
-          <button type="button" onClick={() => handleTripTypeChange("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+          <button ref={registerTripTypeRef("oneway")} type="button" onClick={() => handleTripTypeChange("oneway")} aria-pressed={tripType === "oneway"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "oneway" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
             <ArrowRightIcon width={15} height={15} />
             {sw.oneWay}
           </button>
-          <button type="button" onClick={() => handleTripTypeChange("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
+          <button ref={registerTripTypeRef("roundtrip")} type="button" onClick={() => handleTripTypeChange("roundtrip")} aria-pressed={tripType === "roundtrip"} className={`relative z-10 flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 font-semibold transition-colors ${tripType === "roundtrip" ? "text-white" : "text-muted hover:text-brand-navy"}`}>
             <RoundTripIcon width={15} height={15} />
             {sw.roundTrip}
           </button>
@@ -161,8 +175,7 @@ export function SearchWidget({
       </div>
 
       <div className={`relative grid gap-2 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] ${tripType === "roundtrip" ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.72fr)_minmax(190px,0.72fr)_150px_auto]" : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(210px,0.8fr)_150px_auto]"} lg:items-stretch`}>
-        <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="mb-0.5 block pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.from}</span>
+        <label className={`relative flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
           <CityCombobox
             name="origin"
             required
@@ -170,7 +183,7 @@ export function SearchWidget({
             value={originInput}
             onChange={handleOriginChange}
             options={cityOptions}
-            placeholder={sw.fromPlaceholder}
+            placeholder={sw.from}
             noMatchesLabel={dict.cityCombobox.noMatches}
             leadingIcon={<StartPointIcon width={15} height={15} />}
             leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-teal-soft text-teal"
@@ -188,8 +201,7 @@ export function SearchWidget({
           <SwapIcon width={16} height={16} />
         </button>
 
-        <label className={`relative min-w-0 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="mb-0.5 block pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.to}</span>
+        <label className={`relative flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
           <CityCombobox
             name="destination"
             required
@@ -197,7 +209,7 @@ export function SearchWidget({
             value={destinationInput}
             onChange={setDestinationInput}
             options={destinationOptions}
-            placeholder={sw.toPlaceholder}
+            placeholder={sw.to}
             noMatchesLabel={dict.cityCombobox.noDestinations}
             leadingIcon={<DestinationIcon width={15} height={15} />}
             leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-coral-soft text-coral"
@@ -205,8 +217,7 @@ export function SearchWidget({
           />
         </label>
 
-        <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
-          <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.depart}</span>
+        <div className="flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
           <DatePicker
             name="date"
             value={dateValue}
@@ -225,11 +236,11 @@ export function SearchWidget({
             rangeEndLabel={sw.returnLabel}
             activeRangeBoundary={tripType === "roundtrip" ? "start" : undefined}
             dialogLabel={sw.depart}
+            inlineLabel={sw.depart}
           />
         </div>
         {tripType === "roundtrip" && (
-          <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
-            <span className="mb-0.5 pl-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.returnLabel}</span>
+          <div className="flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
             <DatePicker
               name="returnDate"
               value={returnDateValue}
@@ -247,11 +258,12 @@ export function SearchWidget({
               rangeEndLabel={sw.returnLabel}
               activeRangeBoundary="end"
               dialogLabel={sw.returnLabel}
+              inlineLabel={sw.returnLabel}
             />
           </div>
         )}
-        <div className="flex min-h-16 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
-          <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-black">{sw.passengers}</span>
+        <div className="flex min-h-16 items-end justify-between gap-2 rounded-[1.1rem] bg-white px-3 py-2 text-sm xl:flex-col xl:items-start xl:justify-center">
+          <span className="pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-black xl:mb-1 xl:pb-0">{sw.passengers}</span>
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setPassengers((p) => Math.max(1, p - 1))} disabled={passengers <= 1} aria-label={sw.decreasePassengers} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5f5] text-base text-teal transition hover:bg-teal-soft active:scale-90 disabled:opacity-30">−</button>
             <span className="w-7 text-center text-base font-bold tabular-nums text-brand-navy">{passengers}</span>
