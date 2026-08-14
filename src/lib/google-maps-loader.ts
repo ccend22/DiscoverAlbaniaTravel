@@ -100,24 +100,37 @@ export function pinAutocompleteDropdownBelow(input: HTMLInputElement): () => voi
     container.style.setProperty("margin-top", "0", "important");
   }
 
-  function claimContainer() {
+  function claimContainer(): boolean {
     if (container) {
       reposition();
-      return;
+      return true;
     }
     const containers = document.querySelectorAll<HTMLElement>(".pac-container");
     const found = Array.from(containers).find((el) => el.getBoundingClientRect().height > 0);
-    if (!found) return;
+    if (!found) return false;
     container = found;
     styleObserver = new MutationObserver(reposition);
     styleObserver.observe(container, { attributes: true, attributeFilter: ["style"] });
     reposition();
+    return true;
   }
 
-  // Google shows (and first sizes) the container synchronously within its
-  // own "input" handling, so give that a frame to finish before grabbing it.
+  // Predictions come from an async request to Google's servers, so the
+  // container doesn't necessarily size itself within the next frame the way
+  // a synchronous re-render would -- polling for a bit after each keystroke
+  // (instead of a single rAF check) accounts for that network round-trip,
+  // otherwise a fast typer or a slow response can leave the container
+  // permanently unclaimed and stuck on Google's own unpinned positioning,
+  // which doesn't avoid the on-screen keyboard on mobile.
+  let pollTimeout = 0;
   function handleActivity() {
-    requestAnimationFrame(claimContainer);
+    window.clearTimeout(pollTimeout);
+    const deadline = Date.now() + 1500;
+    function poll() {
+      if (claimContainer() || Date.now() > deadline) return;
+      pollTimeout = window.setTimeout(poll, 80);
+    }
+    poll();
   }
 
   input.addEventListener("input", handleActivity);
@@ -127,6 +140,7 @@ export function pinAutocompleteDropdownBelow(input: HTMLInputElement): () => voi
   window.visualViewport?.addEventListener("scroll", reposition);
 
   return () => {
+    window.clearTimeout(pollTimeout);
     input.removeEventListener("input", handleActivity);
     window.removeEventListener("resize", reposition);
     window.removeEventListener("scroll", reposition, true);
