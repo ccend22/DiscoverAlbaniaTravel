@@ -310,6 +310,7 @@ const en = {
     tripsPerWeek: "{count} weekly departures",
     priceFrom: "From {price}",
     viewRoute: "View schedule",
+    loadMore: "Load more routes",
     noRoutesMatch: 'No routes match "{filter}".',
   },
   routeDetail: {
@@ -737,6 +738,7 @@ const al: typeof en = {
     tripsPerWeek: "{count} nisje javore",
     priceFrom: "Nga {price}",
     viewRoute: "Shiko orarin",
+    loadMore: "Shfaq më shumë itinerarë",
     noRoutesMatch: 'Asnjë itinerar nuk përputhet me "{filter}".',
   },
   routeDetail: {
