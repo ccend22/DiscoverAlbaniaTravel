@@ -550,7 +550,7 @@ export function DatePicker({
             role="dialog"
             aria-modal="true"
             aria-label={dialogLabel ?? dict.chooseDate}
-            className="animate-fade-in fixed inset-x-0 bottom-0 z-50 flex min-h-0 max-h-[calc(100dvh-0.5rem)] flex-col overflow-hidden rounded-t-[1.5rem] bg-surface shadow-[var(--shadow-lg)]"
+            className="animate-fade-in fixed inset-x-0 bottom-0 z-50 flex min-h-0 max-h-[calc(100dvh-0.5rem)] flex-col overflow-hidden rounded-t-[1.5rem] bg-surface shadow-[var(--shadow-lg)] transition-[top,height] duration-[var(--dur-base)] ease-[var(--ease-out-expo)]"
             style={mobileSheetStyle}
           >
             <div className="flex shrink-0 justify-center pb-1 pt-2.5" aria-hidden="true">
