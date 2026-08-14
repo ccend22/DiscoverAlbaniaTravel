@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBookingAction, type CreateBookingActionState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { ChevronLeftIcon } from "@/components/icons";
 import type { Dictionary } from "@/lib/dictionary";
 
 interface BookingFormProps {
@@ -42,20 +43,15 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
 
   if (showCheckout) {
     return (
-      <div className="public-card flex animate-fade-up flex-col gap-3 p-6 sm:p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-medium text-foreground">{bp.completePaymentHeading}</p>
-            <p className="mt-1 text-xs text-muted">{bp.completePaymentNote}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDismissed(true)}
-            className="shrink-0 text-xs font-medium text-teal underline underline-offset-2"
-          >
-            {bp.editDetails}
-          </button>
-        </div>
+      <div className="public-card flex animate-fade-up flex-col gap-2 p-3 sm:gap-3 sm:p-8">
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="flex w-fit items-center gap-1 rounded-full py-1 pr-2 text-sm font-medium text-teal"
+        >
+          <ChevronLeftIcon width={18} height={18} />
+          {bp.goBack}
+        </button>
         <div className="relative h-[1010px] overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] sm:h-[840px]">
           {!iframeLoaded && (
             <div className="absolute inset-0 flex flex-col gap-3 bg-surface p-4" aria-busy="true" aria-live="polite">
