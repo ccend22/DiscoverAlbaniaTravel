@@ -95,10 +95,18 @@ export async function cancelBookingAction(formData: FormData) {
   const userId = await requireUserSession();
   const reference = String(formData.get("reference") ?? "");
 
-  const cancelled = await cancelUserBooking(userId, reference);
-
+  const result = await cancelUserBooking(userId, reference);
   revalidatePath("/account");
-  redirect(cancelled ? "/account?cancelled=1" : "/account?error=Booking%20could%20not%20be%20cancelled");
+
+  if (result === "ok") {
+    redirect("/account?cancelled=1");
+  }
+
+  const message =
+    result === "already_paid"
+      ? "This booking is already paid. Contact us to cancel it."
+      : "Booking could not be cancelled";
+  redirect(`/account?error=${encodeURIComponent(message)}`);
 }
 
 export async function cancelTaxiRequestAction(formData: FormData) {

@@ -4,7 +4,7 @@ import { listDestinations } from "@/db/queries/destinations";
 import { ArrowRightIcon, BusIcon, CompassIcon, MapPinIcon } from "@/components/icons";
 import { DestinationsGrid } from "@/components/destinations-grid";
 import { getLocaleAndDictionary } from "@/lib/i18n";
-import { DESTINATION_IMAGES, normalizeDestinationName } from "@/lib/destination-images";
+import { DESTINATION_IMAGES, FEATURED_DESTINATION_KEYS, normalizeDestinationName } from "@/lib/destination-images";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
 export default async function DestinationsPage() {
   const [destinations, { dict }] = await Promise.all([listDestinations(), getLocaleAndDictionary()]);
   const dp = dict.destinationsPage;
-  const featured = destinations
-    .filter((destination) => DESTINATION_IMAGES[normalizeDestinationName(destination.name)])
-    .slice(0, 6);
+  const featured = FEATURED_DESTINATION_KEYS.map((key) =>
+    destinations.find((destination) => normalizeDestinationName(destination.name) === key)
+  ).filter((destination): destination is (typeof destinations)[number] => !!destination);
 
   return (
     <div className="public-page">
@@ -74,7 +74,7 @@ export default async function DestinationsPage() {
                 {dp.featuredTitle}
               </h2>
             </div>
-            <p className="max-w-md text-sm leading-7 text-muted sm:text-right">{dp.featuredSubtitle}</p>
+            <p className="max-w-md text-sm leading-7 text-muted">{dp.featuredSubtitle}</p>
           </div>
 
           <div className="grid auto-rows-[240px] gap-4 md:grid-cols-2 lg:grid-cols-12 lg:auto-rows-[260px]">

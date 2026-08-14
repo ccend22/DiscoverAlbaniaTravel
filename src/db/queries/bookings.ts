@@ -1,6 +1,6 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../index";
-import { bookings, tripInventories } from "../schema";
+import { bookings, payments, tripInventories } from "../schema";
 import { generateBookingReference } from "@/lib/reference-code";
 import { getTripDepartureById, isDepartureValidOnDate, type TripDepartureDetail } from "./trips";
 
@@ -15,7 +15,7 @@ export interface CreateBookingInput {
 }
 
 export type CreateBookingResult =
-  | { ok: true; reference: string }
+  | { ok: true; reference: string; bookingId: number; priceAtBooking: string }
   | { ok: false; error: "invalid_date" | "trip_not_found" | "sold_out" | "price_unavailable" };
 
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
@@ -37,7 +37,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   const initialSeats = Math.min(trip.freeSeats, trip.plannedSeats);
   if (input.seats > initialSeats) return { ok: false, error: "sold_out" };
-  const result = await db.execute<{ booking_reference: string }>(sql`
+  const result = await db.execute<{ id: number; booking_reference: string }>(sql`
     with reserved as (
       insert into ${tripInventories} (
         ${sql.identifier(tripInventories.tripDepartureId.name)},
@@ -81,96 +81,36 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${input.seats},
         ${trip.basePrice}
       from reserved
-      returning ${sql.identifier(bookings.bookingReference.name)}
+      returning ${sql.identifier(bookings.id.name)}, ${sql.identifier(bookings.bookingReference.name)}
     )
-    select ${sql.identifier(bookings.bookingReference.name)} from created
+    select id, booking_reference from created
   `);
 
-  return result.rows[0] ? { ok: true, reference } : { ok: false, error: "sold_out" };
+  const row = result.rows[0];
+  return row
+    ? { ok: true, reference, bookingId: row.id, priceAtBooking: trip.basePrice }
+    : { ok: false, error: "sold_out" };
 }
 
-export interface BookingDetail {
-  bookingReference: string;
-  travelDate: string;
-  passengerName: string;
-  passengerPhone: string;
-  passengerEmail: string;
-  seats: number;
-  priceAtBooking: string;
-  status: "confirmed" | "cancelled";
-  createdAt: Date;
-  trip: TripDepartureDetail;
-}
-
-export async function getBookingByReference(reference: string): Promise<BookingDetail | null> {
-  const [booking] = await db
-    .select()
-    .from(bookings)
-    .where(eq(bookings.bookingReference, reference))
-    .limit(1);
-
-  if (!booking) return null;
-
-  const trip = await getTripDepartureById(booking.tripDepartureId);
-  if (!trip) return null;
-
-  return {
-    bookingReference: booking.bookingReference,
-    travelDate: booking.travelDate,
-    passengerName: booking.passengerName,
-    passengerPhone: booking.passengerPhone,
-    passengerEmail: booking.passengerEmail,
-    seats: booking.seats,
-    priceAtBooking: booking.priceAtBooking,
-    status: booking.status,
-    createdAt: booking.createdAt,
-    trip,
-  };
-}
-
-export async function getBookingsForUser(userId: number): Promise<BookingDetail[]> {
-  const rows = await db
-    .select()
-    .from(bookings)
-    .where(eq(bookings.userId, userId))
-    .orderBy(desc(bookings.createdAt));
-
-  const results: BookingDetail[] = [];
-  for (const row of rows) {
-    const trip = await getTripDepartureById(row.tripDepartureId);
-    if (!trip) continue;
-    results.push({
-      bookingReference: row.bookingReference,
-      travelDate: row.travelDate,
-      passengerName: row.passengerName,
-      passengerPhone: row.passengerPhone,
-      passengerEmail: row.passengerEmail,
-      seats: row.seats,
-      priceAtBooking: row.priceAtBooking,
-      status: row.status,
-      createdAt: row.createdAt,
-      trip,
-    });
-  }
-  return results;
-}
-
-export async function cancelUserBooking(userId: number, bookingReference: string): Promise<boolean> {
-  const [booking] = await db
-    .select({ id: bookings.id, userId: bookings.userId, status: bookings.status })
-    .from(bookings)
-    .where(eq(bookings.bookingReference, bookingReference))
-    .limit(1);
-
-  if (!booking || booking.userId !== userId || booking.status !== "confirmed") return false;
+// Shared by the user-facing "Cancel" action and the system-initiated
+// payment-failure/expiry path -- both need the exact same atomic
+// cancel-and-restore-inventory behavior, just gated differently on *who*
+// is allowed to trigger it. The `status = 'confirmed'` guard in the WHERE
+// clause is what makes this safe to call more than once for the same
+// booking (webhook + return-redirect + sweep can all race on it).
+async function restoreInventoryAndCancelBooking(
+  bookingId: number,
+  options: { requireUserId?: number } = {}
+): Promise<boolean> {
+  const userGuard = options.requireUserId !== undefined ? sql`and ${bookings.userId} = ${options.requireUserId}` : sql``;
 
   const result = await db.execute<{ id: number }>(sql`
     with cancelled as (
       update ${bookings}
       set ${sql.identifier(bookings.status.name)} = 'cancelled', ${sql.identifier(bookings.updatedAt.name)} = now()
-      where ${bookings.id} = ${booking.id}
-        and ${bookings.userId} = ${userId}
+      where ${bookings.id} = ${bookingId}
         and ${bookings.status} = 'confirmed'
+        ${userGuard}
       returning ${bookings.id}, ${bookings.tripDepartureId}, ${bookings.travelDate}, ${bookings.seats}
     ),
     inventory_restored as (
@@ -188,4 +128,116 @@ export async function cancelUserBooking(userId: number, bookingReference: string
   `);
 
   return Boolean(result.rows[0]);
+}
+
+/** System-initiated cancel for a booking whose payment failed, expired, or was never completed -- no owning user to check. */
+export async function cancelBookingForUnpaidPayment(bookingId: number): Promise<boolean> {
+  return restoreInventoryAndCancelBooking(bookingId);
+}
+
+export interface BookingDetail {
+  bookingReference: string;
+  travelDate: string;
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail: string;
+  seats: number;
+  priceAtBooking: string;
+  status: "confirmed" | "cancelled";
+  createdAt: Date;
+  trip: TripDepartureDetail;
+  /** From the linked `payments` row, if any -- this design keeps `bookings.status` as a plain reservation flag and tracks payment truth separately (see src/db/queries/payments.ts). Null means no payment attempt was ever recorded for this booking. */
+  paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
+}
+
+async function getLatestPaymentStatus(bookingId: number) {
+  const [payment] = await db
+    .select({ status: payments.status })
+    .from(payments)
+    .where(eq(payments.bookingId, bookingId))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  return payment?.status ?? null;
+}
+
+export async function getBookingByReference(reference: string): Promise<BookingDetail | null> {
+  const [booking] = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.bookingReference, reference))
+    .limit(1);
+
+  if (!booking) return null;
+
+  const [trip, paymentStatus] = await Promise.all([
+    getTripDepartureById(booking.tripDepartureId),
+    getLatestPaymentStatus(booking.id),
+  ]);
+  if (!trip) return null;
+
+  return {
+    bookingReference: booking.bookingReference,
+    travelDate: booking.travelDate,
+    passengerName: booking.passengerName,
+    passengerPhone: booking.passengerPhone,
+    passengerEmail: booking.passengerEmail,
+    seats: booking.seats,
+    priceAtBooking: booking.priceAtBooking,
+    status: booking.status,
+    createdAt: booking.createdAt,
+    trip,
+    paymentStatus,
+  };
+}
+
+export async function getBookingsForUser(userId: number): Promise<BookingDetail[]> {
+  const rows = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.userId, userId))
+    .orderBy(desc(bookings.createdAt));
+
+  const results: BookingDetail[] = [];
+  for (const row of rows) {
+    const [trip, paymentStatus] = await Promise.all([
+      getTripDepartureById(row.tripDepartureId),
+      getLatestPaymentStatus(row.id),
+    ]);
+    if (!trip) continue;
+    results.push({
+      bookingReference: row.bookingReference,
+      travelDate: row.travelDate,
+      passengerName: row.passengerName,
+      passengerPhone: row.passengerPhone,
+      passengerEmail: row.passengerEmail,
+      seats: row.seats,
+      priceAtBooking: row.priceAtBooking,
+      status: row.status,
+      createdAt: row.createdAt,
+      trip,
+      paymentStatus,
+    });
+  }
+  return results;
+}
+
+export type CancelUserBookingResult = "ok" | "not_found" | "already_paid";
+
+export async function cancelUserBooking(userId: number, bookingReference: string): Promise<CancelUserBookingResult> {
+  const [booking] = await db
+    .select({ id: bookings.id, userId: bookings.userId, status: bookings.status })
+    .from(bookings)
+    .where(eq(bookings.bookingReference, bookingReference))
+    .limit(1);
+
+  if (!booking || booking.userId !== userId || booking.status !== "confirmed") return "not_found";
+
+  // A paid booking needs a refund, not a silent cancel -- self-service
+  // cancellation would otherwise restore the seat while quietly keeping the
+  // customer's money captured, with nothing surfacing that a refund is owed.
+  const paymentStatus = await getLatestPaymentStatus(booking.id);
+  if (paymentStatus === "paid") return "already_paid";
+
+  const cancelled = await restoreInventoryAndCancelBooking(booking.id, { requireUserId: userId });
+  return cancelled ? "ok" : "not_found";
 }

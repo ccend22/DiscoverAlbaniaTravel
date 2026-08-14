@@ -32,13 +32,11 @@ export function formatDuration(
   durationMin: string | number,
   locale: Locale = "en"
 ): string {
-  const minutes = Number(durationMin);
+  const minutes = Math.round(Number(durationMin));
   if (!Number.isFinite(minutes) || minutes <= 0) {
     return getDictionary(locale).common.durationUnavailable;
   }
-  return `${minutes.toLocaleString(locale === "al" ? "sq-AL" : "en-US", {
-    maximumFractionDigits: 1,
-  })} min`;
+  return `${minutes.toLocaleString(locale === "al" ? "sq-AL" : "en-US")} min`;
 }
 
 export function formatCurrency(price: string | number, currency: "EUR" | "ALL" = "EUR"): string {
@@ -57,4 +55,14 @@ export function formatDateLong(dateStr: string, locale: Locale = "en"): string {
   const day = date.getUTCDate();
   const year = date.getUTCFullYear();
   return locale === "al" ? `${weekday}, ${day} ${month} ${year}` : `${weekday}, ${month} ${day}, ${year}`;
+}
+
+/** Drops the weekday for tight spaces (e.g. a side-by-side date-range summary) -- the day number stays intact rather than being the first thing lost to a `truncate`. */
+export function formatDateShort(dateStr: string, locale: Locale = "en"): string {
+  const dict = getDictionary(locale);
+  const date = new Date(`${dateStr}T00:00:00Z`);
+  const month = dict.datePicker.monthsFull[date.getUTCMonth()].slice(0, 3);
+  const day = date.getUTCDate();
+  const year = date.getUTCFullYear();
+  return locale === "al" ? `${day} ${month} ${year}` : `${month} ${day}, ${year}`;
 }

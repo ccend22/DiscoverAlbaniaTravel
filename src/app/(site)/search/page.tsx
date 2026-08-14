@@ -16,6 +16,7 @@ import { AlertCircleIcon, ArrowRightIcon, MapPinIcon } from "@/components/icons"
 import { getLocaleAndDictionary, type Locale } from "@/lib/i18n";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
+import { buildCityOptions, POPULAR_CITY_NAMES } from "@/lib/city-options";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -213,7 +214,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     getStationNames(),
     getOriginDestinationMap(),
   ]);
-  const cityOptions = Array.from(new Set(stations.flatMap((s) => [s.city, s.name]))).sort();
+  const cityOptions = buildCityOptions(stations);
 
   if (!parsed.success) {
     const message = parsed.error.issues.some((issue) => issue.path.includes("returnDate"))
@@ -225,6 +226,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <p className="mb-6 text-sm text-muted">{message}</p>
         <SearchWidget
           cityOptions={cityOptions}
+          popularCities={POPULAR_CITY_NAMES}
           originToDestinations={originToDestinations}
           dict={dict}
           locale={locale}
@@ -257,6 +259,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <div className="mb-8">
         <SearchWidget
           cityOptions={cityOptions}
+          popularCities={POPULAR_CITY_NAMES}
           originToDestinations={originToDestinations}
           dict={dict}
           locale={locale}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { formatDateLong } from "@/lib/format";
+import { formatDateLong, formatDateShort } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/locale";
 import { CalendarIcon, CloseIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
@@ -202,8 +202,7 @@ function CalendarContent({
       <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[7px] font-medium leading-tight tracking-tight text-muted sm:text-[10px]">
         {dict.weekdayLabels.map((label, i) => (
           <div key={`${label}-${i}`} className="flex min-h-6 items-center justify-center">
-            <span className="sm:hidden">{label.slice(0, 2)}</span>
-            <span className="hidden sm:inline">{label}</span>
+            {label.slice(0, 2)}
           </div>
         ))}
       </div>
@@ -274,6 +273,8 @@ interface DatePickerProps {
   locale?: Locale;
   buttonClassName?: string;
   iconClassName?: string;
+  /** Wraps the calendar icon in a badge matching the FROM/TO leading-icon treatment, e.g. "flex h-8 w-8 items-center justify-center rounded-full bg-gold-soft text-gold". */
+  iconWrapperClassName?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   closeOnSelect?: boolean;
@@ -283,8 +284,10 @@ interface DatePickerProps {
   rangeEndLabel?: string;
   activeRangeBoundary?: "start" | "end";
   dialogLabel?: string;
-  /** Shown inline before the date inside the button, replacing a separate caption above the field. */
+  /** Shown inside the button in place of the date, replacing a separate caption above the field. */
   inlineLabel?: string;
+  /** When false, the button shows only inlineLabel (as a placeholder) instead of the date — for a value the field defaults to internally but the user hasn't actually chosen yet. Ignored when inlineLabel isn't set. */
+  hasSelection?: boolean;
 }
 
 interface QuickPicksProps {
@@ -340,14 +343,14 @@ function RangeSummary({ start, end, startLabel, endLabel, activeBoundary, locale
       <div className={`min-w-0 rounded-xl px-3 py-2 transition-colors ${activeBoundary === "start" ? "bg-white shadow-sm" : ""}`}>
         <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{startLabel}</span>
         <span className={`block truncate text-sm font-semibold ${activeBoundary === "start" ? "text-teal" : "text-brand-navy"}`}>
-          {formatDateLong(start, locale)}
+          {formatDateShort(start, locale)}
         </span>
       </div>
       <ArrowRange />
       <div className={`min-w-0 rounded-xl px-3 py-2 text-right transition-colors ${activeBoundary === "end" ? "bg-white shadow-sm" : ""}`}>
         <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{endLabel}</span>
         <span className={`block truncate text-sm font-semibold ${activeBoundary === "end" ? "text-teal" : "text-brand-navy"}`}>
-          {formatDateLong(end, locale)}
+          {formatDateShort(end, locale)}
         </span>
       </div>
     </div>
@@ -372,6 +375,7 @@ export function DatePicker({
   locale = "en",
   buttonClassName,
   iconClassName,
+  iconWrapperClassName,
   open,
   onOpenChange,
   closeOnSelect = true,
@@ -382,6 +386,7 @@ export function DatePicker({
   activeRangeBoundary,
   dialogLabel,
   inlineLabel,
+  hasSelection = true,
 }: DatePickerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open ?? internalOpen;
@@ -389,6 +394,7 @@ export function DatePicker({
   const isMobile = useIsMobile();
   const sheetMode = isOpen && isMobile;
   const visualViewport = useVisualViewport(sheetMode);
+  const [panelPos, setPanelPos] = useState<{ top: number; right: number } | null>(null);
 
   const setIsOpen = useCallback((next: boolean) => {
     if (open === undefined) setInternalOpen(next);
@@ -397,16 +403,48 @@ export function DatePicker({
 
   useBodyScrollLock(sheetMode);
 
+  // The desktop dialog is portalled to <body> and positioned in viewport
+  // coordinates, so it can render on top of ancestors that clip overflow —
+  // e.g. the homepage hero widget's card shell — instead of being cropped.
+  const updatePanelPosition = useCallback(() => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPanelPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || sheetMode) return;
+    updatePanelPosition();
+    function handleReposition() {
+      updatePanelPosition();
+    }
+    window.addEventListener("scroll", handleReposition, { capture: true, passive: true });
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [isOpen, sheetMode, updatePanelPosition]);
+
   useEffect(() => {
     if (!isOpen || sheetMode) return;
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // The dialog is portalled to <body>, so it's outside containerRef in
+      // the DOM even while open — check it separately via its own id so a
+      // click inside the calendar isn't mistaken for an outside click.
+      const panel = document.getElementById(`${name}-date-picker`);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        !(panel && panel.contains(target))
+      ) {
         setIsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, setIsOpen, sheetMode]);
+  }, [isOpen, setIsOpen, sheetMode, name]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -451,37 +489,53 @@ export function DatePicker({
         aria-label={`${inlineLabel ? `${inlineLabel}: ` : ""}${dict.jumpToMonth}: ${formatDateLong(value, locale)}`}
         className={`flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-left text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${buttonClassName ?? ""}`}
       >
-        <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
-        <span className="min-w-0 leading-tight">
-          {inlineLabel && <span className="mr-1 font-bold uppercase tracking-[0.08em] text-black/60">{inlineLabel}</span>}
-          {formatDateLong(value, locale)}
+        {iconWrapperClassName ? (
+          <span className={`shrink-0 ${iconWrapperClassName}`}>
+            <CalendarIcon width={15} height={15} aria-hidden="true" />
+          </span>
+        ) : (
+          <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
+        )}
+        <span className={`min-w-0 leading-tight ${inlineLabel && !hasSelection ? "truncate font-medium text-muted" : ""}`}>
+          {inlineLabel && !hasSelection ? inlineLabel : formatDateLong(value, locale)}
         </span>
       </button>
 
-      {isOpen && !sheetMode && (
-        <div id={`${name}-date-picker`} role="dialog" aria-modal="false" aria-label={dialogLabel ?? dict.chooseDate} className="overlay-scroll absolute right-0 z-50 mt-2 max-h-[calc(100dvh-2rem)] w-[28rem] max-w-[calc(100vw-2rem)] origin-top-right animate-fade-up overflow-y-auto overscroll-contain rounded-2xl border border-[#dce8e6] bg-white p-4 shadow-[var(--page-shadow-strong)]">
-          {showRange && (
-            <RangeSummary
-              start={rangeStart}
-              end={rangeEnd}
-              startLabel={rangeStartLabel}
-              endLabel={rangeEndLabel}
-              activeBoundary={activeRangeBoundary}
-              locale={locale}
+      {isOpen &&
+        !sheetMode &&
+        panelPos &&
+        createPortal(
+          <div
+            id={`${name}-date-picker`}
+            role="dialog"
+            aria-modal="false"
+            aria-label={dialogLabel ?? dict.chooseDate}
+            className="overlay-scroll fixed z-50 max-h-[calc(100dvh-2rem)] w-[22rem] max-w-[calc(100vw-2rem)] origin-top-right animate-fade-up overflow-y-auto overscroll-contain rounded-2xl border border-[#dce8e6] bg-white p-3 shadow-[var(--page-shadow-strong)]"
+            style={{ top: panelPos.top, right: panelPos.right }}
+          >
+            {showRange && (
+              <RangeSummary
+                start={rangeStart}
+                end={rangeEnd}
+                startLabel={rangeStartLabel}
+                endLabel={rangeEndLabel}
+                activeBoundary={activeRangeBoundary}
+                locale={locale}
+              />
+            )}
+            <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
+            <p className="mb-1.5 text-xs font-medium text-muted">{dialogLabel ?? dict.chooseDate}</p>
+            <CalendarContent
+              value={value}
+              min={min}
+              onSelectDay={selectDay}
+              dict={dict}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
             />
-          )}
-          <QuickPicks dict={dict} min={min} value={value} today={todayStr} tomorrow={tomorrowStr} onSelect={selectDay} />
-          <p className="mb-1.5 text-xs font-medium text-muted">{dialogLabel ?? dict.chooseDate}</p>
-          <CalendarContent
-            value={value}
-            min={min}
-            onSelectDay={selectDay}
-            dict={dict}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-          />
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {sheetMode &&
         createPortal(

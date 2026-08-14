@@ -85,6 +85,13 @@
       "when": 1786198973937,
       "tag": "0011_fixed_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786632109777,
+      "tag": "0012_cloudy_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

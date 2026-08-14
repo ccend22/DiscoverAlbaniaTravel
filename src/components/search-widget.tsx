@@ -14,6 +14,8 @@ type ActiveDateField = "depart" | "return" | null;
 
 interface SearchWidgetProps {
   cityOptions: string[];
+  /** The handful of main hub cities, pinned above the full alphabetical list in From/To so a first-time visitor has an anchor. */
+  popularCities?: string[];
   originToDestinations: Record<string, string[]>;
   dict: Pick<Dictionary, "searchWidget" | "cityCombobox" | "datePicker">;
   locale?: Locale;
@@ -57,6 +59,7 @@ function getDestinationsForOrigin(
 
 export function SearchWidget({
   cityOptions,
+  popularCities,
   originToDestinations,
   dict,
   locale = "en",
@@ -82,14 +85,18 @@ export function SearchWidget({
       : "";
   });
   const [dateValue, setDateValue] = useState(defaultDate || today);
+  const [departSelected, setDepartSelected] = useState(Boolean(defaultDate));
   const [tripType, setTripType] = useState<TripType>(defaultTripType ?? "oneway");
   const [returnDateValue, setReturnDateValue] = useState(
     defaultReturnDate || defaultDate || today
   );
+  const [returnSelected, setReturnSelected] = useState(Boolean(defaultReturnDate));
   const [passengers, setPassengers] = useState(defaultPassengers ?? 1);
   const [swapRotation, setSwapRotation] = useState(0);
   const [swapPulse, setSwapPulse] = useState(false);
   const [activeDateField, setActiveDateField] = useState<ActiveDateField>(null);
+  const [originOpen, setOriginOpen] = useState(false);
+  const [destinationOpen, setDestinationOpen] = useState(false);
   const { registerRef: registerTripTypeRef, style: tripTypeIndicatorStyle } = useSlidingIndicator(tripType);
 
   const destinationOptions = useMemo(() => {
@@ -126,8 +133,14 @@ export function SearchWidget({
 
   function handleDateChange(next: string) {
     setDateValue(next);
+    setDepartSelected(true);
     setReturnDateValue((prev) => (prev < next ? next : prev));
     if (tripType === "roundtrip") setActiveDateField("return");
+  }
+
+  function handleReturnDateChange(next: string) {
+    setReturnDateValue(next);
+    setReturnSelected(true);
   }
 
   function handleTripTypeChange(next: TripType) {
@@ -147,14 +160,14 @@ export function SearchWidget({
           : `relative z-20 isolate overflow-visible rounded-[2rem] p-3 sm:p-4 ${CONTAINER_STYLES[variant]}`
       }
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center gap-3">
         <div
           role="group"
           aria-label={sw.tripTypeAria}
           className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit"
         >
           <span
-            className="absolute inset-y-1 rounded-full bg-teal shadow-sm transition-[left,width] duration-500 ease-[var(--ease-spring)]"
+            className="absolute inset-y-1 rounded-full bg-teal shadow-sm transition-[left,width] duration-500 ease-[var(--ease-out-expo)]"
             style={tripTypeIndicatorStyle ? { left: tripTypeIndicatorStyle.left, width: tripTypeIndicatorStyle.width } : { left: 4, width: 0 }}
             aria-hidden="true"
           />
@@ -168,21 +181,22 @@ export function SearchWidget({
           </button>
           <input type="hidden" name="tripType" value={tripType} suppressHydrationWarning />
         </div>
-        <span className="hidden items-center gap-2 pr-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted lg:flex">
-          <span className="h-2 w-2 rounded-full bg-lime-strong" />
-          Discover Albania Transport
-        </span>
       </div>
 
       <div className={`relative grid gap-2 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] ${tripType === "roundtrip" ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.72fr)_minmax(190px,0.72fr)_150px_auto]" : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(210px,0.8fr)_150px_auto]"} lg:items-stretch`}>
-        <label className={`relative flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+        <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+          <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.from}</span>
           <CityCombobox
             name="origin"
             required
             requireOption
             value={originInput}
             onChange={handleOriginChange}
+            onOpenChange={setOriginOpen}
             options={cityOptions}
+            popularOptions={popularCities}
+            popularLabel={dict.cityCombobox.popular}
+            allOptionsLabel={dict.cityCombobox.allPlaces}
             placeholder={sw.from}
             noMatchesLabel={dict.cityCombobox.noMatches}
             leadingIcon={<StartPointIcon width={15} height={15} />}
@@ -195,20 +209,28 @@ export function SearchWidget({
           type="button"
           onClick={handleSwap}
           aria-label={sw.swapAria}
+          disabled={originOpen || destinationOpen}
           style={{ transform: `rotate(${swapRotation}deg)` }}
-          className="relative z-50 mx-auto flex h-10 w-10 shrink-0 items-center justify-center self-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white xl:-mx-5 [&_svg]:rotate-90"
+          className={`relative z-50 mx-auto flex h-10 w-10 shrink-0 items-center justify-center self-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color,opacity] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white xl:-mx-5 [&_svg]:rotate-90 ${
+            originOpen || destinationOpen ? "pointer-events-none opacity-0" : "opacity-100"
+          }`}
         >
           <SwapIcon width={16} height={16} />
         </button>
 
-        <label className={`relative flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+        <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+          <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.to}</span>
           <CityCombobox
             name="destination"
             required
             requireOption
             value={destinationInput}
             onChange={setDestinationInput}
+            onOpenChange={setDestinationOpen}
             options={destinationOptions}
+            popularOptions={popularCities}
+            popularLabel={dict.cityCombobox.popular}
+            allOptionsLabel={dict.cityCombobox.allPlaces}
             placeholder={sw.to}
             noMatchesLabel={dict.cityCombobox.noDestinations}
             leadingIcon={<DestinationIcon width={15} height={15} />}
@@ -217,7 +239,8 @@ export function SearchWidget({
           />
         </label>
 
-        <div className="flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+        <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm">
+          <span className="px-3 pt-2 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.depart}</span>
           <DatePicker
             name="date"
             value={dateValue}
@@ -225,7 +248,7 @@ export function SearchWidget({
             onChange={handleDateChange}
             dict={dict.datePicker}
             locale={locale}
-            iconClassName="text-gold"
+            iconWrapperClassName="ml-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-gold-soft text-gold"
             buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
             open={activeDateField === "depart"}
             onOpenChange={(open) => setActiveDateField(open ? "depart" : null)}
@@ -237,18 +260,20 @@ export function SearchWidget({
             activeRangeBoundary={tripType === "roundtrip" ? "start" : undefined}
             dialogLabel={sw.depart}
             inlineLabel={sw.depart}
+            hasSelection={departSelected}
           />
         </div>
         {tripType === "roundtrip" && (
-          <div className="flex min-w-0 items-center rounded-[1.1rem] bg-white px-3 py-2 text-sm">
+          <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm">
+            <span className="px-3 pt-2 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.returnLabel}</span>
             <DatePicker
               name="returnDate"
               value={returnDateValue}
               min={dateValue}
-              onChange={setReturnDateValue}
+              onChange={handleReturnDateChange}
               dict={dict.datePicker}
               locale={locale}
-              iconClassName="text-lime-strong"
+              iconWrapperClassName="ml-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-lime-soft text-lime-strong"
               buttonClassName="min-h-11 flex-1 rounded-lg border-0 bg-transparent font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
               open={activeDateField === "return"}
               onOpenChange={(open) => setActiveDateField(open ? "return" : null)}
@@ -259,11 +284,12 @@ export function SearchWidget({
               activeRangeBoundary="end"
               dialogLabel={sw.returnLabel}
               inlineLabel={sw.returnLabel}
+              hasSelection={returnSelected}
             />
           </div>
         )}
-        <div className="flex min-h-16 items-end justify-between gap-2 rounded-[1.1rem] bg-white px-3 py-2 text-sm xl:flex-col xl:items-start xl:justify-center">
-          <span className="pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-black xl:mb-1 xl:pb-0">{sw.passengers}</span>
+        <div className="flex min-h-16 items-center justify-between gap-2 rounded-[1.1rem] bg-white px-3 py-2 text-sm xl:flex-col xl:items-start xl:justify-center">
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-black xl:mb-1">{sw.passengers}</span>
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setPassengers((p) => Math.max(1, p - 1))} disabled={passengers <= 1} aria-label={sw.decreasePassengers} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f5f5] text-base text-teal transition hover:bg-teal-soft active:scale-90 disabled:opacity-30">−</button>
             <span className="w-7 text-center text-base font-bold tabular-nums text-brand-navy">{passengers}</span>

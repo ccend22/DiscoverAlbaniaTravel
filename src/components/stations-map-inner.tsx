@@ -5,6 +5,7 @@ import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { StationLocation } from "@/db/queries/stations";
 import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 declare global {
   interface Window {

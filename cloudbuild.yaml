@@ -1,3 +1,11 @@
+# Before deploying with POK Payments enabled, create the four secrets below
+# in Secret Manager (values from your POK merchant dashboard), e.g.:
+#   echo -n "<value>" | gcloud secrets create discover-albania-pok-key-id --data-file=-
+#   echo -n "<value>" | gcloud secrets create discover-albania-pok-key-secret --data-file=-
+#   echo -n "<value>" | gcloud secrets create discover-albania-pok-merchant-id --data-file=-
+#   openssl rand -base64 48 | gcloud secrets create discover-albania-pok-sweep-secret --data-file=-
+# and grant ${_RUNTIME_SERVICE_ACCOUNT} the Secret Manager Secret Accessor
+# role on each, same as the existing secrets below.
 substitutions:
   _REGION: europe-west1
   _SERVICE: discover-albania-travel
@@ -5,6 +13,7 @@ substitutions:
   _RUNTIME_SERVICE_ACCOUNT: discover-albania-run@discoveralbaniatravel.iam.gserviceaccount.com
   _SITE_URL: https://discover-albania-travel-evdok7f7ua-ew.a.run.app
   _NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
+  _POK_ENV: staging
 
 steps:
   - id: Build container
@@ -39,9 +48,9 @@ steps:
       - --service-account
       - ${_RUNTIME_SERVICE_ACCOUNT}
       - --set-secrets
-      - DATABASE_URL=discover-albania-database-url:latest,GOOGLE_CLIENT_ID=discover-albania-google-client-id:latest,GOOGLE_CLIENT_SECRET=discover-albania-google-client-secret:latest,ADMIN_SESSION_SECRET=discover-albania-admin-session-secret:latest,USER_SESSION_SECRET=discover-albania-user-session-secret:latest,VENDOR_SESSION_SECRET=discover-albania-vendor-session-secret:latest
+      - DATABASE_URL=discover-albania-database-url:latest,GOOGLE_CLIENT_ID=discover-albania-google-client-id:latest,GOOGLE_CLIENT_SECRET=discover-albania-google-client-secret:latest,ADMIN_SESSION_SECRET=discover-albania-admin-session-secret:latest,USER_SESSION_SECRET=discover-albania-user-session-secret:latest,VENDOR_SESSION_SECRET=discover-albania-vendor-session-secret:latest,POK_KEY_ID=discover-albania-pok-key-id:latest,POK_KEY_SECRET=discover-albania-pok-key-secret:latest,POK_MERCHANT_ID=discover-albania-pok-merchant-id:latest,POK_SWEEP_SECRET=discover-albania-pok-sweep-secret:latest
       - --set-env-vars
-      - SITE_URL=${_SITE_URL}
+      - SITE_URL=${_SITE_URL},POK_ENV=${_POK_ENV}
       - --allow-unauthenticated
       - --quiet
 

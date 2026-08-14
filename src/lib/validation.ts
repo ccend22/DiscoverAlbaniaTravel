@@ -222,7 +222,7 @@ export const vendorNewDepartureSchema = z
     toStationId: z.coerce.number().int().positive(),
     departureTime: timeString,
     arrivalTime: timeString,
-    durationMin: z.coerce.number().positive().max(1440).transform((value) => value.toFixed(1)),
+    durationMin: z.coerce.number().positive().max(1440).transform((value) => Math.round(value).toString()),
     distanceKm: z.coerce.number().positive().max(2000).transform((value) => value.toFixed(1)),
     basePrice: z.coerce.number().min(0).transform((value) => value.toFixed(2)),
     plannedSeats: z.coerce.number().int().min(1).max(500),

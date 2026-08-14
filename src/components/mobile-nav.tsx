@@ -113,7 +113,7 @@ export function MobileNav({ primaryLinks, utilityLinks, openMenuLabel, transpare
               key={link.href}
               href={link.href}
               onClick={close}
-              className="flex min-h-14 items-center border-b border-border py-3 font-serif text-2xl font-black tracking-tight text-brand-navy transition-colors duration-[var(--dur-fast)] active:text-brand sm:min-h-16 sm:py-4 sm:text-3xl"
+              className="flex min-h-14 items-center border-b border-border py-3 font-display text-2xl font-black tracking-tight text-brand-navy transition-colors duration-[var(--dur-fast)] active:text-brand sm:min-h-16 sm:py-4 sm:text-3xl"
             >
               {link.label}
             </Link>

@@ -44,7 +44,7 @@ export function FeaturedDestinations({ places, photoCredit }: { places: Featured
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-teal">{place.tagline}</p>
                 <p className="mt-1.5 font-display text-xl font-black text-brand-navy sm:text-2xl">{place.name}</p>
                 {place.description && index < 2 && (
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted sm:text-sm">{place.description}</p>
+                  <p className="mt-2 line-clamp-2 text-sm leading-5 text-muted">{place.description}</p>
                 )}
               </div>
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal transition-all duration-[var(--dur-base)] group-hover:bg-teal group-hover:text-white">
@@ -54,7 +54,7 @@ export function FeaturedDestinations({ places, photoCredit }: { places: Featured
           </Link>
         ))}
       </div>
-      <p className="mt-4 text-xs text-muted">{photoCredit}</p>
+      <p className="mt-4 text-sm text-muted">{photoCredit}</p>
     </div>
   );
 }

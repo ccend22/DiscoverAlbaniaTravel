@@ -12,6 +12,7 @@ type Mode = "bus" | "taxi";
 
 interface HeroBookingWidgetProps {
   cityOptions: string[];
+  popularCities?: string[];
   originToDestinations: Record<string, string[]>;
   dict: Dictionary;
   locale: Locale;
@@ -30,6 +31,7 @@ interface HeroBookingWidgetProps {
 
 export function HeroBookingWidget({
   cityOptions,
+  popularCities,
   originToDestinations,
   dict,
   locale,
@@ -58,8 +60,12 @@ export function HeroBookingWidget({
   }, [mode]);
 
   return (
-    <div className="w-full">
-      <div className="mb-4 flex flex-col gap-4 px-1 text-left sm:flex-row sm:items-end sm:justify-between sm:px-3">
+    // text-left resets the centered text-align inherited from the homepage
+    // hero's own wrapper (which centers its H1/subtitle) -- without it, any
+    // text anywhere in either form below silently inherits center alignment
+    // unless it happens to have its own override.
+    <div className="w-full text-left">
+      <div className="mb-4 flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between sm:px-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-lime">{dict.home.searchKicker}</p>
           <h2 className="mt-2 font-display text-2xl font-black text-white sm:text-3xl">{dict.home.searchHeading}</h2>
@@ -70,7 +76,7 @@ export function HeroBookingWidget({
           aria-label="Booking type"
         >
           <span
-            className="absolute inset-y-1 rounded-full bg-teal shadow-[0_8px_20px_rgba(0,128,128,0.22)] transition-[left,width] duration-500 ease-[var(--ease-spring)]"
+            className="absolute inset-y-1 rounded-full bg-teal shadow-[0_8px_20px_rgba(0,128,128,0.22)] transition-[left,width] duration-500 ease-[var(--ease-out-expo)]"
             style={indicatorStyle ? { left: indicatorStyle.left, width: indicatorStyle.width } : { left: 4, width: 0 }}
             aria-hidden="true"
           />
@@ -117,6 +123,7 @@ export function HeroBookingWidget({
               <SearchWidget
                 bare
                 cityOptions={cityOptions}
+                popularCities={popularCities}
                 originToDestinations={originToDestinations}
                 dict={dict}
                 locale={locale}

@@ -8,6 +8,7 @@ import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey, pinAutocompleteDropdownBelow } from "@/lib/google-maps-loader";
 import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const ALBANIA_CENTER: google.maps.LatLngLiteral = { lat: 41.15, lng: 20.0 };
 const PICKED_ZOOM = 15;

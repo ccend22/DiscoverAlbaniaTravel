@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getBookingByReference } from "@/db/queries/bookings";
 import { formatDuration, formatPrice, formatWeekdays, formatDateLong, formatTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircleIcon, XCircleIcon, MapPinIcon } from "@/components/icons";
+import { CheckCircleIcon, XCircleIcon, ClockIcon, MapPinIcon } from "@/components/icons";
 import { PrintButton } from "@/components/print-button";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
@@ -18,28 +18,39 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   const { locale, dict } = await getLocaleAndDictionary();
   const bc = dict.bookingConfirmation;
 
-  const isConfirmed = booking.status === "confirmed";
+  // A booking is "confirmed" the instant it's reserved, before its payment
+  // resolves -- so the badge shown here needs both booking status and
+  // payment status to actually reflect reality (see src/db/queries/payments.ts).
+  const isPaid = booking.status === "confirmed" && booking.paymentStatus === "paid";
+  const isPending = booking.status === "confirmed" && !isPaid;
 
   return (
     <div className="public-page mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
       <div className="mb-6 flex animate-fade-up items-center justify-between">
-        <Badge tone={isConfirmed ? "success" : "danger"} className="px-3 py-1 text-sm">
-          {isConfirmed ? (
+        <Badge tone={isPaid ? "success" : isPending ? "warning" : "danger"} className="px-3 py-1 text-sm">
+          {isPaid ? (
             <CheckCircleIcon width={14} height={14} />
+          ) : isPending ? (
+            <ClockIcon width={14} height={14} />
           ) : (
             <XCircleIcon width={14} height={14} />
           )}
-          {isConfirmed ? bc.confirmed : bc.cancelled}
+          {isPaid ? bc.confirmed : isPending ? bc.paymentPending : bc.cancelled}
         </Badge>
         <PrintButton />
       </div>
+
+      {isPending && <p className="mb-4 animate-fade-up text-sm text-muted">{bc.paymentPendingNote}</p>}
+      {!isPaid && !isPending && booking.paymentStatus === "failed" && (
+        <p className="mb-4 animate-fade-up text-sm text-muted">{bc.paymentFailedNote}</p>
+      )}
 
       <div className="public-card animate-fade-up overflow-hidden [animation-delay:60ms]">
         <div className="border-t-4 border-brand p-5 sm:p-6">
           <p className="text-xs font-semibold uppercase text-muted">
             {bc.bookingReference}
           </p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold tabular-nums text-foreground">
+          <h1 className="mt-1 font-mono text-2xl font-extrabold tabular-nums text-foreground">
             {booking.bookingReference}
           </h1>
 

@@ -300,7 +300,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
                   setPickupCoordinates({ lat: place.lat, lng: place.lng });
                 }}
                 placeholder={tf.pickupLocationPlaceholder}
-                className="public-input min-h-14 w-full rounded-2xl py-3 pl-14 pr-24 text-base font-semibold sm:text-sm"
+                className="public-input min-h-14 w-full truncate rounded-2xl py-3 pl-14 pr-24 text-base font-semibold sm:text-sm"
               />
               <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 gap-1">
                 <button
@@ -351,7 +351,7 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
                   setDestinationCoordinates({ lat: place.lat, lng: place.lng });
                 }}
                 placeholder={tf.destinationPlaceholder}
-                className="public-input min-h-14 w-full rounded-2xl py-3 pl-12 pr-14 text-base font-semibold sm:text-sm"
+                className="public-input min-h-14 w-full truncate rounded-2xl py-3 pl-12 pr-14 text-base font-semibold sm:text-sm"
               />
               <button
                 type="button"

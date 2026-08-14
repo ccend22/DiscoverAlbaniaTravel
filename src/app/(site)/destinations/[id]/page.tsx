@@ -6,7 +6,8 @@ import { getAllRoutePairs } from "@/db/queries/trips";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
 import { slugify } from "@/lib/slug";
-import { getDestinationImage } from "@/lib/destination-images";
+import { getDestinationImage, normalizeDestinationName } from "@/lib/destination-images";
+import { DESTINATION_IMAGE_CREDITS } from "@/lib/destination-image-credits";
 import { ArrowRightIcon, BusIcon, CalendarIcon, MapPinIcon, TicketIcon } from "@/components/icons";
 import type { Metadata } from "next";
 
@@ -41,6 +42,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     .slice(0, 6);
 
   const image = getDestinationImage(destination.name);
+  const imageCredit = DESTINATION_IMAGE_CREDITS[normalizeDestinationName(destination.name)];
   const weeklyDepartures = routesFromHere.reduce((sum, pair) => sum + pair.tripCount, 0);
   const pricedFares = routesFromHere
     .map((pair) => pair.minPrice)
@@ -105,6 +107,17 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
             {formatMessage(dd.findBusesTo, { name: destination.name })}
             <ArrowRightIcon width={16} height={16} />
           </Link>
+
+          {imageCredit && (
+            <a
+              href={imageCredit.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`mt-6 block w-fit text-[11px] ${image ? "text-white/40 hover:text-white/70" : "text-muted hover:text-foreground"} transition-colors`}
+            >
+              Photo: {imageCredit.author} / Wikimedia Commons ({imageCredit.license})
+            </a>
+          )}
         </div>
       </section>
 

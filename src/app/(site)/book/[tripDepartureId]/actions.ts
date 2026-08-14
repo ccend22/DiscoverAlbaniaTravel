@@ -1,11 +1,21 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { bookingFormSchema } from "@/lib/validation";
-import { createBooking } from "@/db/queries/bookings";
+import { createBooking, cancelBookingForUnpaidPayment } from "@/db/queries/bookings";
+import { createPendingPaymentForBooking } from "@/db/queries/payments";
+import { createSdkOrder, PokConfigError } from "@/lib/pok-payments";
 import { getActiveUserSessionId } from "@/lib/user-session";
+import { getSiteOrigin } from "@/lib/google-oauth";
 
-export async function createBookingAction(formData: FormData) {
+export type CreateBookingActionState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | { status: "checkout"; confirmUrl: string; bookingReference: string };
+
+export async function createBookingAction(
+  _prevState: CreateBookingActionState,
+  formData: FormData
+): Promise<CreateBookingActionState> {
   const tripDepartureId = formData.get("tripDepartureId");
   const travelDate = formData.get("travelDate");
 
@@ -19,8 +29,7 @@ export async function createBookingAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    const message = parsed.error.issues[0]?.message ?? "Please check the form and try again.";
-    redirect(`/book/${tripDepartureId}?date=${travelDate}&error=${encodeURIComponent(message)}`);
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
   const userId = await getActiveUserSessionId();
@@ -34,10 +43,42 @@ export async function createBookingAction(formData: FormData) {
         : result.error === "price_unavailable"
           ? "Online booking isn't available for this route yet."
           : "This departure could not be found.";
-    redirect(
-      `/book/${parsed.data.tripDepartureId}?date=${parsed.data.travelDate}&error=${encodeURIComponent(message)}`
-    );
+    return { status: "error", message };
   }
 
-  redirect(`/booking/${result.reference}`);
+  // The seat is now held (createBooking already reserved it). From here,
+  // any failure must release it again -- drizzle's neon-http driver can't
+  // hold a transaction open across the network round-trip to POK, so this
+  // is a compensating action, not a rollback.
+  const amount = Number(result.priceAtBooking) * parsed.data.seats;
+  const returnUrl = `${getSiteOrigin()}/pay/return?ref=${encodeURIComponent(result.reference)}&embedded=1`;
+
+  try {
+    const order = await createSdkOrder({
+      amount,
+      currencyCode: "ALL",
+      description: `Bus ticket · ${parsed.data.seats} seat(s) · ${result.reference}`,
+      merchantCustomReference: result.reference,
+      webhookUrl: `${getSiteOrigin()}/pay/webhook`,
+      redirectUrl: returnUrl,
+      failRedirectUrl: returnUrl,
+      expiresAfterMinutes: 30,
+    });
+
+    await createPendingPaymentForBooking({
+      bookingId: result.bookingId,
+      amount,
+      currency: "ALL",
+      sdkOrder: order,
+    });
+
+    return { status: "checkout", confirmUrl: order.confirmUrl, bookingReference: result.reference };
+  } catch (error) {
+    console.error("[pok-payments] failed to start checkout, releasing held seat", {
+      bookingId: result.bookingId,
+      error: error instanceof PokConfigError ? error.message : error,
+    });
+    await cancelBookingForUnpaidPayment(result.bookingId);
+    return { status: "error", message: "We couldn't start payment for this booking. Please try again." };
+  }
 }

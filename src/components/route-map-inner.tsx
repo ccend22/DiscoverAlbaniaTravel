@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { Map as LeafletMap } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const BUS_ICON_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">

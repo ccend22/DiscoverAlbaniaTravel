@@ -82,7 +82,7 @@ export default async function AdminOverviewPage() {
 
       <div className="relative mt-4 overflow-hidden rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-sm)]">
         <span className="absolute inset-x-0 top-0 h-1 bg-teal" aria-hidden="true" />
-        <p className="text-sm text-muted">Total revenue (confirmed bookings)</p>
+        <p className="text-sm text-muted">Total revenue (paid bookings)</p>
         <p className="mt-1 font-display text-3xl font-bold text-brand-strong">
           {formatPrice(stats.totalRevenue)}
         </p>

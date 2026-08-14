@@ -22,6 +22,12 @@ interface CityComboboxProps {
   noMatchesLabel?: string;
   leadingIcon?: ReactNode;
   leadingIconClassName?: string;
+  /** Shown pinned above the full list, before the field has a query, so a first-time visitor has an anchor instead of ~400 flat alphabetical rows. */
+  popularOptions?: string[];
+  popularLabel?: string;
+  allOptionsLabel?: string;
+  /** Notified whenever the dropdown/sheet opens or closes, so a parent can react -- e.g. hiding a sibling control the panel would otherwise render on top of. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Per-character normalization only (never the whole-string `.trim()` in
@@ -68,13 +74,34 @@ interface OptionListProps {
   onSelect: (option: string) => void;
   onHover: (index: number) => void;
   idPrefix: string;
+  /** Number of leading entries in `options` that are the pinned "popular" set -- renders a section header before index 0 and another before this index. */
+  popularCount?: number;
+  popularLabel?: string;
+  allOptionsLabel?: string;
 }
 
-function OptionList({ options, query, highlighted, rowHeightClassName, onSelect, onHover, idPrefix }: OptionListProps) {
+function SectionLabel({ children }: { children: ReactNode }) {
+  return <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted first:pt-1">{children}</p>;
+}
+
+function OptionList({
+  options,
+  query,
+  highlighted,
+  rowHeightClassName,
+  onSelect,
+  onHover,
+  idPrefix,
+  popularCount = 0,
+  popularLabel,
+  allOptionsLabel,
+}: OptionListProps) {
   return (
     <>
       {options.map((option, index) => (
         <li key={option} role="none">
+          {popularCount > 0 && index === 0 && popularLabel && <SectionLabel>{popularLabel}</SectionLabel>}
+          {popularCount > 0 && index === popularCount && allOptionsLabel && <SectionLabel>{allOptionsLabel}</SectionLabel>}
           <button
             id={`${idPrefix}-option-${index}`}
             role="option"
@@ -122,10 +149,17 @@ export function CityCombobox({
   noMatchesLabel,
   leadingIcon,
   leadingIconClassName,
+  popularOptions,
+  popularLabel,
+  allOptionsLabel,
+  onOpenChange,
 }: CityComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
-  const [panelPos, setPanelPos] = useState<{ top?: number; bottom?: number; left: number; width: number } | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -143,15 +177,7 @@ export function CityCombobox({
   function updatePanelPosition() {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const direction = spaceBelow < 260 && spaceAbove > spaceBelow ? "up" : "down";
-    setOpenDirection(direction);
-    setPanelPos(
-      direction === "up"
-        ? { bottom: window.innerHeight - rect.top + 8, left: rect.left, width: rect.width }
-        : { top: rect.bottom + 8, left: rect.left, width: rect.width }
-    );
+    setPanelPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
   }
 
   function openDropdown() {
@@ -172,11 +198,28 @@ export function CityCombobox({
     };
   }, [isOpen, sheetMode]);
 
+  // With no query yet, pin the popular set at the top (its own section) ahead
+  // of the full alphabetical list, so a first-time visitor has an anchor
+  // instead of ~400 flat rows. Once they start typing, search the full set
+  // as normal -- the popular grouping only matters before any input.
+  const { orderedOptions, availablePopularCount } = useMemo(() => {
+    if (!popularOptions?.length) return { orderedOptions: options, availablePopularCount: 0 };
+    const optionSet = new Set(options);
+    const popular = popularOptions.filter((option) => optionSet.has(option));
+    const popularSet = new Set(popular);
+    return {
+      orderedOptions: [...popular, ...options.filter((option) => !popularSet.has(option))],
+      availablePopularCount: popular.length,
+    };
+  }, [options, popularOptions]);
+
   const filtered = useMemo(() => {
     const query = normalizeSearchText(value);
-    if (!query) return options;
+    if (!query) return orderedOptions;
     return options.filter((option) => normalizeSearchText(option).includes(query));
-  }, [value, options]);
+  }, [value, options, orderedOptions]);
+
+  const popularCount = value.trim() ? 0 : availablePopularCount;
 
   const hasExactOption = useMemo(
     () => options.some((option) => normalizeSearchText(option) === normalizeSearchText(value)),
@@ -184,16 +227,18 @@ export function CityCombobox({
   );
 
   // Finalized once the field is no longer being actively edited (dropdown
-  // closed) rather than on every keystroke, so native constraint-validation
-  // state isn't churned while the user is still typing.
+  // closed) rather than on every keystroke, so validation state isn't
+  // churned while the user is still typing.
+  const isInvalid = requireOption && !isOpen && value.trim().length > 0 && !hasExactOption;
+
+  // Custom validity still blocks submission of an unmatched value (a real
+  // guardrail, kept) -- but its native browser tooltip is suppressed in
+  // favor of the styled inline message below, which matches the rest of
+  // the app's UI instead of breaking out into an unstyled OS popup.
   useEffect(() => {
-    if (!inputRef.current || isOpen) return;
-    inputRef.current.setCustomValidity(
-      requireOption && value.trim() && !hasExactOption
-        ? "Select an available place from the list."
-        : ""
-    );
-  }, [hasExactOption, requireOption, value, isOpen]);
+    if (!inputRef.current) return;
+    inputRef.current.setCustomValidity(isInvalid ? (noMatchesLabel ?? "Select an available place from the list.") : "");
+  }, [isInvalid, noMatchesLabel]);
 
   useEffect(() => {
     if (!isOpen || sheetMode) return;
@@ -309,15 +354,29 @@ export function CityCombobox({
           setIsOpen(false);
         }}
         onKeyDown={handleKeyDown}
+        onInvalid={(e) => e.preventDefault()}
         placeholder={placeholder}
         role="combobox"
         aria-expanded={isOpen}
         aria-autocomplete="list"
         aria-controls={`${name}-listbox`}
         aria-activedescendant={isOpen && filtered[highlighted] ? `${name}-option-${highlighted}` : undefined}
-        className={`min-h-11 w-full cursor-pointer truncate rounded-2xl border border-border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] hover:border-muted/60 focus:border-teal ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
+        aria-invalid={isInvalid || undefined}
+        aria-describedby={isInvalid ? `${name}-error` : undefined}
+        className={`min-h-11 w-full cursor-pointer truncate rounded-2xl border bg-surface py-2 pr-3 text-base outline-none transition-colors duration-[var(--dur-fast)] focus:border-teal ${
+          isInvalid ? "border-red/60 hover:border-red" : "border-border hover:border-muted/60"
+        } ${inputClassName ?? (leadingIcon ? "pl-10" : "pl-3")}`}
         suppressHydrationWarning
       />
+      {isInvalid && noMatchesLabel && (
+        <p
+          id={`${name}-error`}
+          role="alert"
+          className="absolute left-0 top-full z-40 mt-1 rounded-lg bg-white px-2 py-1 text-xs font-medium text-red shadow-[var(--shadow-xs)]"
+        >
+          {noMatchesLabel}
+        </p>
+      )}
 
       {isOpen &&
         !sheetMode &&
@@ -325,10 +384,8 @@ export function CityCombobox({
         createPortal(
           <div
             id={`${name}-desktop-panel`}
-            className={`fixed z-50 animate-fade-up rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow-strong)] ${
-              openDirection === "up" ? "origin-bottom" : "origin-top"
-            }`}
-            style={{ top: panelPos.top, bottom: panelPos.bottom, left: panelPos.left, width: panelPos.width }}
+            className="fixed z-50 origin-top animate-fade-up rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow-strong)]"
+            style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
           >
             {filtered.length > 0 ? (
               <>
@@ -350,6 +407,9 @@ export function CityCombobox({
                     onSelect={selectOption}
                     onHover={setHighlighted}
                     idPrefix={name}
+                    popularCount={popularCount}
+                    popularLabel={popularLabel}
+                    allOptionsLabel={allOptionsLabel}
                   />
                 </ul>
               </>
@@ -416,6 +476,9 @@ export function CityCombobox({
                       onSelect={selectOption}
                       onHover={setHighlighted}
                       idPrefix={name}
+                      popularCount={popularCount}
+                      popularLabel={popularLabel}
+                      allOptionsLabel={allOptionsLabel}
                     />
                   </ul>
                 ) : (

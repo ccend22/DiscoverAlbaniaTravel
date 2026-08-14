@@ -73,7 +73,7 @@ export async function SiteFooter() {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs font-bold text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-sm font-bold text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>© {new Date().getFullYear()} Discover Albania Transport</p>
           <div className="flex flex-col gap-2 sm:items-end">
             <p>A Licensed &amp; Bonded Travel Operator.</p>

@@ -319,6 +319,11 @@ export const payments = pgTable(
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     currency: text("currency").notNull().default("EUR"),
     status: paymentStatusEnum("status").notNull().default("pending"),
+    // Set from the provider's own order expiry at creation time -- lets the
+    // sweep job key off what was actually sent to the provider rather than
+    // re-deriving a cutoff from a separately-configured constant that could
+    // drift out of sync for orders already in flight.
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },

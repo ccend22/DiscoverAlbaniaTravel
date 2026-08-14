@@ -126,14 +126,9 @@ export function StationsExplorer({ stations, dict }: StationsExplorerProps) {
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted sm:text-base sm:leading-7">{se.planDescription}</p>
         </div>
-        <div className="mt-5 flex shrink-0 items-center gap-3 lg:mt-0">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.22)]">
-            <SearchIcon width={18} height={18} />
-          </span>
-          <div>
-            <p className="text-lg font-black tracking-[-0.02em] text-brand-navy">{stations.length}</p>
-            <p className="text-xs font-semibold text-muted">{se.stationCountLabel}</p>
-          </div>
+        <div className="mt-5 shrink-0 lg:mt-0">
+          <p className="font-display text-lg font-black tracking-[-0.02em] tabular-nums text-brand-navy">{stations.length}</p>
+          <p className="text-xs font-semibold text-muted">{se.stationCountLabel}</p>
         </div>
       </div>
 

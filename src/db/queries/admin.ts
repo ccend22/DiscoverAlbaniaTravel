@@ -51,13 +51,22 @@ export interface AdminOverviewStats {
 export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   const today = getAlbaniaDateInputValue();
 
+  // A booking is "confirmed" the instant it's reserved, before its payment
+  // resolves (see src/db/queries/payments.ts) -- so these headline numbers
+  // are scoped to bookings with an actually-paid payment row, not just the
+  // reservation flag, to avoid inflating revenue/counts with unpaid holds.
+  const paidBookingExists = sql`exists (
+    select 1 from ${payments}
+    where ${payments.bookingId} = ${bookings.id} and ${payments.status} = 'paid'
+  )`;
+
   const [row] = await db
     .select({
       totalBookings: sql<number>`(select count(*) from ${bookings})`,
-      confirmedBookings: sql<number>`(select count(*) from ${bookings} where ${bookings.status} = 'confirmed')`,
-      totalRevenue: sql<number>`(select coalesce(sum(${bookings.priceAtBooking} * ${bookings.seats}), 0) from ${bookings} where ${bookings.status} = 'confirmed')`,
+      confirmedBookings: sql<number>`(select count(*) from ${bookings} where ${bookings.status} = 'confirmed' and ${paidBookingExists})`,
+      totalRevenue: sql<number>`(select coalesce(sum(${bookings.priceAtBooking} * ${bookings.seats}), 0) from ${bookings} where ${bookings.status} = 'confirmed' and ${paidBookingExists})`,
       activeOperators: sql<number>`(select count(*) from ${operators})`,
-      upcomingDepartures: sql<number>`(select count(*) from ${bookings} where ${bookings.status} = 'confirmed' and ${bookings.travelDate} >= ${today})`,
+      upcomingDepartures: sql<number>`(select count(*) from ${bookings} where ${bookings.status} = 'confirmed' and ${bookings.travelDate} >= ${today} and ${paidBookingExists})`,
       pendingVendorApplications: sql<number>`(select count(*) from ${vendorUsers} where ${vendorUsers.status} = 'pending')`,
       taxiRequests: sql<number>`(select count(*) from ${taxiRideRequests})`,
     })

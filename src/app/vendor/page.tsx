@@ -46,7 +46,7 @@ function SectionHeading({
         <Icon width={17} height={17} />
       </span>
       <div>
-        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>
     </div>

@@ -38,11 +38,6 @@ export function TripResultCard({ trip, travelDate, passengers = 1, dict, locale,
             {formatDuration(trip.durationMin, locale)}
           </span>
           <Badge tone="info">{tc.direct}</Badge>
-          <Badge tone={hasEnoughSeats ? "success" : "danger"}>
-            {hasEnoughSeats
-              ? formatMessage(tc.seatsAvailableCount, { count: trip.freeSeats })
-              : tc.soldOut}
-          </Badge>
           {isCheapest && (
             <span className="inline-flex items-center gap-1 rounded-md bg-gold-soft px-2 py-0.5 text-xs font-medium text-gold ring-1 ring-inset ring-gold/15">
               {tc.cheapest}

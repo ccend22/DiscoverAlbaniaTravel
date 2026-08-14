@@ -288,8 +288,8 @@ export async function getAllRoutePairs(): Promise<RoutePairSummary[]> {
     operatorCount: Number(row.operatorCount),
     minPrice: row.minPrice === null ? null : Number(row.minPrice),
     maxPrice: row.maxPrice === null ? null : Number(row.maxPrice),
-    minDurationMin: Number(row.minDurationMin),
-    maxDurationMin: Number(row.maxDurationMin),
+    minDurationMin: Math.round(Number(row.minDurationMin)),
+    maxDurationMin: Math.round(Number(row.maxDurationMin)),
     maxDistanceKm: Number(row.maxDistanceKm),
   }));
 }

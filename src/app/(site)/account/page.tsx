@@ -21,12 +21,18 @@ interface AccountPageProps {
 
 function BookingRow({ booking, showCancel, dict, locale }: { booking: BookingDetail; showCancel: boolean; dict: Dictionary; locale: Locale }) {
   const ap = dict.accountPage;
+  // A booking is "confirmed" the instant it's reserved, before its payment
+  // resolves (see src/db/queries/payments.ts) -- so the badge and the
+  // available actions both need payment status, not just booking status.
+  const isPaid = booking.status === "confirmed" && booking.paymentStatus === "paid";
+  const isPending = booking.status === "confirmed" && !isPaid;
+
   return (
     <div className="card-lift flex flex-col gap-3 rounded-2xl border border-[#dce7e9] bg-white p-5 shadow-[0_10px_28px_rgba(7,52,60,0.07)] sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div className="flex items-center gap-2">
-          <Badge tone={booking.status === "confirmed" ? "success" : "danger"}>
-            {booking.status === "confirmed" ? ap.confirmed : ap.cancelledStatus}
+          <Badge tone={isPaid ? "success" : isPending ? "warning" : "danger"}>
+            {isPaid ? ap.confirmed : isPending ? ap.paymentPending : ap.cancelledStatus}
           </Badge>
           <span className="font-mono text-xs text-muted">{booking.bookingReference}</span>
         </div>
@@ -48,10 +54,14 @@ function BookingRow({ booking, showCancel, dict, locale }: { booking: BookingDet
           {ap.viewTicket}
         </Link>
         {showCancel && booking.status === "confirmed" && (
-          <form action={cancelBookingAction}>
-            <input type="hidden" name="reference" value={booking.bookingReference} />
-            <Button variant="danger" size="sm">{ap.cancel}</Button>
-          </form>
+          isPaid ? (
+            <span className="text-xs text-muted">{ap.contactToCancel}</span>
+          ) : (
+            <form action={cancelBookingAction}>
+              <input type="hidden" name="reference" value={booking.bookingReference} />
+              <Button variant="danger" size="sm">{ap.cancel}</Button>
+            </form>
+          )
         )}
       </div>
     </div>

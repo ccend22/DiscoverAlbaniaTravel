@@ -5,8 +5,7 @@ import { formatDuration, formatPrice, formatWeekdays, formatDateLong, formatTime
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
 import { CheckCircleIcon, ClockIcon, MapPinIcon } from "@/components/icons";
-import { createBookingAction } from "./actions";
-import { Button } from "@/components/ui/button";
+import { BookingForm } from "./booking-form";
 import { Alert } from "@/components/ui/alert";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
@@ -88,85 +87,30 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
         </Alert>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
-          <div>
+          <div className="lg:col-span-2">
             <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">{bp.busReservation}</p>
             <h1 className="mt-2 animate-fade-up font-display text-4xl font-black tracking-[-0.035em] text-brand-navy [animation-delay:60ms]">{bp.passengerDetailsHeading}</h1>
             <p className="mt-1 text-sm text-muted">{formatMessage(bp.travelingOn, { date: formatDateLong(date, locale) })}</p>
+          </div>
 
+          <div>
             {error && (
-              <div className="mt-4">
-                <Alert tone="error">{error}</Alert>
-              </div>
+              <Alert tone="error" className="mb-4">{error}</Alert>
             )}
 
             {profile && (
-              <div className="mt-4">
-                <Alert tone="success">
-                  {formatMessage(bp.bookingAs, { name: profile.name, email: profile.email })}
-                </Alert>
-              </div>
+              <Alert tone="success" className="mb-4">
+                {formatMessage(bp.bookingAs, { name: profile.name, email: profile.email })}
+              </Alert>
             )}
 
-            <form action={createBookingAction} className="public-card mt-8 flex flex-col gap-5 p-6 sm:p-8">
-              <input type="hidden" name="tripDepartureId" value={id} />
-              <input type="hidden" name="travelDate" value={date} />
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                  <span className="font-medium text-foreground">{bp.fullName}</span>
-                  <input
-                    name="passengerName"
-                    required
-                    minLength={2}
-                    autoComplete="name"
-                    defaultValue={profile?.name}
-                    className="public-input min-h-13 rounded-2xl px-4 py-3"
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-foreground">{bp.phone}</span>
-                  <input
-                    name="passengerPhone"
-                    required
-                    type="tel"
-                    minLength={6}
-                    autoComplete="tel"
-                    defaultValue={profile?.phone ?? undefined}
-                    className="public-input min-h-13 rounded-2xl px-4 py-3"
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-foreground">{bp.email}</span>
-                  <input
-                    name="passengerEmail"
-                    required
-                    type="email"
-                    autoComplete="email"
-                    defaultValue={profile?.email}
-                    className="public-input min-h-13 rounded-2xl px-4 py-3"
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-foreground">{bp.seats}</span>
-                  <input
-                    name="seats"
-                    required
-                    type="number"
-                    min={1}
-                    max={9}
-                    defaultValue={defaultSeats}
-                    className="public-input min-h-13 w-24 rounded-2xl px-4 py-3"
-                  />
-                </label>
-              </div>
-
-              <Button type="submit" className="mt-2">
-                {bp.confirmReservation}
-              </Button>
-              <p className="text-xs text-muted">
-                {bp.paymentNote}
-              </p>
-            </form>
+            <BookingForm
+              tripDepartureId={id}
+              date={date}
+              defaultSeats={defaultSeats}
+              profile={profile ? { name: profile.name, email: profile.email, phone: profile.phone } : null}
+              bp={bp}
+            />
 
             <section className="mt-10 border-t border-border pt-6">
               <h2 className="text-sm font-semibold text-foreground">{bp.goodToKnow}</h2>
@@ -195,7 +139,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
             </section>
           </div>
 
-          <aside className="public-card p-6 lg:sticky lg:top-24">
+          <aside className="public-card p-6 sm:p-8">
             <p className="text-xs font-semibold uppercase text-muted">
               {bp.tripSummary}
             </p>
