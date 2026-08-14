@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRightIcon, BusIcon, SearchIcon } from "./icons";
 import { slugify } from "@/lib/slug";
@@ -17,12 +17,9 @@ interface RoutesGridProps {
     priceFrom: string;
     priceUnavailable: string;
     viewRoute: string;
-    loadMore: string;
     noRoutesMatch: string;
   };
 }
-
-const ROUTES_PAGE_SIZE = 12;
 
 export function RoutesGrid({ pairs, dict }: RoutesGridProps) {
   const [filter, setFilter] = useState("");
@@ -32,12 +29,6 @@ export function RoutesGrid({ pairs, dict }: RoutesGridProps) {
     if (!query) return pairs;
     return pairs.filter((pair) => `${pair.fromCity} ${pair.toCity}`.toLowerCase().includes(query));
   }, [pairs, filter]);
-
-  const [visibleCount, setVisibleCount] = useState(ROUTES_PAGE_SIZE);
-  useEffect(() => {
-    setVisibleCount(ROUTES_PAGE_SIZE);
-  }, [filtered]);
-  const visible = filtered.slice(0, visibleCount);
 
   return (
     <div>
@@ -67,7 +58,7 @@ export function RoutesGrid({ pairs, dict }: RoutesGridProps) {
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((pair) => (
+        {filtered.map((pair) => (
           <Link
             key={`${pair.fromCity}-${pair.toCity}`}
             href={`/routes/${slugify(pair.fromCity)}/${slugify(pair.toCity)}`}
@@ -91,16 +82,6 @@ export function RoutesGrid({ pairs, dict }: RoutesGridProps) {
           </Link>
         ))}
       </div>
-
-      {visibleCount < filtered.length && (
-        <button
-          type="button"
-          onClick={() => setVisibleCount((count) => count + ROUTES_PAGE_SIZE)}
-          className="public-card mt-4 flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-teal transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:border-teal hover:shadow-md"
-        >
-          {dict.loadMore}
-        </button>
-      )}
 
       {filtered.length === 0 && (
         <div className="mt-10 flex min-h-64 flex-col items-center justify-center rounded-[2rem] border border-dashed border-[#cfdde1] bg-white px-6 text-center shadow-sm">

@@ -134,7 +134,7 @@ export default async function DestinationsPage() {
             <p className="mt-4 max-w-2xl leading-7 text-muted">{dp.subtitle}</p>
           </div>
 
-          <DestinationsGrid destinations={destinations} fallbackDescription={dp.fallbackDescription} loadMoreLabel={dp.loadMore} />
+          <DestinationsGrid destinations={destinations} fallbackDescription={dp.fallbackDescription} />
         </div>
       </section>
     </div>

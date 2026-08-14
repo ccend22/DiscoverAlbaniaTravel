@@ -291,7 +291,6 @@ const en = {
     connectedByBus: "Connected by bus",
     directoryKicker: "The complete network",
     fallbackDescription: "Discover this stop and find bus connections for your journey across Albania.",
-    loadMore: "Load more destinations",
   },
   destinationDetail: {
     allDestinations: "All destinations",
@@ -311,7 +310,6 @@ const en = {
     tripsPerWeek: "{count} weekly departures",
     priceFrom: "From {price}",
     viewRoute: "View schedule",
-    loadMore: "Load more routes",
     noRoutesMatch: 'No routes match "{filter}".',
   },
   routeDetail: {
@@ -720,7 +718,6 @@ const al: typeof en = {
     connectedByBus: "Lidhur me autobus",
     directoryKicker: "I gjithë rrjeti",
     fallbackDescription: "Zbulo këtë ndalesë dhe gjej lidhjet me autobus për udhëtimin tënd nëpër Shqipëri.",
-    loadMore: "Shfaq më shumë destinacione",
   },
   destinationDetail: {
     allDestinations: "Të gjitha destinacionet",
@@ -740,7 +737,6 @@ const al: typeof en = {
     tripsPerWeek: "{count} nisje javore",
     priceFrom: "Nga {price}",
     viewRoute: "Shiko orarin",
-    loadMore: "Shfaq më shumë itinerarë",
     noRoutesMatch: 'Asnjë itinerar nuk përputhet me "{filter}".',
   },
   routeDetail: {

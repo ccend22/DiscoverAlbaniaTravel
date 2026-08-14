@@ -73,7 +73,6 @@ export default async function RoutesPage() {
             priceFrom: rp.priceFrom,
             priceUnavailable: dict.common.priceUnavailable,
             viewRoute: rp.viewRoute,
-            loadMore: rp.loadMore,
             noRoutesMatch: rp.noRoutesMatch,
           }}
         />
