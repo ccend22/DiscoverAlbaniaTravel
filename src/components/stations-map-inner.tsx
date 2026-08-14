@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import type { StationLocation } from "@/db/queries/stations";
-import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
-import "leaflet/dist/leaflet.css";
 
 declare global {
   interface Window {
@@ -24,98 +22,6 @@ export interface StationSelection {
 export interface StationsMapProps {
   stations: StationLocation[];
   selection?: StationSelection | null;
-}
-
-function OpenStreetMapFallback({ stations, selection }: StationsMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const markersRef = useRef<Map<number, LeafletMarker>>(new Map());
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [mapVersion, setMapVersion] = useState(0);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    let cancelled = false;
-    let resizeObserver: ResizeObserver | undefined;
-    const markerStore = new Map<number, LeafletMarker>();
-    markersRef.current = markerStore;
-
-    import("leaflet")
-      .then((leaflet) => {
-        if (cancelled || !containerRef.current) return;
-        const map = leaflet.map(containerRef.current, {
-          center: [ALBANIA_CENTER.lat, ALBANIA_CENTER.lng],
-          zoom: 8,
-          zoomControl: true,
-          attributionControl: true,
-          scrollWheelZoom: false,
-        });
-        leaflet
-          .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          })
-          .addTo(map);
-
-        const icon = leaflet.divIcon({
-          className: "dat-leaflet-station-marker",
-          html: '<span class="dat-leaflet-station-dot"></span>',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          popupAnchor: [0, -13],
-        });
-        const bounds = leaflet.latLngBounds([]);
-
-        for (const station of stations) {
-          const lat = Number(station.latitude);
-          const lng = Number(station.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          const marker = leaflet.marker([lat, lng], { icon, title: station.name, riseOnHover: true });
-          marker.bindPopup(buildInfoWindowContent(station), { maxWidth: 280, minWidth: 190 });
-          marker.addTo(map);
-          markerStore.set(station.id, marker);
-          bounds.extend([lat, lng]);
-        }
-
-        if (bounds.isValid()) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 10 });
-        mapRef.current = map;
-        setMapVersion((version) => version + 1);
-        resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
-        resizeObserver.observe(containerRef.current);
-        requestAnimationFrame(() => map.invalidateSize({ pan: false }));
-      })
-      .catch(() => {
-        if (!cancelled) setLoadFailed(true);
-      });
-
-    return () => {
-      cancelled = true;
-      resizeObserver?.disconnect();
-      markerStore.clear();
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, [stations]);
-
-  useEffect(() => {
-    if (!selection || !mapRef.current) return;
-    const station = stations.find((item) => item.id === selection.stationId);
-    const marker = markersRef.current.get(selection.stationId);
-    if (!station || !marker) return;
-    mapRef.current.flyTo([Number(station.latitude), Number(station.longitude)], 14, { duration: 0.65 });
-    marker.openPopup();
-  }, [mapVersion, selection, stations]);
-
-  return (
-    <div className={`relative ${MAP_SIZE} w-full overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#eef5f6]`}>
-      <div ref={containerRef} aria-label="Map of bus stations in Albania" className="dat-leaflet-map h-full w-full" />
-      {loadFailed && (
-        <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken px-6 text-center text-sm font-medium text-muted">
-          The map could not load. Search above to find a station.
-        </div>
-      )}
-    </div>
-  );
 }
 
 const BUS_MARKER_ICON_URL =
@@ -270,7 +176,11 @@ export function StationsMap({ stations, selection = null }: StationsMapProps) {
   }, [selection]);
 
   if (error || !hasGoogleMapsApiKey) {
-    return <OpenStreetMapFallback stations={stations} selection={selection} />;
+    return (
+      <div className={`flex ${MAP_SIZE} w-full items-center justify-center overflow-hidden rounded-[1.9rem] border border-white/10 bg-[#eef5f6] px-6 text-center text-sm font-medium text-muted`}>
+        The map could not load. Search above to find a station.
+      </div>
+    );
   }
 
   return (

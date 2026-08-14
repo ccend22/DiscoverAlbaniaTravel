@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
-import type { Map as LeafletMap } from "leaflet";
-import "leaflet/dist/leaflet.css";
 
 const BUS_ICON_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
@@ -20,6 +18,7 @@ const BUS_ICON_SVG = `
 const BUS_ICON_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BUS_ICON_SVG)}`;
 
 const ROUTE_LINE_COLOR = "#2563eb";
+const MAP_SIZE = "h-[52dvh] min-h-[300px] max-h-[520px] w-full overflow-hidden rounded-lg border border-border sm:h-[50vh] sm:min-h-[320px] sm:max-h-none";
 
 export interface RouteSegment {
   fromName: string;
@@ -34,81 +33,6 @@ export interface RouteSegment {
 
 export interface RouteMapProps {
   segments: RouteSegment[];
-}
-
-interface MapMarkerData {
-  key: string;
-  name: string;
-  lat: number;
-  lng: number;
-}
-
-interface MapLineData {
-  key: string;
-  positions: google.maps.LatLngLiteral[];
-}
-
-function OpenStreetRouteMap({ markers, lines }: { markers: MapMarkerData[]; lines: MapLineData[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    let cancelled = false;
-    let resizeObserver: ResizeObserver | undefined;
-
-    import("leaflet").then((leaflet) => {
-      if (cancelled || !containerRef.current) return;
-      const map = leaflet.map(containerRef.current, {
-        center: [41.15, 20],
-        zoom: 8,
-        scrollWheelZoom: false,
-      });
-      leaflet
-        .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        })
-        .addTo(map);
-      const bounds = leaflet.latLngBounds([]);
-
-      for (const line of lines) {
-        const positions = line.positions.map((point) => [point.lat, point.lng] as [number, number]);
-        leaflet.polyline(positions, { color: ROUTE_LINE_COLOR, weight: 4, opacity: 0.85 }).addTo(map);
-        positions.forEach((point) => bounds.extend(point));
-      }
-
-      const icon = leaflet.divIcon({
-        className: "dat-leaflet-station-marker",
-        html: '<span class="dat-leaflet-station-dot"></span>',
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -13],
-      });
-      for (const markerData of markers) {
-        const label = document.createElement("p");
-        label.className = "m-0 text-sm font-semibold text-brand-navy";
-        label.textContent = markerData.name;
-        leaflet.marker([markerData.lat, markerData.lng], { icon, title: markerData.name }).bindPopup(label).addTo(map);
-        bounds.extend([markerData.lat, markerData.lng]);
-      }
-
-      if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 });
-      mapRef.current = map;
-      resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
-      resizeObserver.observe(containerRef.current);
-      requestAnimationFrame(() => map.invalidateSize({ pan: false }));
-    });
-
-    return () => {
-      cancelled = true;
-      resizeObserver?.disconnect();
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, [lines, markers]);
-
-  return <div ref={containerRef} className="dat-leaflet-map h-[52dvh] min-h-[300px] max-h-[520px] w-full overflow-hidden rounded-lg border border-border sm:h-[50vh] sm:min-h-[320px] sm:max-h-none" />;
 }
 
 export function RouteMap({ segments }: RouteMapProps) {
@@ -230,8 +154,12 @@ export function RouteMap({ segments }: RouteMapProps) {
   }, [markers, lines]);
 
   if (!hasGoogleMapsApiKey || mapError) {
-    return <OpenStreetRouteMap markers={markers} lines={lines} />;
+    return (
+      <div className={`${MAP_SIZE} flex items-center justify-center bg-surface-sunken px-6 text-center text-sm text-muted`}>
+        The map could not load right now.
+      </div>
+    );
   }
 
-  return <div ref={containerRef} className="h-[52dvh] min-h-[300px] max-h-[520px] w-full overflow-hidden rounded-lg border border-border sm:h-[50vh] sm:min-h-[320px] sm:max-h-none" />;
+  return <div ref={containerRef} className={MAP_SIZE} />;
 }

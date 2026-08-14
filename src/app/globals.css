@@ -305,21 +305,6 @@ table tbody tr:hover {
   transform: scale(1.12);
 }
 
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  background: var(--surface);
-  color: var(--foreground);
-}
-
-.leaflet-popup-content-wrapper {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-.leaflet-container a.leaflet-popup-close-button {
-  color: var(--muted);
-}
-
 /* Google Places Autocomplete's suggestion dropdown, restyled to match the
    site's own dropdowns/cards instead of Google's default flat white box. */
 .pac-container {
@@ -517,71 +502,6 @@ table tbody tr:hover {
    flicked to their scroll limit. */
 .overlay-scroll {
   overscroll-behavior: contain;
-}
-
-/* Leaflet is the keyless safety net for every public map. Keep its controls
-   aligned with the site's rounded, quiet surface system. */
-.dat-leaflet-map {
-  z-index: 0;
-  background: #eaf3f3;
-  font-family: var(--font-inter), sans-serif;
-}
-
-.dat-leaflet-map .leaflet-control-zoom,
-.dat-leaflet-map .leaflet-control-attribution {
-  border: 1px solid rgb(220 232 230 / 90%);
-  box-shadow: 0 8px 24px rgb(7 52 60 / 12%);
-}
-
-.dat-leaflet-map .leaflet-control-zoom a {
-  color: var(--teal);
-}
-
-.dat-leaflet-map .leaflet-control-attribution {
-  border-radius: 0.5rem 0 0 0;
-  color: var(--muted);
-  font-size: 9px;
-}
-
-.dat-leaflet-map .leaflet-control-attribution a {
-  color: var(--teal);
-}
-
-.dat-leaflet-station-marker,
-.dat-leaflet-pin-marker {
-  background: transparent;
-  border: 0;
-}
-
-.dat-leaflet-station-dot {
-  display: block;
-  width: 30px;
-  height: 30px;
-  border: 7px solid #fff;
-  border-radius: 999px;
-  background: var(--teal);
-  box-shadow: 0 5px 16px rgb(0 87 92 / 32%);
-}
-
-.dat-leaflet-pin-dot {
-  display: block;
-  width: 28px;
-  height: 28px;
-  border: 7px solid #fff;
-  border-radius: 999px 999px 999px 3px;
-  background: var(--coral);
-  box-shadow: 0 6px 18px rgb(120 52 42 / 30%);
-  transform: rotate(-45deg);
-}
-
-.dat-leaflet-map .leaflet-popup-content-wrapper {
-  border: 1px solid rgb(220 232 230 / 90%);
-  border-radius: 1rem;
-  box-shadow: 0 14px 36px rgb(7 52 60 / 18%);
-}
-
-.dat-leaflet-map .leaflet-popup-content {
-  margin: 0.85rem 1rem;
 }
 
 /* Premium hover lift for cards/panels: pair with `shadow-[var(--shadow-sm)]`. */
