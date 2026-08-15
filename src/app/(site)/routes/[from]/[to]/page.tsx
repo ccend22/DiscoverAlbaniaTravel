@@ -8,6 +8,7 @@ import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
 import { slugify } from "@/lib/slug";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { getDestinationImage } from "@/lib/destination-images";
 import type { Metadata } from "next";
 
 interface RouteDetailPageProps {
@@ -30,12 +31,13 @@ export async function generateMetadata({ params }: RouteDetailPageProps): Promis
       ? "no online payment available"
       : `tickets from ${Math.round(pair.minPrice).toLocaleString("en-US")} ALL`;
   const description = `Compare ${pair.tripCount} weekly departures from ${pair.fromCity} to ${pair.toCity}. ${priceClause[0].toUpperCase()}${priceClause.slice(1)}, ${pair.minDurationMin}–${pair.maxDurationMin} min journey, run by ${pair.operatorCount} operator${pair.operatorCount === 1 ? "" : "s"}.`;
+  const heroImage = getDestinationImage(pair.toCity) ?? getDestinationImage(pair.fromCity) ?? "/images/destinations/durres.jpg";
 
   return {
     title,
     description,
     alternates: { canonical: `/routes/${from}/${to}` },
-    openGraph: { title, description, url: `/routes/${from}/${to}` },
+    openGraph: { title, description, url: `/routes/${from}/${to}`, images: [{ url: heroImage }] },
   };
 }
 
@@ -50,6 +52,8 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
 
   const todayOutcome = await searchTripDepartures(pair.fromCity, pair.toCity, today);
   const todayTrips = todayOutcome.results.slice(0, 4);
+
+  const heroImage = getDestinationImage(pair.toCity) ?? getDestinationImage(pair.fromCity) ?? "/images/destinations/durres.jpg";
 
   const baseUrl = process.env.SITE_URL ?? "http://localhost:3000";
   const breadcrumbJsonLd = {
@@ -104,8 +108,8 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
 
       <section className="relative isolate -mt-20 overflow-hidden pt-20 md:-mt-24 md:pt-24">
         <Image
-          src="/images/destinations/durres.jpg"
-          alt=""
+          src={heroImage}
+          alt={`${pair.fromCity} to ${pair.toCity} bus route`}
           fill
           priority
           quality={90}

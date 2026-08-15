@@ -20,10 +20,19 @@ export async function generateMetadata({ params }: DestinationDetailPageProps): 
   const destination = await getDestinationById(Number(id));
   if (!destination) return { title: "Destination Not Found", robots: { index: false } };
 
+  const description = destination.description.slice(0, 160);
+  const image = getDestinationImage(destination.name);
+
   return {
     title: destination.name,
-    description: destination.description.slice(0, 160),
+    description,
     alternates: { canonical: `/destinations/${destination.id}` },
+    openGraph: {
+      title: destination.name,
+      description,
+      url: `/destinations/${destination.id}`,
+      images: image ? [{ url: image }] : undefined,
+    },
   };
 }
 
@@ -74,7 +83,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
       <section className={`relative isolate -mt-20 overflow-hidden pt-20 md:-mt-24 md:pt-24 ${image ? "" : "bg-[linear-gradient(180deg,#eaf5f4_0%,#f4f8f7_58%)]"}`}>
         {image && (
           <>
-            <Image src={image} alt="" fill priority quality={90} sizes="100vw" className="object-cover object-center" />
+            <Image src={image} alt={`${destination.name}, Albania`} fill priority quality={90} sizes="100vw" className="object-cover object-center" />
             <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(4,22,31,0.94)_0%,rgba(4,31,38,0.82)_45%,rgba(4,31,38,0.55)_100%)]" />
             <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f4f8f7] to-transparent" aria-hidden="true" />
           </>

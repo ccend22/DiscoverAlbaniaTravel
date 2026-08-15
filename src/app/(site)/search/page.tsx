@@ -256,6 +256,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="public-page mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+      <h1 className="sr-only">{`Bus tickets: ${origin} to ${destination}`}</h1>
       <div className="mb-8">
         <SearchWidget
           cityOptions={cityOptions}

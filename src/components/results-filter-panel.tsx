@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { TripDepartureDetail } from "@/db/queries/trips";
 import { TripResultCard } from "./trip-result-card";
 import { FilterIcon } from "./icons";
@@ -69,9 +69,11 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
   }, [filtered]);
 
   const [visibleCount, setVisibleCount] = useState(RESULTS_PAGE_SIZE);
-  useEffect(() => {
+  const [prevFiltered, setPrevFiltered] = useState(filtered);
+  if (filtered !== prevFiltered) {
+    setPrevFiltered(filtered);
     setVisibleCount(RESULTS_PAGE_SIZE);
-  }, [filtered]);
+  }
   const visible = filtered.slice(0, visibleCount);
 
   function toggleBucket(bucket: TimeBucket) {

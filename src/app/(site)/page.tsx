@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { HeroBookingWidget } from "@/components/hero-booking-widget";
 import { FeaturedDestinations, type FeaturedPlace } from "@/components/featured-destinations";
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -16,6 +17,10 @@ import { getActiveUserSessionId } from "@/lib/user-session";
 import { getUserById } from "@/db/queries/users";
 import { slugify } from "@/lib/slug";
 import { buildCityOptions } from "@/lib/city-options";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const FEATURED_PLACE_META: Omit<FeaturedPlace, "destinationId" | "tagline">[] = [
   { name: "Tiranë", image: "/images/destinations/tirana.jpg" },
