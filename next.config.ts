@@ -15,9 +15,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // 90 is used for a handful of large, dark-gradient-overlaid photo heroes
   // (routes, destination detail) where compression artifacts are more
-  // visible than on the default 75.
+  // visible than on the default 75. minimumCacheTTL extends past Next's
+  // 4-hour default to match how rarely these curated photos actually
+  // change (redeployed, not runtime-uploaded).
   images: {
     qualities: [75, 90],
+    minimumCacheTTL: 2592000,
   },
   turbopack: {
     root: path.resolve(__dirname),
@@ -47,6 +50,21 @@ const nextConfig: NextConfig = {
             ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
             : []),
         ],
+      },
+      // `public/` assets get no caching by default once self-hosted (off
+      // Vercel's CDN, which adds this automatically) -- every one of the
+      // curated destination photos was re-validated on every request,
+      // including the /destinations directory rendering ~80 of them on one
+      // page. These are static, redeployed (not runtime-uploaded) files, so
+      // a long cache is safe; a new deploy naturally busts it anyway since
+      // the container's file contents change.
+      {
+        source: "/images/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" }],
+      },
+      {
+        source: "/:file(dat-logo|og|og-v2|og-v3).png",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" }],
       },
     ];
   },
