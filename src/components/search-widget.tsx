@@ -184,60 +184,68 @@ export function SearchWidget({
       </div>
 
       <div className={`relative grid gap-2 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] ${tripType === "roundtrip" ? "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(190px,0.72fr)_minmax(190px,0.72fr)_150px_auto]" : "xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(210px,0.8fr)_150px_auto]"} lg:items-stretch`}>
-        <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.from}</span>
-          <CityCombobox
-            name="origin"
-            required
-            requireOption
-            value={originInput}
-            onChange={handleOriginChange}
-            onOpenChange={setOriginOpen}
-            options={cityOptions}
-            popularOptions={popularCities}
-            popularLabel={dict.cityCombobox.popular}
-            allOptionsLabel={dict.cityCombobox.allPlaces}
-            placeholder={sw.from}
-            noMatchesLabel={dict.cityCombobox.noMatches}
-            leadingIcon={<StartPointIcon width={15} height={15} />}
-            leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-teal-soft text-teal"
-            inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
-          />
-        </label>
+        {/* From/To are one merged card with the swap button floating on their
+            shared edge on mobile (`lg:contents` unwraps this back into three
+            separate grid items — label, button, label — for the desktop
+            row, where each field keeps its own card). */}
+        <div className="relative flex flex-col rounded-[1.1rem] bg-white lg:contents">
+          <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 transition-[box-shadow,transform] lg:rounded-[1.1rem] lg:bg-white lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+            <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.from}</span>
+            <CityCombobox
+              name="origin"
+              required
+              requireOption
+              value={originInput}
+              onChange={handleOriginChange}
+              onOpenChange={setOriginOpen}
+              options={cityOptions}
+              popularOptions={popularCities}
+              popularLabel={dict.cityCombobox.popular}
+              allOptionsLabel={dict.cityCombobox.allPlaces}
+              placeholder={sw.from}
+              noMatchesLabel={dict.cityCombobox.noMatches}
+              leadingIcon={<StartPointIcon width={15} height={15} />}
+              leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-teal-soft text-teal"
+              inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
+            />
+          </label>
 
-        <button
-          type="button"
-          onClick={handleSwap}
-          aria-label={sw.swapAria}
-          disabled={originOpen || destinationOpen}
-          style={{ transform: `rotate(${swapRotation}deg)` }}
-          className={`relative z-50 mx-auto flex h-10 w-10 shrink-0 items-center justify-center self-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color,opacity] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white xl:-mx-5 [&_svg]:rotate-90 ${
-            originOpen || destinationOpen ? "pointer-events-none opacity-0" : "opacity-100"
-          }`}
-        >
-          <SwapIcon width={16} height={16} />
-        </button>
+          <div className="mx-3 border-t border-[#e4edec] lg:hidden" />
 
-        <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 rounded-[1.1rem] bg-white px-3 py-2 transition-[box-shadow,transform] focus-within:z-[70] focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
-          <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.to}</span>
-          <CityCombobox
-            name="destination"
-            required
-            requireOption
-            value={destinationInput}
-            onChange={setDestinationInput}
-            onOpenChange={setDestinationOpen}
-            options={destinationOptions}
-            popularOptions={popularCities}
-            popularLabel={dict.cityCombobox.popular}
-            allOptionsLabel={dict.cityCombobox.allPlaces}
-            placeholder={sw.to}
-            noMatchesLabel={dict.cityCombobox.noDestinations}
-            leadingIcon={<DestinationIcon width={15} height={15} />}
-            leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-coral-soft text-coral"
-            inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
-          />
-        </label>
+          <button
+            type="button"
+            onClick={handleSwap}
+            aria-label={sw.swapAria}
+            disabled={originOpen || destinationOpen}
+            style={{ transform: `rotate(${swapRotation}deg)` }}
+            className={`absolute right-3 top-1/2 z-50 flex h-10 w-10 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color,opacity] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white [&_svg]:rotate-90 lg:static lg:mx-auto lg:translate-y-0 lg:self-center xl:-mx-5 ${
+              originOpen || destinationOpen ? "pointer-events-none opacity-0" : "opacity-100"
+            }`}
+          >
+            <SwapIcon width={16} height={16} />
+          </button>
+
+          <label className={`relative flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 transition-[box-shadow,transform] lg:rounded-[1.1rem] lg:bg-white lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] ${swapPulse ? "scale-[1.01]" : ""}`}>
+            <span className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.to}</span>
+            <CityCombobox
+              name="destination"
+              required
+              requireOption
+              value={destinationInput}
+              onChange={setDestinationInput}
+              onOpenChange={setDestinationOpen}
+              options={destinationOptions}
+              popularOptions={popularCities}
+              popularLabel={dict.cityCombobox.popular}
+              allOptionsLabel={dict.cityCombobox.allPlaces}
+              placeholder={sw.to}
+              noMatchesLabel={dict.cityCombobox.noDestinations}
+              leadingIcon={<DestinationIcon width={15} height={15} />}
+              leadingIconClassName="flex h-8 w-8 items-center justify-center rounded-full bg-coral-soft text-coral"
+              inputClassName="min-h-11 rounded-lg border-0 bg-transparent pl-14 font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent focus:shadow-none"
+            />
+          </label>
+        </div>
 
         <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm">
           <span className="px-3 pt-2 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.depart}</span>
