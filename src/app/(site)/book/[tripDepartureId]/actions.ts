@@ -6,6 +6,7 @@ import { createPendingPaymentForBooking } from "@/db/queries/payments";
 import { createSdkOrder, PokConfigError } from "@/lib/pok-payments";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getSiteOrigin } from "@/lib/google-oauth";
+import { getLocale } from "@/lib/i18n";
 
 export type CreateBookingActionState =
   | { status: "idle" }
@@ -32,8 +33,8 @@ export async function createBookingAction(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
   }
 
-  const userId = await getActiveUserSessionId();
-  const result = await createBooking({ ...parsed.data, userId });
+  const [userId, locale] = await Promise.all([getActiveUserSessionId(), getLocale()]);
+  const result = await createBooking({ ...parsed.data, userId, locale });
 
   if (!result.ok) {
     const message = result.error === "invalid_date"

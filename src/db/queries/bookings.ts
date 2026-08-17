@@ -1,8 +1,10 @@
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../index";
 import { bookings, payments, tripInventories } from "../schema";
 import { generateBookingReference } from "@/lib/reference-code";
 import { getTripDepartureById, isDepartureValidOnDate, type TripDepartureDetail } from "./trips";
+import type { Locale } from "@/lib/locale";
 
 export interface CreateBookingInput {
   tripDepartureId: number;
@@ -12,6 +14,12 @@ export interface CreateBookingInput {
   passengerEmail: string;
   seats: number;
   userId?: number | null;
+  locale?: Locale;
+}
+
+/** Bearer secret for the emailed "manage your booking" link -- see the `manageToken` column comment in schema.ts. */
+function generateManageToken(): string {
+  return randomBytes(24).toString("base64url");
 }
 
 export type CreateBookingResult =
@@ -34,6 +42,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
   }
 
   const reference = generateBookingReference();
+  const manageToken = generateManageToken();
 
   const initialSeats = Math.min(trip.freeSeats, trip.plannedSeats);
   if (input.seats > initialSeats) return { ok: false, error: "sold_out" };
@@ -68,7 +77,9 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${sql.identifier(bookings.passengerPhone.name)},
         ${sql.identifier(bookings.passengerEmail.name)},
         ${sql.identifier(bookings.seats.name)},
-        ${sql.identifier(bookings.priceAtBooking.name)}
+        ${sql.identifier(bookings.priceAtBooking.name)},
+        ${sql.identifier(bookings.locale.name)},
+        ${sql.identifier(bookings.manageToken.name)}
       )
       select
         ${reference},
@@ -79,7 +90,9 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${input.passengerPhone},
         ${input.passengerEmail},
         ${input.seats},
-        ${trip.basePrice}
+        ${trip.basePrice},
+        ${input.locale ?? "en"},
+        ${manageToken}
       from reserved
       returning ${sql.identifier(bookings.id.name)}, ${sql.identifier(bookings.bookingReference.name)}
     )
@@ -240,4 +253,114 @@ export async function cancelUserBooking(userId: number, bookingReference: string
 
   const cancelled = await restoreInventoryAndCancelBooking(booking.id, { requireUserId: userId });
   return cancelled ? "ok" : "not_found";
+}
+
+export interface BookingEmailDetail {
+  bookingReference: string;
+  travelDate: string;
+  passengerName: string;
+  passengerEmail: string;
+  seats: number;
+  priceAtBooking: string;
+  manageToken: string | null;
+  locale: string;
+  trip: TripDepartureDetail;
+}
+
+/** For the confirmation email, sent once payment settles as paid (see verifyAndSettlePokPayment) -- that trigger only has a bookingId, not a reference. */
+export async function getBookingEmailDetail(bookingId: number): Promise<BookingEmailDetail | null> {
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  if (!booking) return null;
+
+  const trip = await getTripDepartureById(booking.tripDepartureId);
+  if (!trip) return null;
+
+  return {
+    bookingReference: booking.bookingReference,
+    travelDate: booking.travelDate,
+    passengerName: booking.passengerName,
+    passengerEmail: booking.passengerEmail,
+    seats: booking.seats,
+    priceAtBooking: booking.priceAtBooking,
+    manageToken: booking.manageToken,
+    locale: booking.locale,
+    trip,
+  };
+}
+
+function manageTokenMatches(provided: string, expected: string): boolean {
+  const providedBuffer = Buffer.from(provided);
+  const expectedBuffer = Buffer.from(expected);
+  return providedBuffer.length === expectedBuffer.length && timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+/**
+ * Every self-service manage action (view, cancel, edit contact details) on
+ * the emailed link goes through this first -- it's the only thing standing
+ * between the public, guessable booking reference and being able to touch
+ * someone else's reservation. Constant-time compare against the per-booking
+ * secret so mismatched attempts can't be timed to narrow down the token.
+ */
+async function verifyManageToken(
+  reference: string,
+  token: string
+): Promise<{ id: number; status: "confirmed" | "cancelled" } | null> {
+  const [booking] = await db
+    .select({ id: bookings.id, status: bookings.status, manageToken: bookings.manageToken })
+    .from(bookings)
+    .where(eq(bookings.bookingReference, reference))
+    .limit(1);
+
+  if (!booking || !booking.manageToken || !manageTokenMatches(token, booking.manageToken)) return null;
+  return { id: booking.id, status: booking.status };
+}
+
+export async function getBookingForManage(reference: string, token: string): Promise<BookingDetail | null> {
+  const verified = await verifyManageToken(reference, token);
+  if (!verified) return null;
+  return getBookingByReference(reference);
+}
+
+export type ManageActionResult = "ok" | "invalid_token" | "already_cancelled" | "already_paid";
+
+export async function cancelBookingByToken(reference: string, token: string): Promise<ManageActionResult> {
+  const verified = await verifyManageToken(reference, token);
+  if (!verified) return "invalid_token";
+  if (verified.status !== "confirmed") return "already_cancelled";
+
+  // Same already-paid guard as the logged-in self-service cancel -- a paid
+  // booking needs a refund, not a silent seat release.
+  const paymentStatus = await getLatestPaymentStatus(verified.id);
+  if (paymentStatus === "paid") return "already_paid";
+
+  const cancelled = await restoreInventoryAndCancelBooking(verified.id);
+  return cancelled ? "ok" : "already_cancelled";
+}
+
+export interface UpdatePassengerDetailsInput {
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail: string;
+}
+
+export async function updatePassengerDetailsByToken(
+  reference: string,
+  token: string,
+  data: UpdatePassengerDetailsInput
+): Promise<ManageActionResult> {
+  const verified = await verifyManageToken(reference, token);
+  if (!verified) return "invalid_token";
+  if (verified.status !== "confirmed") return "already_cancelled";
+
+  await db
+    .update(bookings)
+    .set({
+      passengerName: data.passengerName,
+      passengerPhone: data.passengerPhone,
+      passengerEmail: data.passengerEmail,
+      updatedAt: new Date(),
+    })
+    .where(eq(bookings.id, verified.id));
+
+  return "ok";
 }

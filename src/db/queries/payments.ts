@@ -2,7 +2,8 @@ import { and, eq, isNull, lt } from "drizzle-orm";
 import { db } from "../index";
 import { bookings, payments } from "../schema";
 import { getSdkOrder, type PokSdkOrder } from "@/lib/pok-payments";
-import { cancelBookingForUnpaidPayment } from "./bookings";
+import { cancelBookingForUnpaidPayment, getBookingEmailDetail } from "./bookings";
+import { sendBookingConfirmationEmail } from "@/lib/email";
 
 export interface CreatePendingPaymentInput {
   bookingId: number;
@@ -83,6 +84,16 @@ export async function verifyAndSettlePokPayment(paymentId: number): Promise<Sett
     // as a paid-payment-on-a-cancelled-booking mismatch in the admin ledger,
     // which is a real operator-must-refund case, not something to hide.
     await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, paymentId));
+
+    // Best-effort: a broken SMTP config or a transient send failure must
+    // never undo (or even appear to undo) a payment that already settled.
+    try {
+      const detail = await getBookingEmailDetail(payment.bookingId);
+      if (detail) await sendBookingConfirmationEmail(detail);
+    } catch (error) {
+      console.error("[email] failed to send booking confirmation", { bookingId: payment.bookingId, error });
+    }
+
     return "paid";
   }
 

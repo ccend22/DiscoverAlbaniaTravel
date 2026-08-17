@@ -187,6 +187,16 @@ export const bookings = pgTable(
     seats: integer("seats").notNull(),
     priceAtBooking: numeric("price_at_booking", { precision: 10, scale: 2 }).notNull(),
     status: bookingStatusEnum("status").notNull().default("confirmed"),
+    // Site language at the moment of booking, so the confirmation email
+    // (sent later, from a webhook/sweep context with no request cookies)
+    // renders in the language the customer was actually using.
+    locale: text("locale").notNull().default("en"),
+    // Bearer secret embedded only in the confirmation email's "manage
+    // booking" link -- lets a guest (no account) cancel or edit contact
+    // details without being able to guess it from the public, view-only
+    // booking reference lookup. Null for bookings created before this
+    // existed; those simply have no email-based manage link.
+    manageToken: text("manage_token"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },

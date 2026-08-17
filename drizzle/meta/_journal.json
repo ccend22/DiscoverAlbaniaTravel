@@ -92,6 +92,13 @@
       "when": 1786632109777,
       "tag": "0012_cloudy_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786960014354,
+      "tag": "0013_tricky_the_leader",
+      "breakpoints": true
     }
   ]
 }

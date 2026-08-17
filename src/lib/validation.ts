@@ -39,15 +39,19 @@ export const searchParamsSchema = z
 
 export type SearchParamsInput = z.infer<typeof searchParamsSchema>;
 
+export const passengerDetailsSchema = z.object({
+  passengerName: z.string().trim().min(2, "Enter the passenger's full name"),
+  passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+  passengerEmail: z.string().trim().email("Enter a valid email address"),
+});
+
 export const bookingFormSchema = z
   .object({
     tripDepartureId: z.coerce.number().int().positive(),
     travelDate: dateString,
-    passengerName: z.string().trim().min(2, "Enter the passenger's full name"),
-    passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
-    passengerEmail: z.string().trim().email("Enter a valid email address"),
     seats: z.coerce.number().int().min(1, "At least 1 seat is required").max(9, "Max 9 seats per booking"),
   })
+  .extend(passengerDetailsSchema.shape)
   .refine((data) => data.travelDate >= todayInAlbania(), {
     message: "Choose today or a future travel date",
     path: ["travelDate"],
