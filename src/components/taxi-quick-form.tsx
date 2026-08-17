@@ -12,6 +12,7 @@ import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, type Coordinates } from "@/lib/taxi-service";
+import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
@@ -177,6 +178,10 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
     [pickupCoordinates, destinationCoordinates]
   );
   const routeIsEligible = distanceKm !== null && distanceKm >= MIN_INTERCITY_TAXI_DISTANCE_KM;
+  const priceEstimate = useMemo(
+    () => (routeIsEligible ? estimateTaxiPriceEur(pickupLocation, destination, distanceKm) : null),
+    [routeIsEligible, pickupLocation, destination, distanceKm]
+  );
 
   function handlePicked(location: PickedLocation) {
     if (activePicker === "pickup") {
@@ -433,8 +438,15 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
                 />
               </div>
             </div>
+            {priceEstimate && (
+              <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-success/15 pl-11 pt-2.5">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-muted">{tq.estimatedFare}</p>
+                <p className="font-display text-lg font-black text-brand-navy">~€{priceEstimate.priceEur}</p>
+              </div>
+            )}
           </div>
         )}
+        {priceEstimate && <p className="mt-2 pl-1 text-xs text-muted">{tq.quoteNote}</p>}
 
         <div className="mt-5 grid gap-4 border-t border-[#e5edec] pt-5 md:grid-cols-[minmax(14rem,1fr)_auto] md:items-end">
           <label className="block max-w-md">
