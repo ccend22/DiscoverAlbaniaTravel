@@ -6,9 +6,9 @@ import { getBookingsForUser, type BookingDetail } from "@/db/queries/bookings";
 import { listTaxiRequestsForUser } from "@/db/queries/taxi";
 import { formatCurrency, formatPrice, formatDateLong, formatTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { TicketIcon } from "@/components/icons";
+import { TicketIcon, MapPinIcon, CalendarIcon, ClockIcon } from "@/components/icons";
 import { cancelBookingAction, cancelTaxiRequestAction, logoutUserAction, updateProfileAction } from "./actions";
 import { formatAlbaniaDateTime } from "@/lib/timezone";
 import { getLocaleAndDictionary } from "@/lib/i18n";
@@ -28,27 +28,36 @@ function BookingRow({ booking, showCancel, dict, locale }: { booking: BookingDet
   const isPending = booking.status === "confirmed" && !isPaid;
 
   return (
-    <div className="card-lift flex flex-col gap-3 rounded-2xl border border-[#dce7e9] bg-white p-5 shadow-[0_10px_28px_rgba(7,52,60,0.07)] sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <article className="public-card card-lift flex flex-col gap-4 p-5 hover:border-teal/30 sm:flex-row sm:items-stretch sm:justify-between">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-center gap-2">
           <Badge tone={isPaid ? "success" : isPending ? "warning" : "danger"}>
             {isPaid ? ap.confirmed : isPending ? ap.paymentPending : ap.cancelledStatus}
           </Badge>
           <span className="font-mono text-xs text-muted">{booking.bookingReference}</span>
         </div>
-        <p className="mt-2 text-lg font-medium text-foreground">
+        <p className="flex items-center gap-1.5 text-lg font-medium text-foreground">
+          <MapPinIcon width={16} height={16} className="shrink-0 text-coral" />
           {booking.trip.fromStationName} → {booking.trip.toStationName}
         </p>
-        <p className="text-sm text-muted">
-          {formatDateLong(booking.travelDate, locale)} · {formatTime(booking.trip.departureTime)} ·{" "}
-          {booking.seats} {booking.seats > 1 ? ap.seats : ap.seat} ·{" "}
-          {formatPrice(booking.priceAtBooking, booking.seats)}
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+          <span className="flex items-center gap-1.5">
+            <CalendarIcon width={14} height={14} />
+            {formatDateLong(booking.travelDate, locale)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ClockIcon width={14} height={14} />
+            {formatTime(booking.trip.departureTime)}
+          </span>
+          <span>
+            {booking.seats} {booking.seats > 1 ? ap.seats : ap.seat} · {formatPrice(booking.priceAtBooking, booking.seats)}
+          </span>
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--page-line)] pt-4 sm:flex-col sm:items-end sm:justify-center sm:border-t-0 sm:pt-0">
         <Link
           href={`/booking/${booking.bookingReference}`}
-          className="flex items-center gap-1.5 rounded-full border border-[#dce7e9] bg-white px-4 py-2 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--page-line)] bg-white px-4 py-2 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]"
         >
           <TicketIcon width={16} height={16} />
           {ap.viewTicket}
@@ -64,7 +73,7 @@ function BookingRow({ booking, showCancel, dict, locale }: { booking: BookingDet
           )
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -84,6 +93,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = bookings.filter((b) => b.travelDate >= today && b.status === "confirmed");
   const past = bookings.filter((b) => b.travelDate < today || b.status === "cancelled");
+  const taxiStatusLabel: Record<string, string> = {
+    requested: ap.taxiStatusRequested,
+    accepted: ap.taxiStatusAccepted,
+    declined: ap.taxiStatusDeclined,
+    cancelled: ap.taxiStatusCancelled,
+    completed: ap.taxiStatusCompleted,
+  };
 
   return (
     <div className="public-page mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -122,7 +138,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       <section className="py-8">
         <h2 className="font-display text-2xl font-black text-brand-navy">{ap.upcomingTrips}</h2>
         {upcoming.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">{ap.noUpcoming}</p>
+          <div className="public-card mt-4 flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <TicketIcon width={18} height={18} className="shrink-0" />
+              {ap.noUpcoming}
+            </p>
+            <LinkButton href="/" variant="outline" size="sm">{ap.noUpcomingCta}</LinkButton>
+          </div>
         ) : (
           <div className="mt-4 flex flex-col gap-3">
             {upcoming.map((booking) => (
@@ -149,29 +171,45 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <h2 className="font-display text-2xl font-black text-brand-navy">{ap.taxiRequestsTitle}</h2>
             <p className="mt-1 text-sm text-muted">{ap.taxiRequestsSubtitle}</p>
           </div>
-          <Link href="/?tab=taxi#search" className="group shrink-0 text-sm font-medium text-teal">
-            <span className="relative">
-              {ap.requestTaxi}
-              <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-teal transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-x-100" />
-            </span>
+          <Link
+            href="/?tab=taxi#search"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--page-line)] bg-white px-4 py-2 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]"
+          >
+            {ap.requestTaxi}
           </Link>
         </div>
         {taxiRequests.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">{ap.noTaxiRequests}</p>
+          <div className="public-card mt-4 flex items-center gap-2 p-6 text-sm text-muted">
+            <MapPinIcon width={18} height={18} className="shrink-0" />
+            {ap.noTaxiRequests}
+          </div>
         ) : (
           <div className="mt-4 flex flex-col gap-3">
             {taxiRequests.map((request) => (
-              <div key={request.id} className="card-lift flex flex-col gap-3 rounded-2xl border border-[#dce7e9] bg-white p-5 shadow-[0_10px_28px_rgba(7,52,60,0.07)] sm:flex-row sm:items-center sm:justify-between">
-                <div>
+              <article key={request.id} className="public-card card-lift flex flex-col gap-4 p-5 hover:border-teal/30 sm:flex-row sm:items-stretch sm:justify-between">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={request.status === "accepted" || request.status === "completed" ? "success" : request.status === "cancelled" || request.status === "declined" ? "danger" : "warning"}>{request.status}</Badge>
+                    <Badge tone={request.status === "accepted" || request.status === "completed" ? "success" : request.status === "cancelled" || request.status === "declined" ? "danger" : "warning"}>
+                      {taxiStatusLabel[request.status] ?? request.status}
+                    </Badge>
                     <span className="font-mono text-xs text-muted">{request.requestReference}</span>
                   </div>
-                  <p className="mt-2 font-medium text-foreground">{request.pickupLocation} to {request.destination}</p>
-                  <p className="mt-1 text-sm text-muted">{formatAlbaniaDateTime(request.pickupAt, locale)}{request.providerName ? ` · ${request.providerName}` : ""}{request.quotedPrice ? ` · ${formatCurrency(request.quotedPrice)}` : ""}</p>
+                  <p className="flex items-center gap-1.5 text-lg font-medium text-foreground">
+                    <MapPinIcon width={16} height={16} className="shrink-0 text-coral" />
+                    {request.pickupLocation} → {request.destination}
+                  </p>
+                  <p className="flex items-center gap-1.5 text-sm text-muted">
+                    <ClockIcon width={14} height={14} />
+                    {formatAlbaniaDateTime(request.pickupAt, locale)}{request.providerName ? ` · ${request.providerName}` : ""}{request.quotedPrice ? ` · ${formatCurrency(request.quotedPrice)}` : ""}
+                  </p>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <Link href={`/account/taxi/${request.requestReference}`} className="rounded-full border border-[#dce7e9] px-4 py-2 text-sm font-medium transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]">{ap.view}</Link>
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--page-line)] pt-4 sm:flex-col sm:items-end sm:justify-center sm:border-t-0 sm:pt-0">
+                  <Link
+                    href={`/account/taxi/${request.requestReference}`}
+                    className="flex items-center gap-1.5 rounded-full border border-[var(--page-line)] bg-white px-4 py-2 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:border-teal hover:text-teal hover:shadow-[var(--shadow-xs)]"
+                  >
+                    {ap.view}
+                  </Link>
                   {(request.status === "requested" || request.status === "accepted") && (
                     <form action={cancelTaxiRequestAction}>
                       <input type="hidden" name="requestId" value={request.id} />
@@ -179,7 +217,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                     </form>
                   )}
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
@@ -205,7 +243,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <input
               value={profile.email}
               disabled
-              className="min-h-13 rounded-2xl border border-[#dce7e9] bg-surface-sunken px-4 py-3 text-muted"
+              className="min-h-13 rounded-2xl border border-[var(--page-line)] bg-surface-sunken px-4 py-3 text-muted"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
