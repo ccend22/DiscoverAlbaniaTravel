@@ -6,8 +6,7 @@ import { getUserById } from "@/db/queries/users";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { taxiRideRequestSchema } from "@/lib/validation";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
-
-const REQUEST_DISPATCH_BUFFER_MS = 30 * 60 * 1000;
+import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
 
 export async function requestTaxiAction(formData: FormData) {
   const parsed = taxiRideRequestSchema.safeParse({
@@ -17,6 +16,8 @@ export async function requestTaxiAction(formData: FormData) {
     pickupLongitude: formData.get("pickupLongitude"),
     destinationLatitude: formData.get("destinationLatitude"),
     destinationLongitude: formData.get("destinationLongitude"),
+    pickupDate: formData.get("pickupDate"),
+    pickupTime: formData.get("pickupTime"),
     passengerPhone: formData.get("passengerPhone"),
   });
 
@@ -42,7 +43,7 @@ export async function requestTaxiAction(formData: FormData) {
   const reference = await createTaxiRideRequest({
     pickupLocation: parsed.data.pickupLocation,
     destination: parsed.data.destination,
-    pickupAt: new Date(Date.now() + REQUEST_DISPATCH_BUFFER_MS),
+    pickupAt: albaniaLocalDateTimeToDate(parsed.data.pickupDate, parsed.data.pickupTime),
     passengers: 1,
     passengerName: user?.name ?? null,
     passengerPhone: parsed.data.passengerPhone,

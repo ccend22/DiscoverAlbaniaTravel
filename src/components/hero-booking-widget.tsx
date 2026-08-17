@@ -129,7 +129,7 @@ export function HeroBookingWidget({
                 locale={locale}
               />
             ) : (
-              <TaxiQuickForm bare dict={dict} user={user} error={taxiError} defaults={taxiDefaults} />
+              <TaxiQuickForm bare dict={dict} locale={locale} user={user} error={taxiError} defaults={taxiDefaults} />
             )}
           </div>
         </div>

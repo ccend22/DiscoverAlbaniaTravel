@@ -9,13 +9,37 @@ import { Alert } from "@/components/ui/alert";
 import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, CloseIcon, LocateIcon, MapPinIcon } from "./icons";
 import { LocationPickerPanel, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
+import { DatePicker } from "./date-picker";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
-import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, type Coordinates } from "@/lib/taxi-service";
+import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, MIN_TAXI_LEAD_TIME_HOURS, type Coordinates } from "@/lib/taxi-service";
 import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
+import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
+import type { Locale } from "@/lib/locale";
+
+const ALBANIA_TIME_ZONE = "Europe/Tirane";
+
+/** A comfortably-valid starting point (an hour past the minimum) so the form doesn't load with an invalid or empty pickup time. */
+function getDefaultPickup(): { date: string; time: string } {
+  const target = new Date(Date.now() + (MIN_TAXI_LEAD_TIME_HOURS + 1) * 60 * 60 * 1000);
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: ALBANIA_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(target)
+      .map((part) => [part.type, part.value])
+  );
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
 
 interface TaxiDefaults {
   pickup?: string;
@@ -28,6 +52,7 @@ interface TaxiDefaults {
 
 interface TaxiQuickFormProps {
   dict: Dictionary;
+  locale: Locale;
   user: { name: string; phone: string | null; email: string } | null;
   error?: string;
   variant?: "solid" | "glass";
@@ -152,7 +177,7 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
   );
 }
 
-export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, bare = false }: TaxiQuickFormProps) {
+export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", defaults, bare = false }: TaxiQuickFormProps) {
   const tq = dict.taxiQuickForm;
   const tf = dict.taxiForm;
   const lp = dict.locationPicker;
@@ -169,6 +194,11 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationFailure, setLocationFailure] = useState<GeolocationFailureReason | null>(null);
   const [eligibilityModal, setEligibilityModal] = useState<"too-short" | "unverified" | null>(null);
+  const [defaultPickupDateTime] = useState(getDefaultPickup);
+  const [pickupDate, setPickupDate] = useState(defaultPickupDateTime.date);
+  const [pickupTime, setPickupTime] = useState(defaultPickupDateTime.time);
+  const [pickupTimeError, setPickupTimeError] = useState<string | null>(null);
+  const todayAlbania = useMemo(() => getAlbaniaDateInputValue(), []);
 
   const distanceKm = useMemo(
     () =>
@@ -244,7 +274,15 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
     if (!routeIsEligible) {
       event.preventDefault();
       setEligibilityModal("too-short");
+      return;
     }
+    const earliestAllowed = Date.now() + MIN_TAXI_LEAD_TIME_HOURS * 60 * 60 * 1000;
+    if (albaniaLocalDateTimeToDate(pickupDate, pickupTime).getTime() < earliestAllowed) {
+      event.preventDefault();
+      setPickupTimeError(formatMessage(tq.minLeadTimeError, { hours: MIN_TAXI_LEAD_TIME_HOURS }));
+      return;
+    }
+    setPickupTimeError(null);
   }
 
   const routeStatus = routeIsEligible
@@ -447,6 +485,45 @@ export function TaxiQuickForm({ dict, user, error, variant = "solid", defaults, 
           </div>
         )}
         {priceEstimate && <p className="mt-2 pl-1 text-xs text-muted">{tq.quoteNote}</p>}
+
+        <div className="mt-5 border-t border-[#e5edec] pt-5">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+            {formatMessage(tq.pickupTimeLabel, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex min-w-0 items-center rounded-2xl border border-[#dce8e6] bg-white">
+              <DatePicker
+                name="pickupDate"
+                value={pickupDate}
+                min={todayAlbania}
+                onChange={setPickupDate}
+                dict={dict.datePicker}
+                locale={locale}
+                dialogLabel={tq.pickupDateAria}
+                iconWrapperClassName="ml-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal"
+                buttonClassName="min-h-14 flex-1 rounded-2xl border-0 bg-transparent px-3 text-base font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent sm:text-sm"
+              />
+            </div>
+            <input
+              type="time"
+              name="pickupTime"
+              required
+              aria-label={tq.pickupTimeAria}
+              value={pickupTime}
+              suppressHydrationWarning
+              onChange={(event) => {
+                setPickupTime(event.target.value);
+                setPickupTimeError(null);
+              }}
+              className="public-input min-h-14 w-full rounded-2xl px-4 py-3 text-base font-semibold sm:text-sm"
+            />
+          </div>
+          {pickupTimeError && (
+            <p role="alert" className="mt-2 text-xs font-medium text-red">
+              {pickupTimeError}
+            </p>
+          )}
+        </div>
 
         <div className="mt-5 grid gap-4 border-t border-[#e5edec] pt-5 md:grid-cols-[minmax(14rem,1fr)_auto] md:items-end">
           <label className="block max-w-md">

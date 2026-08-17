@@ -1,5 +1,8 @@
 export const MIN_INTERCITY_TAXI_DISTANCE_KM = 20;
 
+/** These are pre-scheduled intercity transfers, not an instant-dispatch service -- drivers need lead time to line up a car for a long trip. */
+export const MIN_TAXI_LEAD_TIME_HOURS = 5;
+
 export interface Coordinates {
   lat: number;
   lng: number;
