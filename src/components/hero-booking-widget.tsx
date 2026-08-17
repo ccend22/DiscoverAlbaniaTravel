@@ -64,11 +64,10 @@ export function HeroBookingWidget({
     // hero's own wrapper (which centers its H1/subtitle) -- without it, any
     // text anywhere in either form below silently inherits center alignment
     // unless it happens to have its own override.
-    <div className="w-full text-left">
+    <div className="mx-auto w-full max-w-5xl text-left">
       <div className="mb-4 flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between sm:px-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-lime">{dict.home.searchKicker}</p>
-          <h2 className="mt-2 font-display text-2xl font-black text-white sm:text-3xl">{dict.home.searchHeading}</h2>
+          <h2 className="font-display text-2xl font-black text-white sm:text-3xl">{dict.home.searchHeading}</h2>
         </div>
         <div
           className="relative inline-flex w-full rounded-full border border-white/70 bg-white p-1 shadow-[0_12px_30px_rgba(0,24,32,0.2)] sm:w-fit"

@@ -633,6 +633,24 @@ table tbody tr:hover {
   outline: none;
 }
 
+/* Chrome/Safari paint a saved-value background (often a mismatched
+   lavender or yellow tint, square-cornered even inside our rounded
+   fields) on autofilled inputs by default, with no normal CSS property
+   to turn it off directly. The long transition-delay defeats it: the
+   fill color technically still gets set, but never finishes animating
+   in before the field is edited or blurred. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+  transition: background-color 600000s ease-in-out 0s;
+}
+
 .public-primary-action {
   display: inline-flex;
   min-height: 3.25rem;
