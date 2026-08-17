@@ -84,6 +84,7 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased ${inter.variable} ${merriweather.variable}`}
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
