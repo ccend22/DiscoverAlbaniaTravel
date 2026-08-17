@@ -305,16 +305,19 @@ table tbody tr:hover {
   transform: scale(1.12);
 }
 
-/* Google Places Autocomplete's suggestion dropdown, restyled to match the
-   site's own dropdowns/cards instead of Google's default flat white box. */
+/* Google Places Autocomplete's suggestion dropdown, restyled row-for-row to
+   match CityCombobox's own dropdown (src/components/city-combobox.tsx) --
+   a padded panel of individually-rounded rows, not a bordered flat list --
+   so the two "type a place" fields on the site feel like one family. */
 .pac-container {
   z-index: 70;
   margin-top: 10px;
+  padding: 8px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--surface);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--page-shadow-strong);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   animation: fade-up 180ms var(--ease-out-expo) both;
 }
@@ -323,28 +326,28 @@ table tbody tr:hover {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 10px 14px 10px 38px;
-  border-color: var(--border);
-  font-size: 0.875rem;
+  min-height: 44px;
+  padding: 8px 12px 8px 34px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
   color: var(--foreground);
   transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
-.pac-item:first-child {
-  border-top: none;
-}
-
-.pac-item:hover {
-  background: var(--brand-soft);
+.pac-item:hover,
+.pac-item-selected {
+  background: var(--surface-sunken);
 }
 
 .pac-item-query {
   color: var(--foreground);
-  font-size: 0.875rem;
+  font-size: 15px;
 }
 
-/* Google's own pin glyph is replaced with a small ring-dot marker matching
-   the pickup field's own leading icon, rather than left fully bare. */
+/* Google's own pin glyph is replaced with a CSS-masked copy of the site's
+   own MapPinIcon (icons.tsx) at the same 14px/opacity-50 treatment
+   CityCombobox uses for its row icon, rather than left fully bare. */
 .pac-icon {
   display: none;
 }
@@ -352,20 +355,32 @@ table tbody tr:hover {
 .pac-item::before {
   content: "";
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  border: 2px solid var(--teal);
-  background: var(--surface);
+  width: 14px;
+  height: 14px;
   transform: translateY(-50%);
-  opacity: 0.7;
+  opacity: 0.5;
+  background-color: var(--muted);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
 }
 
 .pac-matched {
   color: var(--teal);
   font-weight: 600;
+}
+
+/* Google's required attribution row -- left in place (can't be removed per
+   their terms) but toned down so it reads as fine print, not a fourth
+   suggestion row. */
+.pac-container:after {
+  margin: 2px 4px 0;
+  opacity: 0.5;
+  transform: scale(0.9);
+  transform-origin: right center;
 }
 
 @media (max-width: 639px) {

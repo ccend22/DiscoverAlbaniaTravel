@@ -196,9 +196,11 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
   const [eligibilityModal, setEligibilityModal] = useState<"too-short" | "unverified" | null>(null);
   const [defaultPickupDateTime] = useState(getDefaultPickup);
   const [pickupDate, setPickupDate] = useState(defaultPickupDateTime.date);
+  const [pickupDateSelected, setPickupDateSelected] = useState(false);
   const [pickupTime, setPickupTime] = useState(defaultPickupDateTime.time);
   const [pickupTimeError, setPickupTimeError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [showNote, setShowNote] = useState(false);
   const [swapRotation, setSwapRotation] = useState(0);
   const [swapPulse, setSwapPulse] = useState(false);
   const todayAlbania = useMemo(() => getAlbaniaDateInputValue(), []);
@@ -226,6 +228,11 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
       setDestinationCoordinates({ lat: location.lat, lng: location.lng });
     }
     setActivePicker(null);
+  }
+
+  function handlePickupDateChange(next: string) {
+    setPickupDate(next);
+    setPickupDateSelected(true);
   }
 
   function handleSwapLocations() {
@@ -321,25 +328,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
         <input type="hidden" name="destinationLatitude" value={destinationCoordinates?.lat ?? ""} />
         <input type="hidden" name="destinationLongitude" value={destinationCoordinates?.lng ?? ""} />
 
-        <div className="flex items-start justify-between gap-3 border-b border-[#e5edec] pb-4 sm:items-center sm:pb-5">
-          <div className="flex min-w-0 gap-3.5">
-            <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] sm:flex">
-              <MapPinIcon width={19} height={19} aria-hidden="true" />
-            </span>
-            <div className="min-w-0 text-left">
-              <h2 className="font-display text-xl font-black tracking-[-0.03em] text-brand-navy sm:text-2xl">{tq.title}</h2>
-              <p className="mt-0.5 text-xs leading-5 text-muted sm:text-sm">{tq.subtitle}</p>
-            </div>
-          </div>
-          <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-teal/15 bg-teal-soft px-2.5 py-1.5 text-[10px] font-bold text-teal sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs">
-            <span className="h-2 w-2 rounded-full bg-teal" />
-            {formatMessage(tq.minimumBadge, { min: MIN_INTERCITY_TAXI_DISTANCE_KM })}
-          </span>
-        </div>
+        {error && <div className="mb-4"><Alert tone="error">{error}</Alert></div>}
 
-        {error && <div className="mt-5"><Alert tone="error">{error}</Alert></div>}
-
-        <div className="relative mt-4 grid gap-1.5 rounded-[1.5rem] bg-[#edf4f3] p-2 sm:mt-5 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch lg:gap-2">
+        <div className="relative grid gap-1.5 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(340px,1.05fr)] lg:items-stretch lg:gap-2">
           <div className={`relative flex flex-col rounded-[1.1rem] bg-white transition-transform duration-300 ease-[var(--ease-out-expo)] lg:contents ${swapPulse ? "scale-[1.008]" : ""}`}>
             <label className="relative block min-w-0 px-3 py-2 transition-shadow duration-200 lg:rounded-[1.1rem] lg:bg-white lg:px-3.5 lg:py-2.5 lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
               <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.fromLabel}</span>
@@ -437,7 +428,51 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
               </div>
             </label>
           </div>
+
+          <div className="grid grid-cols-[1.7fr_1fr] gap-1.5 lg:gap-2">
+            <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm transition-shadow duration-200 has-[button:focus-visible]:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+              <span className="px-3 pt-2 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.dateLabel}</span>
+              <DatePicker
+                name="pickupDate"
+                value={pickupDate}
+                min={todayAlbania}
+                onChange={handlePickupDateChange}
+                dict={dict.datePicker}
+                locale={locale}
+                dialogLabel={tq.pickupDateAria}
+                inlineLabel={tq.dateLabel}
+                hasSelection={pickupDateSelected}
+                iconWrapperClassName="ml-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal"
+                buttonClassName="min-h-11 flex-1 truncate rounded-lg border-0 bg-transparent px-3 text-base font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent sm:text-sm"
+              />
+            </div>
+            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.timeLabel}</span>
+              <input
+                type="time"
+                name="pickupTime"
+                required
+                aria-label={tq.pickupTimeAria}
+                value={pickupTime}
+                suppressHydrationWarning
+                onChange={(event) => {
+                  setPickupTime(event.target.value);
+                  setPickupTimeError(null);
+                }}
+                className="min-h-7 w-full border-0 bg-transparent p-0 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
+              />
+            </label>
+          </div>
         </div>
+
+        <p className="mt-2 pl-1 text-xs text-muted">
+          {formatMessage(tq.leadTimeCaption, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
+        </p>
+        {pickupTimeError && (
+          <p role="alert" className="mt-1 pl-1 text-xs font-medium text-red">
+            {pickupTimeError}
+          </p>
+        )}
 
         {activePicker && (
           <div className="mt-4 animate-fade-up overflow-hidden rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow)]">
@@ -512,66 +547,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
         )}
         {priceEstimate && <p className="mt-2 pl-1 text-xs text-muted">{tq.quoteNote}</p>}
 
-        <div className="mt-5 border-t border-[#e5edec] pt-5">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-            {formatMessage(tq.pickupTimeLabel, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex min-w-0 items-center rounded-2xl border border-[#dce8e6] bg-white transition-[box-shadow,border-color] duration-150 has-[button:focus-visible]:border-teal has-[button:focus-visible]:shadow-[0_0_0_4px_rgba(0,128,128,0.11)]">
-              <DatePicker
-                name="pickupDate"
-                value={pickupDate}
-                min={todayAlbania}
-                onChange={setPickupDate}
-                dict={dict.datePicker}
-                locale={locale}
-                dialogLabel={tq.pickupDateAria}
-                iconWrapperClassName="ml-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal"
-                buttonClassName="min-h-14 flex-1 rounded-2xl border-0 bg-transparent px-3 text-base font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent sm:text-sm"
-              />
-            </div>
-            <input
-              type="time"
-              name="pickupTime"
-              required
-              aria-label={tq.pickupTimeAria}
-              value={pickupTime}
-              suppressHydrationWarning
-              onChange={(event) => {
-                setPickupTime(event.target.value);
-                setPickupTimeError(null);
-              }}
-              className="public-input min-h-14 w-full rounded-2xl px-4 py-3 text-base font-semibold sm:text-sm"
-            />
-          </div>
-          {pickupTimeError && (
-            <p role="alert" className="mt-2 text-xs font-medium text-red">
-              {pickupTimeError}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-5 border-t border-[#e5edec] pt-5">
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-              <span>{tf.note}</span>
-              <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
-            </span>
-            <textarea
-              name="notes"
-              rows={2}
-              maxLength={500}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder={tf.notePlaceholder}
-              className="public-input min-h-[3.5rem] w-full resize-none rounded-2xl px-4 py-3 text-base font-medium leading-relaxed sm:text-sm"
-            />
-          </label>
-        </div>
-
-        <div className="mt-5 grid gap-4 border-t border-[#e5edec] pt-5 md:grid-cols-[minmax(14rem,1fr)_auto] md:items-end">
-          <label className="block max-w-md">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tf.phoneNumber}</span>
+        <div className="mt-3 flex flex-wrap items-stretch gap-2">
+          <label className="flex min-w-0 flex-1 flex-col justify-center rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 py-2 transition-[box-shadow,border-color] duration-150 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tf.phoneNumber}</span>
             <input
               name="passengerPhone"
               type="tel"
@@ -580,18 +558,57 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
               autoComplete="tel"
               defaultValue={user?.phone ?? ""}
               placeholder={tf.phoneNumberPlaceholder}
-              className="public-input min-h-14 w-full rounded-2xl px-4 py-3 text-base font-semibold sm:text-sm"
+              className="min-h-7 w-full border-0 bg-transparent p-0 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
             />
           </label>
 
-          <button
-            type="submit"
-            className="public-primary-action min-h-14 w-full px-7 text-sm md:w-auto"
-          >
+          {!showNote && (
+            <button
+              type="button"
+              onClick={() => setShowNote(true)}
+              className="flex shrink-0 items-center rounded-[1.1rem] border border-dashed border-[#c9d9d7] px-4 text-sm font-semibold text-teal transition-colors hover:border-teal hover:bg-teal-soft"
+            >
+              {tf.addNote}
+            </button>
+          )}
+
+          <button type="submit" className="public-primary-action min-h-14 shrink-0 flex-1 px-7 text-sm sm:min-w-[11rem] sm:flex-none">
             <span>{tf.sendRequest}</span>
             <ArrowRightIcon width={16} height={16} aria-hidden="true" />
           </button>
         </div>
+
+        {showNote && (
+          <label className="mt-2 block animate-fade-up rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 py-2 transition-[box-shadow,border-color] duration-150 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+            <span className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+              <span>{tf.note}</span>
+              <span className="flex items-center gap-2">
+                <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotes("");
+                    setShowNote(false);
+                  }}
+                  aria-label={tf.removeNote}
+                  className="normal-case tracking-normal text-muted transition-colors hover:text-red"
+                >
+                  <CloseIcon width={12} height={12} />
+                </button>
+              </span>
+            </span>
+            <textarea
+              name="notes"
+              rows={2}
+              maxLength={500}
+              autoFocus
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder={tf.notePlaceholder}
+              className="min-h-[2.5rem] w-full resize-none border-0 bg-transparent p-0 text-base font-medium leading-relaxed text-brand-navy shadow-none outline-none sm:text-sm"
+            />
+          </label>
+        )}
       </form>
 
       {eligibilityModal && (
