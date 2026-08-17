@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { requestTaxiAction } from "@/app/(site)/taxi/actions";
 import { Alert } from "@/components/ui/alert";
-import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, CloseIcon, LocateIcon, MapPinIcon } from "./icons";
+import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, CloseIcon, LocateIcon, MapPinIcon, SwapIcon } from "./icons";
 import { LocationPickerPanel, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { DatePicker } from "./date-picker";
@@ -198,6 +198,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
   const [pickupDate, setPickupDate] = useState(defaultPickupDateTime.date);
   const [pickupTime, setPickupTime] = useState(defaultPickupDateTime.time);
   const [pickupTimeError, setPickupTimeError] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
+  const [swapRotation, setSwapRotation] = useState(0);
+  const [swapPulse, setSwapPulse] = useState(false);
   const todayAlbania = useMemo(() => getAlbaniaDateInputValue(), []);
 
   const distanceKm = useMemo(
@@ -223,6 +226,19 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
       setDestinationCoordinates({ lat: location.lat, lng: location.lng });
     }
     setActivePicker(null);
+  }
+
+  function handleSwapLocations() {
+    const prevPickupLocation = pickupLocation;
+    const prevPickupCoordinates = pickupCoordinates;
+    setPickupLocation(destination);
+    setPickupCoordinates(destinationCoordinates);
+    setDestination(prevPickupLocation);
+    setDestinationCoordinates(prevPickupCoordinates);
+    setLocationEnabled(false);
+    setSwapRotation((rotation) => rotation + 180);
+    setSwapPulse(true);
+    window.setTimeout(() => setSwapPulse(false), 320);
   }
 
   async function handleUseCurrentLocation() {
@@ -323,94 +339,104 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
 
         {error && <div className="mt-5"><Alert tone="error">{error}</Alert></div>}
 
-        <div className="mt-4 grid items-end gap-3 sm:mt-5 lg:grid-cols-[1fr_auto_1fr]">
-          <label className="block min-w-0">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.fromLabel}</span>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-teal-soft text-teal">
-                <span className="h-2.5 w-2.5 rounded-full border-2 border-teal bg-white" />
-              </span>
-              <PlacesAutocompleteInput
-                name="pickupLocation"
-                required
-                value={pickupLocation}
-                onChange={(next) => {
-                  setPickupLocation(next);
-                  setPickupCoordinates(null);
-                  setLocationEnabled(false);
-                }}
-                onPlaceSelect={(place) => {
-                  setPickupCoordinates({ lat: place.lat, lng: place.lng });
-                }}
-                placeholder={tf.pickupLocationPlaceholder}
-                className="public-input min-h-14 w-full truncate rounded-2xl py-3 pl-14 pr-24 text-base font-semibold sm:text-sm"
-              />
-              <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 gap-1">
-                <button
-                  type="button"
-                  onClick={handleUseCurrentLocation}
-                  disabled={locating}
-                  aria-label={tq.useCurrentLocationAria}
-                  aria-pressed={locationEnabled}
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors disabled:opacity-40 ${locationEnabled ? "bg-lime text-lime-foreground" : "text-teal hover:bg-teal-soft"}`}
-                >
-                  <LocateIcon width={16} height={16} className={locating ? "animate-pulse" : undefined} />
-                </button>
+        <div className="relative mt-4 grid gap-1.5 rounded-[1.5rem] bg-[#edf4f3] p-2 sm:mt-5 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch lg:gap-2">
+          <div className={`relative flex flex-col rounded-[1.1rem] bg-white transition-transform duration-300 ease-[var(--ease-out-expo)] lg:contents ${swapPulse ? "scale-[1.008]" : ""}`}>
+            <label className="relative block min-w-0 px-3 py-2 transition-shadow duration-200 lg:rounded-[1.1rem] lg:bg-white lg:px-3.5 lg:py-2.5 lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.fromLabel}</span>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-teal-soft text-teal">
+                  <span className="h-2.5 w-2.5 rounded-full border-2 border-teal bg-white" />
+                </span>
+                <PlacesAutocompleteInput
+                  name="pickupLocation"
+                  required
+                  value={pickupLocation}
+                  onChange={(next) => {
+                    setPickupLocation(next);
+                    setPickupCoordinates(null);
+                    setLocationEnabled(false);
+                  }}
+                  onPlaceSelect={(place) => {
+                    setPickupCoordinates({ lat: place.lat, lng: place.lng });
+                  }}
+                  placeholder={tf.pickupLocationPlaceholder}
+                  className="min-h-11 w-full truncate rounded-lg border-0 bg-transparent py-1 pl-11 pr-20 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
+                />
+                <div className="absolute right-0 top-1/2 z-10 flex -translate-y-1/2 gap-0.5">
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={locating}
+                    aria-label={tq.useCurrentLocationAria}
+                    aria-pressed={locationEnabled}
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-40 ${locationEnabled ? "bg-lime text-lime-foreground" : "text-teal hover:bg-teal-soft"}`}
+                  >
+                    <LocateIcon width={16} height={16} className={locating ? "animate-pulse" : undefined} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (pickupLocation && hasGoogleMapsApiKey) {
+                        setPickupLocation("");
+                        setPickupCoordinates(null);
+                        setLocationEnabled(false);
+                      } else setActivePicker("pickup");
+                    }}
+                    aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
+                  >
+                    {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
+                  </button>
+                </div>
+              </div>
+            </label>
+
+            <div className="mx-3 border-t border-[#dfe9e7] lg:hidden" />
+
+            <button
+              type="button"
+              onClick={handleSwapLocations}
+              aria-label={tq.swapAria}
+              style={{ transform: `rotate(${swapRotation}deg)` }}
+              className="absolute right-3 top-1/2 z-50 flex h-10 w-10 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white lg:static lg:mx-auto lg:translate-y-0 lg:self-center xl:-mx-4"
+            >
+              <SwapIcon width={16} height={16} />
+            </button>
+
+            <label className="relative block min-w-0 px-3 py-2 transition-shadow duration-200 lg:rounded-[1.1rem] lg:bg-white lg:px-3.5 lg:py-2.5 lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.toLabel}</span>
+              <div className="relative">
+                <MapPinIcon width={17} height={17} className="pointer-events-none absolute left-1 top-1/2 z-10 -translate-y-1/2 text-coral" />
+                <PlacesAutocompleteInput
+                  name="destination"
+                  required
+                  value={destination}
+                  onChange={(next) => {
+                    setDestination(next);
+                    setDestinationCoordinates(null);
+                  }}
+                  onPlaceSelect={(place) => {
+                    setDestinationCoordinates({ lat: place.lat, lng: place.lng });
+                  }}
+                  placeholder={tf.destinationPlaceholder}
+                  className="min-h-11 w-full truncate rounded-lg border-0 bg-transparent py-1 pl-8 pr-12 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
+                />
                 <button
                   type="button"
                   onClick={() => {
-                    if (pickupLocation && hasGoogleMapsApiKey) {
-                      setPickupLocation("");
-                      setPickupCoordinates(null);
-                      setLocationEnabled(false);
-                    } else setActivePicker("pickup");
+                    if (destination && hasGoogleMapsApiKey) {
+                      setDestination("");
+                      setDestinationCoordinates(null);
+                    } else setActivePicker("destination");
                   }}
-                  aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
+                  aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
+                  className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
                 >
-                  {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
+                  {destination && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
                 </button>
               </div>
-            </div>
-          </label>
-
-          <span className="mb-2 hidden h-10 w-10 items-center justify-center rounded-full border border-[#dce8e6] bg-white text-teal shadow-sm lg:flex" aria-hidden="true">
-            <ArrowRightIcon width={16} height={16} />
-          </span>
-
-          <label className="block min-w-0">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.toLabel}</span>
-            <div className="relative">
-              <MapPinIcon width={17} height={17} className="pointer-events-none absolute left-5 top-1/2 z-10 -translate-y-1/2 text-coral" />
-              <PlacesAutocompleteInput
-                name="destination"
-                required
-                value={destination}
-                onChange={(next) => {
-                  setDestination(next);
-                  setDestinationCoordinates(null);
-                }}
-                onPlaceSelect={(place) => {
-                  setDestinationCoordinates({ lat: place.lat, lng: place.lng });
-                }}
-                placeholder={tf.destinationPlaceholder}
-                className="public-input min-h-14 w-full truncate rounded-2xl py-3 pl-12 pr-14 text-base font-semibold sm:text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (destination && hasGoogleMapsApiKey) {
-                    setDestination("");
-                    setDestinationCoordinates(null);
-                  } else setActivePicker("destination");
-                }}
-                aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
-              >
-                {destination && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
-              </button>
-            </div>
-          </label>
+            </label>
+          </div>
         </div>
 
         {activePicker && (
@@ -491,7 +517,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
             {formatMessage(tq.pickupTimeLabel, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex min-w-0 items-center rounded-2xl border border-[#dce8e6] bg-white">
+            <div className="flex min-w-0 items-center rounded-2xl border border-[#dce8e6] bg-white transition-[box-shadow,border-color] duration-150 has-[button:focus-visible]:border-teal has-[button:focus-visible]:shadow-[0_0_0_4px_rgba(0,128,128,0.11)]">
               <DatePicker
                 name="pickupDate"
                 value={pickupDate}
@@ -523,6 +549,24 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
               {pickupTimeError}
             </p>
           )}
+        </div>
+
+        <div className="mt-5 border-t border-[#e5edec] pt-5">
+          <label className="block">
+            <span className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+              <span>{tf.note}</span>
+              <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
+            </span>
+            <textarea
+              name="notes"
+              rows={2}
+              maxLength={500}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder={tf.notePlaceholder}
+              className="public-input min-h-[3.5rem] w-full resize-none rounded-2xl px-4 py-3 text-base font-medium leading-relaxed sm:text-sm"
+            />
+          </label>
         </div>
 
         <div className="mt-5 grid gap-4 border-t border-[#e5edec] pt-5 md:grid-cols-[minmax(14rem,1fr)_auto] md:items-end">

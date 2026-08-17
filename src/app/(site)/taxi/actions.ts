@@ -19,6 +19,7 @@ export async function requestTaxiAction(formData: FormData) {
     pickupDate: formData.get("pickupDate"),
     pickupTime: formData.get("pickupTime"),
     passengerPhone: formData.get("passengerPhone"),
+    notes: formData.get("notes") || undefined,
   });
 
   if (!parsed.success) {
@@ -48,7 +49,7 @@ export async function requestTaxiAction(formData: FormData) {
     passengerName: user?.name ?? null,
     passengerPhone: parsed.data.passengerPhone,
     passengerEmail: user?.email ?? null,
-    notes: null,
+    notes: parsed.data.notes || null,
     userId,
   });
 

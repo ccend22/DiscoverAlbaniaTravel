@@ -34,6 +34,7 @@ export async function getTaxiRideRequestByReference(reference: string) {
       destination: taxiRideRequests.destination,
       pickupAt: taxiRideRequests.pickupAt,
       passengers: taxiRideRequests.passengers,
+      notes: taxiRideRequests.notes,
       quotedPrice: taxiRideRequests.quotedPrice,
       status: taxiRideRequests.status,
     })

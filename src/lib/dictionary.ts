@@ -231,6 +231,8 @@ const en = {
     destinationPlaceholder: "e.g. Sarandë city centre",
     phoneNumber: "Phone number",
     phoneNumberPlaceholder: "e.g. +355 69 123 4567",
+    note: "Note (optional)",
+    notePlaceholder: "Flight number, extra luggage, child seat, meeting point…",
     sendRequest: "Send a request",
   },
   taxiQuickForm: {
@@ -256,6 +258,7 @@ const en = {
     pickupDateAria: "Choose pickup date",
     pickupTimeAria: "Pickup time",
     minLeadTimeError: "Choose a pickup time at least {hours} hours from now.",
+    swapAria: "Swap pickup and destination",
     eligibilityModalKicker: "Intercity service check",
     tooShortModalTitle: "This journey is too short for our taxi service.",
     tooShortModalBody: "Discover Albania taxis are reserved for journeys between cities. Choose a destination at least {min} km away, or continue with a bus route.",
@@ -293,6 +296,7 @@ const en = {
     pickup: "Pickup",
     passengers: "Passengers",
     status: "Status",
+    note: "Note",
     returnToSearch: "Return to trip search",
   },
   accountTaxiRequest: {
@@ -696,6 +700,8 @@ const al: typeof en = {
     destinationPlaceholder: "p.sh. qendra e Sarandës",
     phoneNumber: "Numri i telefonit",
     phoneNumberPlaceholder: "p.sh. +355 69 123 4567",
+    note: "Shënim (opsionale)",
+    notePlaceholder: "Numri i fluturimit, bagazh shtesë, ndenjëse fëmije, pika takimi…",
     sendRequest: "Dërgo një kërkesë",
   },
   taxiQuickForm: {
@@ -721,6 +727,7 @@ const al: typeof en = {
     pickupDateAria: "Zgjidh datën e marrjes",
     pickupTimeAria: "Ora e marrjes",
     minLeadTimeError: "Zgjidh një orë marrjeje së paku {hours} orë nga tani.",
+    swapAria: "Këmbe marrjen me destinacionin",
     eligibilityModalKicker: "Kontrolli i shërbimit ndërqytetës",
     tooShortModalTitle: "Ky udhëtim është shumë i shkurtër për shërbimin tonë të taksisë.",
     tooShortModalBody: "Taksitë Discover Albania janë vetëm për udhëtime mes qyteteve. Zgjidh një destinacion të paktën {min} km larg ose vazhdo me një itinerar autobusi.",
@@ -758,6 +765,7 @@ const al: typeof en = {
     pickup: "Marrja",
     passengers: "Udhëtarët",
     status: "Statusi",
+    note: "Shënim",
     returnToSearch: "Kthehu te kërkimi i udhëtimeve",
   },
   accountTaxiRequest: {

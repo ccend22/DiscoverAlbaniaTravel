@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTaxiRideRequestByReference } from "@/db/queries/taxi";
-import { formatDateLong } from "@/lib/format";
+import { formatAlbaniaDateTime } from "@/lib/timezone";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 
 export default async function TaxiRequestConfirmation({ params }: { params: Promise<{ reference: string }> }) {
@@ -23,9 +23,15 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
       </div>
       <dl className="public-card mt-6 grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
         <div><dt className="text-xs uppercase text-muted">{tc.journey}</dt><dd className="mt-1 font-medium text-foreground">{request.pickupLocation} to {request.destination}</dd></div>
-        <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatDateLong(request.pickupAt.toISOString().slice(0, 10), locale)} at {request.pickupAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</dd></div>
+        <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatAlbaniaDateTime(request.pickupAt, locale)}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.passengers}</dt><dd className="mt-1 font-medium text-foreground">{request.passengers}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.status}</dt><dd className="mt-1 font-medium capitalize text-foreground">{request.status}</dd></div>
+        {request.notes && (
+          <div className="sm:col-span-2">
+            <dt className="text-xs uppercase text-muted">{tc.note}</dt>
+            <dd className="mt-1 font-medium text-foreground">{request.notes}</dd>
+          </div>
+        )}
       </dl>
       <Link href="/" className="mt-6 inline-flex text-sm font-medium text-teal hover:underline">{tc.returnToSearch}</Link>
     </main>

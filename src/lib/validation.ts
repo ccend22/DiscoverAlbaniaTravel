@@ -76,6 +76,7 @@ export const taxiRideRequestSchema = z.object({
   pickupDate: dateString,
   pickupTime: timeString,
   passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+  notes: z.string().trim().max(500, "Keep the note under 500 characters").optional(),
 }).refine(
   (data) => albaniaLocalDateTimeToDate(data.pickupDate, data.pickupTime).getTime() >= Date.now() + MIN_TAXI_LEAD_TIME_HOURS * 60 * 60 * 1000,
   { message: `Choose a pickup time at least ${MIN_TAXI_LEAD_TIME_HOURS} hours from now.`, path: ["pickupTime"] }

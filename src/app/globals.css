@@ -320,7 +320,10 @@ table tbody tr:hover {
 }
 
 .pac-item {
-  padding: 10px 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px 10px 38px;
   border-color: var(--border);
   font-size: 0.875rem;
   color: var(--foreground);
@@ -340,8 +343,24 @@ table tbody tr:hover {
   font-size: 0.875rem;
 }
 
+/* Google's own pin glyph is replaced with a small ring-dot marker matching
+   the pickup field's own leading icon, rather than left fully bare. */
 .pac-icon {
   display: none;
+}
+
+.pac-item::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid var(--teal);
+  background: var(--surface);
+  transform: translateY(-50%);
+  opacity: 0.7;
 }
 
 .pac-matched {
@@ -359,12 +378,14 @@ table tbody tr:hover {
   }
 
   .pac-item {
-    display: flex;
     min-height: 3.25rem;
-    align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
     font-size: 0.9375rem;
     line-height: 1.3;
+  }
+
+  .pac-item::before {
+    left: 1rem;
   }
 
   .pac-item-query {
