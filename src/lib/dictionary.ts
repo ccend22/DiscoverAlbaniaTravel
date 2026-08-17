@@ -239,8 +239,8 @@ const en = {
   },
   taxiQuickForm: {
     kicker: "Private intercity transfer",
-    title: "Intercity taxi",
-    subtitle: "Door-to-door transfers across Albania.",
+    title: "Book your private transfer",
+    subtitle: "Licensed drivers, transparent pricing, door-to-door across Albania.",
     fromLabel: "Pickup",
     toLabel: "Destination",
     minimumBadge: "{min} km minimum",
@@ -712,8 +712,8 @@ const al: typeof en = {
   },
   taxiQuickForm: {
     kicker: "Transfer privat ndërqytetës",
-    title: "Taksi ndërqytetëse",
-    subtitle: "Transferta derë më derë në të gjithë Shqipërinë.",
+    title: "Rezervo transferin tënd privat",
+    subtitle: "Shoferë të licencuar, çmim transparent, derë më derë në të gjithë Shqipërinë.",
     fromLabel: "Marrja",
     toLabel: "Destinacioni",
     minimumBadge: "Minimumi {min} km",

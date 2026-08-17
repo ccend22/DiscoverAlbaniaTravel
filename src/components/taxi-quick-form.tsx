@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { requestTaxiAction } from "@/app/(site)/taxi/actions";
 import { Alert } from "@/components/ui/alert";
-import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, CloseIcon, LocateIcon, MapPinIcon, SwapIcon } from "./icons";
+import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, ClockIcon, CloseIcon, LocateIcon, MapPinIcon, SwapIcon } from "./icons";
 import { LocationPickerPanel, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { DatePicker } from "./date-picker";
@@ -202,7 +202,6 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
   const [notes, setNotes] = useState("");
   const [showNote, setShowNote] = useState(false);
   const [swapRotation, setSwapRotation] = useState(0);
-  const [swapPulse, setSwapPulse] = useState(false);
   const todayAlbania = useMemo(() => getAlbaniaDateInputValue(), []);
 
   const distanceKm = useMemo(
@@ -244,8 +243,6 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
     setDestinationCoordinates(prevPickupCoordinates);
     setLocationEnabled(false);
     setSwapRotation((rotation) => rotation + 180);
-    setSwapPulse(true);
-    window.setTimeout(() => setSwapPulse(false), 320);
   }
 
   async function handleUseCurrentLocation() {
@@ -328,110 +325,134 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
         <input type="hidden" name="destinationLatitude" value={destinationCoordinates?.lat ?? ""} />
         <input type="hidden" name="destinationLongitude" value={destinationCoordinates?.lng ?? ""} />
 
+        <div className="mb-5 sm:mb-6">
+          <h2 className="font-display text-[1.6rem] font-black leading-[1.1] tracking-[-0.02em] text-brand-navy sm:text-3xl">{tq.title}</h2>
+          <p className="mt-1.5 text-sm text-muted">{tq.subtitle}</p>
+        </div>
+
         {error && <div className="mb-4"><Alert tone="error">{error}</Alert></div>}
 
-        <div className="relative grid gap-1.5 rounded-[1.5rem] bg-[#edf4f3] p-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(340px,1.05fr)] lg:items-stretch lg:gap-2">
-          <div className={`relative flex flex-col rounded-[1.1rem] bg-white transition-transform duration-300 ease-[var(--ease-out-expo)] lg:contents ${swapPulse ? "scale-[1.008]" : ""}`}>
-            <label className="relative block min-w-0 px-3 py-2 transition-shadow duration-200 lg:rounded-[1.1rem] lg:bg-white lg:px-3.5 lg:py-2.5 lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.fromLabel}</span>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-teal-soft text-teal">
-                  <span className="h-2.5 w-2.5 rounded-full border-2 border-teal bg-white" />
-                </span>
-                <PlacesAutocompleteInput
-                  name="pickupLocation"
-                  required
-                  value={pickupLocation}
-                  onChange={(next) => {
-                    setPickupLocation(next);
-                    setPickupCoordinates(null);
-                    setLocationEnabled(false);
-                  }}
-                  onPlaceSelect={(place) => {
-                    setPickupCoordinates({ lat: place.lat, lng: place.lng });
-                  }}
-                  placeholder={tf.pickupLocationPlaceholder}
-                  className="min-h-11 w-full truncate rounded-lg border-0 bg-transparent py-1 pl-11 pr-20 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
-                />
-                <div className="absolute right-0 top-1/2 z-10 flex -translate-y-1/2 gap-0.5">
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    disabled={locating}
-                    aria-label={tq.useCurrentLocationAria}
-                    aria-pressed={locationEnabled}
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:opacity-40 ${locationEnabled ? "bg-lime text-lime-foreground" : "text-teal hover:bg-teal-soft"}`}
-                  >
-                    <LocateIcon width={16} height={16} className={locating ? "animate-pulse" : undefined} />
-                  </button>
+        <div className="overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] bg-white/85 shadow-[0_1px_3px_rgba(4,31,38,0.05)] backdrop-blur-sm">
+          {/* PICKUP / DESTINATION — the form's primary, highest-priority unit */}
+          <div className="relative">
+            <div className="grid sm:grid-cols-2">
+              <label className="relative flex flex-col gap-1.5 px-4 py-3.5 sm:pr-9">
+                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tq.fromLabel}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+                    <span className="h-2.5 w-2.5 rounded-full border-2 border-teal" />
+                  </span>
+                  <PlacesAutocompleteInput
+                    name="pickupLocation"
+                    required
+                    value={pickupLocation}
+                    onChange={(next) => {
+                      setPickupLocation(next);
+                      setPickupCoordinates(null);
+                      setLocationEnabled(false);
+                    }}
+                    onPlaceSelect={(place) => {
+                      setPickupCoordinates({ lat: place.lat, lng: place.lng });
+                    }}
+                    placeholder={tf.pickupLocationPlaceholder}
+                    className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none placeholder:font-normal placeholder:text-muted/70 sm:text-base"
+                  />
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={handleUseCurrentLocation}
+                      disabled={locating}
+                      aria-label={tq.useCurrentLocationAria}
+                      aria-pressed={locationEnabled}
+                      className={`flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors disabled:opacity-40 ${locationEnabled ? "bg-lime text-lime-foreground" : "text-muted/60 hover:bg-teal-soft hover:text-teal"}`}
+                    >
+                      <LocateIcon width={15} height={15} className={locating ? "animate-pulse" : undefined} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (pickupLocation && hasGoogleMapsApiKey) {
+                          setPickupLocation("");
+                          setPickupCoordinates(null);
+                          setLocationEnabled(false);
+                        } else setActivePicker("pickup");
+                      }}
+                      aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
+                      className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-muted/60 transition-colors hover:bg-teal-soft hover:text-teal"
+                    >
+                      {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={14} height={14} /> : <MapPinIcon width={15} height={15} />}
+                    </button>
+                  </div>
+                </div>
+              </label>
+
+              {/* Swap, mobile: embedded in the horizontal seam between the stacked fields */}
+              <div className="flex items-center gap-3 px-4 sm:hidden">
+                <span className="h-px flex-1 bg-[var(--page-line)]" aria-hidden="true" />
+                <button
+                  type="button"
+                  onClick={handleSwapLocations}
+                  aria-label={tq.swapAria}
+                  style={{ transform: `rotate(${swapRotation}deg)` }}
+                  className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[var(--page-line)] bg-white text-teal shadow-sm transition-all duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-teal hover:text-white"
+                >
+                  <SwapIcon width={14} height={14} />
+                </button>
+                <span className="h-px flex-1 bg-[var(--page-line)]" aria-hidden="true" />
+              </div>
+
+              <label className="relative flex flex-col gap-1.5 border-t border-[var(--page-line)] px-4 py-3.5 sm:border-l sm:border-t-0 sm:pl-9">
+                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tq.toLabel}</span>
+                <div className="flex items-center gap-2.5">
+                  <MapPinIcon width={15} height={15} className="shrink-0 text-coral" aria-hidden="true" />
+                  <PlacesAutocompleteInput
+                    name="destination"
+                    required
+                    value={destination}
+                    onChange={(next) => {
+                      setDestination(next);
+                      setDestinationCoordinates(null);
+                    }}
+                    onPlaceSelect={(place) => {
+                      setDestinationCoordinates({ lat: place.lat, lng: place.lng });
+                    }}
+                    placeholder={tf.destinationPlaceholder}
+                    className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none placeholder:font-normal placeholder:text-muted/70 sm:text-base"
+                  />
                   <button
                     type="button"
                     onClick={() => {
-                      if (pickupLocation && hasGoogleMapsApiKey) {
-                        setPickupLocation("");
-                        setPickupCoordinates(null);
-                        setLocationEnabled(false);
-                      } else setActivePicker("pickup");
+                      if (destination && hasGoogleMapsApiKey) {
+                        setDestination("");
+                        setDestinationCoordinates(null);
+                      } else setActivePicker("destination");
                     }}
-                    aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
+                    aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
+                    className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-muted/60 transition-colors hover:bg-teal-soft hover:text-teal"
                   >
-                    {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
+                    {destination && hasGoogleMapsApiKey ? <CloseIcon width={14} height={14} /> : <MapPinIcon width={15} height={15} />}
                   </button>
                 </div>
-              </div>
-            </label>
+              </label>
+            </div>
 
-            <div className="mx-3 border-t border-[#dfe9e7] lg:hidden" />
-
-            <button
-              type="button"
-              onClick={handleSwapLocations}
-              aria-label={tq.swapAria}
-              style={{ transform: `rotate(${swapRotation}deg)` }}
-              className="absolute right-3 top-1/2 z-50 flex h-10 w-10 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[transform,background-color,color] duration-500 ease-[var(--ease-spring)] hover:bg-teal hover:text-white lg:static lg:mx-auto lg:translate-y-0 lg:self-center xl:-mx-4"
-            >
-              <SwapIcon width={16} height={16} />
-            </button>
-
-            <label className="relative block min-w-0 px-3 py-2 transition-shadow duration-200 lg:rounded-[1.1rem] lg:bg-white lg:px-3.5 lg:py-2.5 lg:focus-within:z-[70] lg:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-              <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.toLabel}</span>
-              <div className="relative">
-                <MapPinIcon width={17} height={17} className="pointer-events-none absolute left-1 top-1/2 z-10 -translate-y-1/2 text-coral" />
-                <PlacesAutocompleteInput
-                  name="destination"
-                  required
-                  value={destination}
-                  onChange={(next) => {
-                    setDestination(next);
-                    setDestinationCoordinates(null);
-                  }}
-                  onPlaceSelect={(place) => {
-                    setDestinationCoordinates({ lat: place.lat, lng: place.lng });
-                  }}
-                  placeholder={tf.destinationPlaceholder}
-                  className="min-h-11 w-full truncate rounded-lg border-0 bg-transparent py-1 pl-8 pr-12 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (destination && hasGoogleMapsApiKey) {
-                      setDestination("");
-                      setDestinationCoordinates(null);
-                    } else setActivePicker("destination");
-                  }}
-                  aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                  className="absolute right-0 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-teal transition-colors hover:bg-teal-soft"
-                >
-                  {destination && hasGoogleMapsApiKey ? <CloseIcon width={15} height={15} /> : <MapPinIcon width={16} height={16} />}
-                </button>
-              </div>
-            </label>
+            {/* Swap, desktop: sits directly on the vertical seam between the two fields */}
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 z-10 hidden -translate-x-1/2 items-center sm:flex">
+              <button
+                type="button"
+                onClick={handleSwapLocations}
+                aria-label={tq.swapAria}
+                style={{ transform: `rotate(${swapRotation}deg)` }}
+                className="pointer-events-auto flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[var(--page-line)] bg-white text-teal shadow-[0_2px_6px_rgba(4,31,38,0.08)] transition-all duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-teal hover:text-white"
+              >
+                <SwapIcon width={15} height={15} />
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-[1.7fr_1fr] gap-1.5 lg:gap-2">
-            <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm transition-shadow duration-200 has-[button:focus-visible]:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-              <span className="px-3 pt-2 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.dateLabel}</span>
+          {/* DATE / TIME — trip scheduling, deliberately lighter weight than pickup/destination */}
+          <div className="border-t border-[var(--page-line)] px-4 py-3.5">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <DatePicker
                 name="pickupDate"
                 value={pickupDate}
@@ -442,40 +463,139 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
                 dialogLabel={tq.pickupDateAria}
                 inlineLabel={tq.dateLabel}
                 hasSelection={pickupDateSelected}
-                iconWrapperClassName="ml-3.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal"
-                buttonClassName="min-h-11 flex-1 truncate rounded-lg border-0 bg-transparent px-3 text-base font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent sm:text-sm"
+                iconClassName="text-muted"
+                buttonClassName="min-h-8 w-auto min-w-0 gap-2 rounded-lg border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
               />
+              <span className="h-4 w-px shrink-0 bg-[var(--page-line)]" aria-hidden="true" />
+              <label className="flex min-w-0 items-center gap-2">
+                <span className="sr-only">{tq.timeLabel}</span>
+                <ClockIcon width={15} height={15} className="shrink-0 text-muted" aria-hidden="true" />
+                <input
+                  type="time"
+                  name="pickupTime"
+                  required
+                  aria-label={tq.pickupTimeAria}
+                  value={pickupTime}
+                  suppressHydrationWarning
+                  onChange={(event) => {
+                    setPickupTime(event.target.value);
+                    setPickupTimeError(null);
+                  }}
+                  className="min-h-8 min-w-0 border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none"
+                />
+              </label>
             </div>
-            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.timeLabel}</span>
-              <input
-                type="time"
-                name="pickupTime"
-                required
-                aria-label={tq.pickupTimeAria}
-                value={pickupTime}
-                suppressHydrationWarning
-                onChange={(event) => {
-                  setPickupTime(event.target.value);
-                  setPickupTimeError(null);
-                }}
-                className="min-h-7 w-full border-0 bg-transparent p-0 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
-              />
-            </label>
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+              <AlertCircleIcon width={12} height={12} className="shrink-0" aria-hidden="true" />
+              {formatMessage(tq.leadTimeCaption, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
+            </p>
+            {pickupTimeError && (
+              <p role="alert" className="mt-1 text-xs font-medium text-red">
+                {pickupTimeError}
+              </p>
+            )}
+          </div>
+
+          {locationFailure && (
+            <p role="alert" className="border-t border-[var(--page-line)] px-4 py-3 text-xs font-medium text-red">
+              {currentLocationError}
+            </p>
+          )}
+
+          {distanceKm !== null && (
+            <div
+              aria-live="polite"
+              className={`border-t border-[var(--page-line)] px-4 py-3 ${routeStatus.tone === "success" ? "bg-success-soft/40" : "bg-coral-soft/40"}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <routeStatus.Icon
+                  width={15}
+                  height={15}
+                  className={`shrink-0 ${routeStatus.tone === "success" ? "text-success" : "text-coral"}`}
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-semibold text-brand-navy">{routeStatus.title}</p>
+                <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted">{Math.round(distanceKm)} km</span>
+              </div>
+              {priceEstimate && (
+                <div className="mt-2 flex items-center justify-between gap-2 border-t border-[var(--page-line)]/70 pl-[26px] pt-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{tq.estimatedFare}</span>
+                  <span className="font-display text-base font-black text-brand-navy">~€{priceEstimate.priceEur}</span>
+                </div>
+              )}
+              {priceEstimate && <p className="mt-1.5 pl-[26px] text-xs text-muted">{tq.quoteNote}</p>}
+            </div>
+          )}
+
+          {/* PHONE + NOTE + PRIMARY CTA */}
+          <div className="border-t border-[var(--page-line)] p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0 flex-1 sm:max-w-xs">
+                <label className="block">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tf.phoneNumber}</span>
+                  <input
+                    name="passengerPhone"
+                    type="tel"
+                    required
+                    minLength={6}
+                    autoComplete="tel"
+                    defaultValue={user?.phone ?? ""}
+                    placeholder={tf.phoneNumberPlaceholder}
+                    className="mt-1 block min-h-8 w-full border-0 border-b border-[var(--page-line)] bg-transparent px-0 pb-1.5 text-[15px] font-semibold text-brand-navy outline-none transition-colors placeholder:font-normal placeholder:text-muted/60 focus:border-teal"
+                  />
+                </label>
+
+                {!showNote ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowNote(true)}
+                    className="-ml-3 mt-1 inline-flex min-h-[44px] items-center px-3 text-xs font-semibold text-teal transition-colors hover:text-teal-hover"
+                  >
+                    {tf.addNote}
+                  </button>
+                ) : (
+                  <label className="mt-3 block animate-fade-up">
+                    <span className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
+                      <span>{tf.note}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotes("");
+                            setShowNote(false);
+                          }}
+                          aria-label={tf.removeNote}
+                          className="-m-2.5 flex h-[44px] w-[44px] items-center justify-center normal-case tracking-normal text-muted transition-colors hover:text-red"
+                        >
+                          <CloseIcon width={12} height={12} />
+                        </button>
+                      </span>
+                    </span>
+                    <textarea
+                      name="notes"
+                      rows={2}
+                      maxLength={500}
+                      autoFocus
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                      placeholder={tf.notePlaceholder}
+                      className="mt-1 block w-full resize-none border-0 border-b border-[var(--page-line)] bg-transparent px-0 pb-1.5 text-sm leading-relaxed text-brand-navy outline-none transition-colors placeholder:text-muted/60 focus:border-teal"
+                    />
+                  </label>
+                )}
+              </div>
+
+              <button type="submit" className="public-primary-action min-h-14 shrink-0 px-8 text-sm sm:min-w-[13rem]">
+                <span>{tf.sendRequest}</span>
+                <ArrowRightIcon width={16} height={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <p className="mt-2 pl-1 text-xs text-muted">
-          {formatMessage(tq.leadTimeCaption, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
-        </p>
-        {pickupTimeError && (
-          <p role="alert" className="mt-1 pl-1 text-xs font-medium text-red">
-            {pickupTimeError}
-          </p>
-        )}
-
         {activePicker && (
-          <div className="mt-4 animate-fade-up overflow-hidden rounded-2xl border border-[#dce8e6] bg-white shadow-[var(--page-shadow)]">
+          <div className="mt-4 animate-fade-up overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] bg-white shadow-[var(--page-shadow)]">
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-[linear-gradient(135deg,#f1f9f7_0%,#ffffff_80%)] px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal text-white shadow-[0_8px_18px_rgba(0,128,128,0.18)]">
@@ -487,7 +607,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
                 type="button"
                 onClick={() => setActivePicker(null)}
                 aria-label={lp.close}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#dfe8e7] bg-white text-muted shadow-sm transition-colors hover:text-brand-navy"
+                className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#dfe8e7] bg-white text-muted shadow-sm transition-colors hover:text-brand-navy"
               >
                 <CloseIcon width={16} height={16} />
               </button>
@@ -503,111 +623,6 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
               mapHeightClassName="h-[320px] sm:h-[380px]"
             />
           </div>
-        )}
-
-        {locationFailure && (
-          <p role="alert" className="mt-2 text-xs font-medium text-red">
-            {currentLocationError}
-          </p>
-        )}
-
-        {distanceKm !== null && (
-          <div
-            aria-live="polite"
-            className={`mt-3 rounded-2xl border px-4 py-3 ${
-              routeStatus.tone === "success" ? "border-success/20 bg-success-soft/70" : "border-coral/20 bg-[#fff7f4]"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                routeStatus.tone === "success" ? "bg-white text-success" : "bg-white text-coral"
-              }`}>
-                <routeStatus.Icon width={16} height={16} />
-              </span>
-              <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-brand-navy">{routeStatus.title}</p>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black tabular-nums text-brand-navy shadow-sm">{Math.round(distanceKm)} km</span>
-              </div>
-            </div>
-            <div className="mt-2.5 pl-11">
-              <div className="h-1.5 overflow-hidden rounded-full bg-white">
-                <div
-                  className={`h-full rounded-full transition-[width] duration-500 ease-[var(--ease-out-expo)] ${routeIsEligible ? "bg-success" : "bg-coral"}`}
-                  style={{ width: `${Math.min(100, (distanceKm / MIN_INTERCITY_TAXI_DISTANCE_KM) * 100)}%` }}
-                />
-              </div>
-            </div>
-            {priceEstimate && (
-              <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-success/15 pl-11 pt-2.5">
-                <p className="text-xs font-bold uppercase tracking-[0.1em] text-muted">{tq.estimatedFare}</p>
-                <p className="font-display text-lg font-black text-brand-navy">~€{priceEstimate.priceEur}</p>
-              </div>
-            )}
-          </div>
-        )}
-        {priceEstimate && <p className="mt-2 pl-1 text-xs text-muted">{tq.quoteNote}</p>}
-
-        <div className="mt-3 flex flex-wrap items-stretch gap-2">
-          <label className="flex min-w-0 flex-1 flex-col justify-center rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 py-2 transition-[box-shadow,border-color] duration-150 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tf.phoneNumber}</span>
-            <input
-              name="passengerPhone"
-              type="tel"
-              required
-              minLength={6}
-              autoComplete="tel"
-              defaultValue={user?.phone ?? ""}
-              placeholder={tf.phoneNumberPlaceholder}
-              className="min-h-7 w-full border-0 bg-transparent p-0 text-base font-semibold text-brand-navy shadow-none outline-none sm:text-sm"
-            />
-          </label>
-
-          {!showNote && (
-            <button
-              type="button"
-              onClick={() => setShowNote(true)}
-              className="flex shrink-0 items-center rounded-[1.1rem] border border-dashed border-[#c9d9d7] px-4 text-sm font-semibold text-teal transition-colors hover:border-teal hover:bg-teal-soft"
-            >
-              {tf.addNote}
-            </button>
-          )}
-
-          <button type="submit" className="public-primary-action min-h-14 shrink-0 flex-1 px-7 text-sm sm:min-w-[11rem] sm:flex-none">
-            <span>{tf.sendRequest}</span>
-            <ArrowRightIcon width={16} height={16} aria-hidden="true" />
-          </button>
-        </div>
-
-        {showNote && (
-          <label className="mt-2 block animate-fade-up rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 py-2 transition-[box-shadow,border-color] duration-150 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
-            <span className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-              <span>{tf.note}</span>
-              <span className="flex items-center gap-2">
-                <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNotes("");
-                    setShowNote(false);
-                  }}
-                  aria-label={tf.removeNote}
-                  className="normal-case tracking-normal text-muted transition-colors hover:text-red"
-                >
-                  <CloseIcon width={12} height={12} />
-                </button>
-              </span>
-            </span>
-            <textarea
-              name="notes"
-              rows={2}
-              maxLength={500}
-              autoFocus
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder={tf.notePlaceholder}
-              className="min-h-[2.5rem] w-full resize-none border-0 bg-transparent p-0 text-base font-medium leading-relaxed text-brand-navy shadow-none outline-none sm:text-sm"
-            />
-          </label>
         )}
       </form>
 
