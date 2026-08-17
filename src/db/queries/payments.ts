@@ -50,6 +50,26 @@ export async function findPaymentIdForBookingReference(bookingReference: string)
 
 export type SettleOutcome = "paid" | "failed" | "already_settled" | "not_found";
 
+/** Shared by the real POK settle path and the dev-only fake-payment path below -- both need the exact same "record paid, then best-effort email" behavior. */
+async function markPaymentPaidAndNotify(paymentId: number, bookingId: number): Promise<void> {
+  // Never flip a booking that's already been cancelled back to confirmed on
+  // a late "paid" result (e.g. sweep beat a slow webhook) -- the seat may
+  // already be back in the pool. Record the payment as paid anyway (money
+  // was actually captured, don't lose that) but this then shows up as a
+  // paid-payment-on-a-cancelled-booking mismatch in the admin ledger, which
+  // is a real operator-must-refund case, not something to hide.
+  await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, paymentId));
+
+  // Best-effort: a broken SMTP config or a transient send failure must
+  // never undo (or even appear to undo) a payment that already settled.
+  try {
+    const detail = await getBookingEmailDetail(bookingId);
+    if (detail) await sendBookingConfirmationEmail(detail);
+  } catch (error) {
+    console.error("[email] failed to send booking confirmation", { bookingId, error });
+  }
+}
+
 /**
  * The one place that turns a POK order's live status into our own state --
  * every trigger (the redirect-return route, the webhook, and the sweep)
@@ -77,23 +97,7 @@ export async function verifyAndSettlePokPayment(paymentId: number): Promise<Sett
   const order = await getSdkOrder(payment.providerPaymentId);
 
   if (order.isCompleted) {
-    // Never flip a booking that's already been cancelled back to confirmed
-    // on a late "paid" result (e.g. sweep beat a slow webhook) -- the seat
-    // may already be back in the pool. Record the payment as paid anyway
-    // (money was actually captured, don't lose that) but this then shows up
-    // as a paid-payment-on-a-cancelled-booking mismatch in the admin ledger,
-    // which is a real operator-must-refund case, not something to hide.
-    await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, paymentId));
-
-    // Best-effort: a broken SMTP config or a transient send failure must
-    // never undo (or even appear to undo) a payment that already settled.
-    try {
-      const detail = await getBookingEmailDetail(payment.bookingId);
-      if (detail) await sendBookingConfirmationEmail(detail);
-    } catch (error) {
-      console.error("[email] failed to send booking confirmation", { bookingId: payment.bookingId, error });
-    }
-
+    await markPaymentPaidAndNotify(paymentId, payment.bookingId);
     return "paid";
   }
 
@@ -107,6 +111,31 @@ export async function verifyAndSettlePokPayment(paymentId: number): Promise<Sett
   // Still genuinely pending (customer hasn't finished on POK's page yet) --
   // leave it as-is for the next trigger to re-check.
   return "already_settled";
+}
+
+/**
+ * Lets a developer complete the checkout flow on localhost without a real
+ * POK charge -- skips calling POK entirely and marks the payment paid
+ * directly. Hard-gated on NODE_ENV so this can never fire in production,
+ * even if a request somehow reaches it there.
+ */
+export async function devMarkPaymentPaid(bookingReference: string): Promise<SettleOutcome> {
+  if (process.env.NODE_ENV === "production") return "not_found";
+
+  const paymentId = await findPaymentIdForBookingReference(bookingReference);
+  if (!paymentId) return "not_found";
+
+  const [payment] = await db
+    .select({ id: payments.id, bookingId: payments.bookingId, status: payments.status })
+    .from(payments)
+    .where(eq(payments.id, paymentId))
+    .limit(1);
+
+  if (!payment || !payment.bookingId) return "not_found";
+  if (payment.status !== "pending" && payment.status !== "authorized") return "already_settled";
+
+  await markPaymentPaidAndNotify(payment.id, payment.bookingId);
+  return "paid";
 }
 
 /** Sweep target: pending payments whose provider order has expired but no trigger (redirect/webhook) ever settled them -- the customer likely abandoned checkout entirely. */

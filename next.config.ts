@@ -66,6 +66,17 @@ const nextConfig: NextConfig = {
         source: "/:file(dat-logo|og|og-v2|og-v3).png",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" }],
       },
+      // The embedded checkout (book/[tripDepartureId]) loads POK's hosted
+      // payment page in an iframe, and POK navigates that same iframe here
+      // when checkout finishes -- the blanket X-Frame-Options: DENY above
+      // blocks a page from framing *itself*, not just third parties, so
+      // without this override the return relay can never load and the
+      // customer is left staring at a blank frame after paying. Same-origin
+      // framing only; every other route still denies framing entirely.
+      {
+        source: "/pay/return",
+        headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }],
+      },
     ];
   },
 };

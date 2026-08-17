@@ -22,6 +22,7 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
   const [state, formAction, isPending] = useActionState(createBookingAction, initialState);
   const [dismissed, setDismissed] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [devOverrideSrc, setDevOverrideSrc] = useState<string | null>(null);
   const router = useRouter();
   const showCheckout = state.status === "checkout" && !dismissed;
 
@@ -72,12 +73,23 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
             </div>
           )}
           <iframe
-            src={state.confirmUrl}
+            src={devOverrideSrc ?? state.confirmUrl}
             title={bp.completePaymentHeading}
             onLoad={() => setIframeLoaded(true)}
             className={`h-full w-full transition-opacity duration-[var(--dur-base)] ${iframeLoaded ? "opacity-100" : "opacity-0"}`}
           />
         </div>
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            type="button"
+            onClick={() =>
+              setDevOverrideSrc(`/pay/return?ref=${encodeURIComponent(state.bookingReference)}&embedded=1&dev=1`)
+            }
+            className="mt-1 rounded-xl border border-dashed border-warning/50 bg-warning-soft px-3 py-2 text-xs font-medium text-warning"
+          >
+            Dev only: simulate payment success (no real charge)
+          </button>
+        )}
       </div>
     );
   }

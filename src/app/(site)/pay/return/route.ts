@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSiteOrigin } from "@/lib/google-oauth";
-import { findPaymentIdForBookingReference, verifyAndSettlePokPayment } from "@/db/queries/payments";
+import { devMarkPaymentPaid, findPaymentIdForBookingReference, verifyAndSettlePokPayment } from "@/db/queries/payments";
 
 /**
  * POK redirects the customer's browser here after checkout -- both on
@@ -12,14 +12,23 @@ import { findPaymentIdForBookingReference, verifyAndSettlePokPayment } from "@/d
 export async function GET(request: NextRequest) {
   const bookingReference = request.nextUrl.searchParams.get("ref");
   const embedded = request.nextUrl.searchParams.get("embedded") === "1";
+  // Dev-only escape hatch so the whole flow (payment -> email -> manage
+  // link) can be exercised on localhost without a real POK charge. The
+  // `dev` param alone can't do anything in production -- devMarkPaymentPaid
+  // re-checks NODE_ENV itself.
+  const devComplete = request.nextUrl.searchParams.get("dev") === "1" && process.env.NODE_ENV !== "production";
 
   if (!bookingReference) {
     return embedded ? notifyParentHtml(null) : NextResponse.redirect(new URL("/", getSiteOrigin()));
   }
 
   try {
-    const paymentId = await findPaymentIdForBookingReference(bookingReference);
-    if (paymentId) await verifyAndSettlePokPayment(paymentId);
+    if (devComplete) {
+      await devMarkPaymentPaid(bookingReference);
+    } else {
+      const paymentId = await findPaymentIdForBookingReference(bookingReference);
+      if (paymentId) await verifyAndSettlePokPayment(paymentId);
+    }
   } catch (error) {
     console.error("[pok-payments] return verification failed", { bookingReference, error });
     // Fall through to the confirmation page regardless -- it shows whatever
