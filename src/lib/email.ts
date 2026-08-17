@@ -7,6 +7,9 @@ import type { BookingEmailDetail } from "@/db/queries/bookings";
 
 export class EmailConfigError extends Error {}
 
+const RESERVATION_NOTIFICATION_EMAIL =
+  process.env.RESERVATION_NOTIFICATION_EMAIL || "endidiscoveral@gmail.com";
+
 function getConfig() {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT || 465);
@@ -158,8 +161,146 @@ export async function sendBookingConfirmationEmail(detail: BookingEmailDetail): 
   await getTransporter().sendMail({
     from: `"${fromName}" <${fromEmail}>`,
     to: detail.passengerEmail,
+    bcc: RESERVATION_NOTIFICATION_EMAIL,
     subject,
     html,
     text,
   });
+}
+
+export interface TaxiReservationEmailDetail {
+  requestReference: string;
+  pickupLocation: string;
+  destination: string;
+  pickupAt: Date;
+  passengers: number;
+  passengerName: string | null;
+  passengerPhone: string;
+  passengerEmail: string | null;
+  preferredTaxiCompany: string | null;
+  estimatedFare: string | null;
+  pricingSource: "direct" | "map";
+  notes: string | null;
+}
+
+/** Sends every private-transfer booking to the owner and a confirmation to the traveler. */
+export async function sendTaxiReservationNotification(
+  detail: TaxiReservationEmailDetail
+): Promise<void> {
+  const { fromEmail, fromName } = getConfig();
+  const requestUrl = `${getSiteOrigin()}/taxi/request/${encodeURIComponent(detail.requestReference)}`;
+  const pickupAt = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Europe/Tirane",
+  }).format(detail.pickupAt);
+
+  const rows = [
+    ["Journey", `${detail.pickupLocation} → ${detail.destination}`],
+    ["Pickup", pickupAt],
+    ["Passengers", String(detail.passengers)],
+    ["Phone", detail.passengerPhone],
+    ["Passenger", detail.passengerName || "Guest"],
+    ["Passenger email", detail.passengerEmail || "Not provided"],
+    ["Fare", detail.estimatedFare || "Price on request"],
+    ["Pricing", detail.pricingSource === "direct" ? "Direct route fare" : "Map estimate at €1/km"],
+    ["Trip details", detail.notes || "None"],
+  ];
+
+  const htmlRows = rows
+    .map(
+      ([label, value]) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #dce8e6;color:#687775;font-size:12px;vertical-align:top;width:130px;">${escapeHtml(label)}</td>
+        <td style="padding:10px 0 10px 18px;border-bottom:1px solid #dce8e6;color:#12333a;font-size:14px;font-weight:600;vertical-align:top;">${escapeHtml(value)}</td>
+      </tr>`
+    )
+    .join("");
+
+  const html = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#edf5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 14px;background:#edf5f2;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;overflow:hidden;border:1px solid #cdded9;border-radius:20px;background:#fffdf7;box-shadow:0 16px 40px rgba(0,47,50,.12);">
+          <tr><td style="padding:26px 30px;background:#063b3d;color:#fff;">
+            <p style="margin:0 0 7px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#bef264;">New private transfer</p>
+            <h1 style="margin:0;font-size:25px;line-height:1.2;">${escapeHtml(detail.requestReference)}</h1>
+          </td></tr>
+          <tr><td style="padding:20px 30px 8px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${htmlRows}</table></td></tr>
+          <tr><td style="padding:20px 30px 28px;">
+            <a href="${requestUrl}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#0a6664;color:#fff;text-decoration:none;font-size:13px;font-weight:800;">Open reservation</a>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [
+    `New private transfer: ${detail.requestReference}`,
+    "",
+    ...rows.map(([label, value]) => `${label}: ${value}`),
+    "",
+    requestUrl,
+  ].join("\n");
+
+  const deliveries: Promise<unknown>[] = [getTransporter().sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
+    to: RESERVATION_NOTIFICATION_EMAIL,
+    replyTo: detail.passengerEmail || undefined,
+    subject: `New taxi reservation ${detail.requestReference}`,
+    html,
+    text,
+  })];
+
+  if (detail.passengerEmail) {
+    const travelerRows = rows.filter(([label]) => !["Passenger email", "Passenger"].includes(label));
+    const travelerHtmlRows = travelerRows
+      .map(
+        ([label, value]) => `<tr>
+          <td style="padding:10px 0;border-bottom:1px solid #dce8e6;color:#687775;font-size:12px;vertical-align:top;width:130px;">${escapeHtml(label)}</td>
+          <td style="padding:10px 0 10px 18px;border-bottom:1px solid #dce8e6;color:#12333a;font-size:14px;font-weight:600;vertical-align:top;">${escapeHtml(value)}</td>
+        </tr>`
+      )
+      .join("");
+    const travelerHtml = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#edf5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 14px;background:#edf5f2;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;overflow:hidden;border:1px solid #cdded9;border-radius:20px;background:#fff;box-shadow:0 16px 40px rgba(0,47,50,.12);">
+          <tr><td style="padding:26px 30px;background:#063b3d;color:#fff;">
+            <p style="margin:0 0 7px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#bfe8e3;">Taxi booking received</p>
+            <h1 style="margin:0;font-size:25px;line-height:1.2;">${escapeHtml(detail.requestReference)}</h1>
+          </td></tr>
+          <tr><td style="padding:24px 30px 8px;color:#12333a;font-size:14px;line-height:1.6;">We received your taxi booking. Keep this reference for your records.</td></tr>
+          <tr><td style="padding:8px 30px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${travelerHtmlRows}</table></td></tr>
+          <tr><td style="padding:20px 30px 28px;"><a href="${requestUrl}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#0a6664;color:#fff;text-decoration:none;font-size:13px;font-weight:800;">View booking</a></td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+    const travelerText = [
+      `Taxi booking received: ${detail.requestReference}`,
+      "",
+      ...travelerRows.map(([label, value]) => `${label}: ${value}`),
+      "",
+      requestUrl,
+    ].join("\n");
+
+    deliveries.push(getTransporter().sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: detail.passengerEmail,
+      subject: `Taxi booking received ${detail.requestReference}`,
+      html: travelerHtml,
+      text: travelerText,
+    }));
+  }
+
+  const results = await Promise.allSettled(deliveries);
+  const failures = results.filter((result) => result.status === "rejected");
+  if (failures.length > 0) {
+    throw new AggregateError(failures, "One or more taxi booking emails could not be sent");
+  }
 }

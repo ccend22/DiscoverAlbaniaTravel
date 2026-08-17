@@ -286,6 +286,7 @@ export const taxiRideRequests = pgTable(
     passengerPhone: text("passenger_phone").notNull(),
     passengerEmail: text("passenger_email"),
     notes: text("notes"),
+    preferredTaxiCompany: text("preferred_taxi_company"),
     quotedPrice: numeric("quoted_price", { precision: 10, scale: 2 }),
     status: taxiRideStatusEnum("status").notNull().default("requested"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

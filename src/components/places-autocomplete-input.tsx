@@ -5,6 +5,7 @@ import { importLibrary } from "@googlemaps/js-api-loader";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey, pinAutocompleteDropdownBelow } from "@/lib/google-maps-loader";
 
 interface PlacesAutocompleteInputProps {
+  id?: string;
   name: string;
   value: string;
   onChange: (value: string) => void;
@@ -20,7 +21,7 @@ interface PlacesAutocompleteInputProps {
  * the full map picker at all — the map stays there as the fallback for
  * addresses that don't resolve to a named place.
  */
-export function PlacesAutocompleteInput({ name, value, onChange, placeholder, required, className, onPlaceSelect }: PlacesAutocompleteInputProps) {
+export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder, required, className, onPlaceSelect }: PlacesAutocompleteInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const onChangeRef = useRef(onChange);
   const onPlaceSelectRef = useRef(onPlaceSelect);
@@ -53,7 +54,6 @@ export function PlacesAutocompleteInput({ name, value, onChange, placeholder, re
         .then(() => {
           if (cancelled || !inputRef.current) return;
           const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-            componentRestrictions: { country: "al" },
             fields: ["formatted_address", "geometry"],
           });
           unpin = pinAutocompleteDropdownBelow(inputRef.current);
@@ -86,6 +86,7 @@ export function PlacesAutocompleteInput({ name, value, onChange, placeholder, re
   return (
     <input
       ref={inputRef}
+      id={id}
       type="text"
       name={name}
       required={required}

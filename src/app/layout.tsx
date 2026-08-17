@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: "Discover Albania Transport, Buses, Taxis & Destinations",
     template: "%s | Discover Albania Transport",
   },
-  description: "Search intercity buses, reserve seats, request scheduled taxis, and discover destinations across Albania.",
+  description: "Search intercity buses, reserve seats, book scheduled taxis, and discover destinations across Albania.",
   applicationName: "Discover Albania Transport",
   keywords: ["Albania travel", "Albania buses", "Albania taxi", "Albania destinations", "intercity transport"],
   category: "travel",
@@ -32,14 +32,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     siteName: "Discover Albania Transport",
     title: "Discover Albania Transport, Buses, Taxis & Destinations",
-    description: "Search buses, request taxis, and discover destinations across Albania.",
+    description: "Search buses, book taxis, and discover destinations across Albania.",
     url: "/",
     images: [{ url: "/og-v3.png", width: 1200, height: 630, alt: "Discover Albania Transport across Albania's coast and mountains" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Discover Albania Transport, Buses, Taxis & Destinations",
-    description: "Search buses, request taxis, and discover destinations across Albania.",
+    description: "Search buses, book taxis, and discover destinations across Albania.",
     images: ["/og-v3.png"],
   },
 };
@@ -56,7 +56,7 @@ const organizationJsonLd = {
   name: "Discover Albania Transport",
   url: SITE_URL,
   logo: `${SITE_URL}/dat-logo.png`,
-  description: "Search intercity buses, reserve seats, request scheduled taxis, and discover destinations across Albania.",
+  description: "Search intercity buses, reserve seats, book scheduled taxis, and discover destinations across Albania.",
   email: "info@discoveralbania.al",
   telephone: "+355696583870",
   address: {
@@ -87,6 +87,19 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
+        <template
+          data-impeccable-contract="147f1f3b"
+          dangerouslySetInnerHTML={{
+            __html: `<!--
+THESIS: Bus and taxi booking feel like one product, with a single quiet white-and-teal language and no provider-choice detour.
+OWN-WORLD: The established bus form's white cards, pale sea-glass field bed, teal actions, coral destination marker, Inter controls, and Merriweather headings.
+STORY: Set pickup and destination, schedule the journey, choose passengers, see a Sheet-backed direct fare or €1/km map estimate, then add phone and email and book.
+FIRST VIEWPORT: One compact booking form matching the bus ticket form, with empty example-led location fields and a bounded map dialog.
+FORM: Production taxi booking flow aligned to the site's existing bus design system, superseding the separate dark Figma theme.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->`,
+          }}
+        />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
         {children}

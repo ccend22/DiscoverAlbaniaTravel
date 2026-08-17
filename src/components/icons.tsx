@@ -262,10 +262,28 @@ export function BusIcon(props: IconProps) {
   );
 }
 
+export function CarIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="m5 11 1.8-4.2A2 2 0 0 1 8.6 5.6h6.8a2 2 0 0 1 1.8 1.2L19 11" />
+      <path d="M4 11h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1Z" />
+      <path d="M6 18v1.5M18 18v1.5M7 14h.01M17 14h.01M9.5 15.5h5" />
+    </svg>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 5v14M5 12h14" />
     </svg>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "taxi_ride_requests" ADD COLUMN "preferred_taxi_company" text;

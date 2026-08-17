@@ -415,6 +415,47 @@ table tbody tr:hover {
   }
 }
 
+.taxi-console :where(button):not(.rounded-full) {
+  border-radius: 0.75rem !important;
+}
+
+.taxi-console :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.rounded-full) {
+  border-radius: 0.75rem !important;
+}
+
+.taxi-console .taxi-location-input,
+.taxi-console .taxi-schedule-input {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.taxi-console {
+  accent-color: #008080;
+  caret-color: #008080;
+  color-scheme: light;
+}
+
+.taxi-console ::selection {
+  background: rgba(0, 128, 128, 0.2);
+  color: #12333a;
+}
+
+.taxi-console :where(input, textarea)::placeholder {
+  color: #687775;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taxi-console *,
+  .taxi-console *::before,
+  .taxi-console *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ---------------------------------------------------------------------- */
 /* Premium motion & surface utilities                                     */
 /* ---------------------------------------------------------------------- */

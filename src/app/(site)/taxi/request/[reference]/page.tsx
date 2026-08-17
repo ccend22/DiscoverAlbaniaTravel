@@ -26,6 +26,9 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
         <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatAlbaniaDateTime(request.pickupAt, locale)}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.passengers}</dt><dd className="mt-1 font-medium text-foreground">{request.passengers}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.status}</dt><dd className="mt-1 font-medium capitalize text-foreground">{request.status}</dd></div>
+        {request.preferredTaxiCompany && (
+          <div><dt className="text-xs uppercase text-muted">{tc.preferredCompany}</dt><dd className="mt-1 font-medium text-foreground">{request.preferredTaxiCompany}</dd></div>
+        )}
         {request.notes && (
           <div className="sm:col-span-2">
             <dt className="text-xs uppercase text-muted">{tc.note}</dt>

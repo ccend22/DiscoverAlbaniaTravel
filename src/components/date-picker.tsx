@@ -288,6 +288,8 @@ interface DatePickerProps {
   inlineLabel?: string;
   /** When false, the button shows only inlineLabel (as a placeholder) instead of the date — for a value the field defaults to internally but the user hasn't actually chosen yet. Ignored when inlineLabel isn't set. */
   hasSelection?: boolean;
+  /** "short" drops the weekday for tight side-by-side slots (e.g. paired with another field in a 2-column row). Defaults to "long". */
+  labelFormat?: "long" | "short";
 }
 
 interface QuickPicksProps {
@@ -387,6 +389,7 @@ export function DatePicker({
   dialogLabel,
   inlineLabel,
   hasSelection = true,
+  labelFormat = "long",
 }: DatePickerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open ?? internalOpen;
@@ -497,7 +500,7 @@ export function DatePicker({
           <CalendarIcon width={18} height={18} className={`shrink-0 ${iconClassName ?? "text-teal"}`} aria-hidden="true" />
         )}
         <span className={`min-w-0 leading-tight ${inlineLabel && !hasSelection ? "truncate font-medium text-muted" : ""}`}>
-          {inlineLabel && !hasSelection ? inlineLabel : formatDateLong(value, locale)}
+          {inlineLabel && !hasSelection ? inlineLabel : labelFormat === "short" ? formatDateShort(value, locale) : formatDateLong(value, locale)}
         </span>
       </button>
 

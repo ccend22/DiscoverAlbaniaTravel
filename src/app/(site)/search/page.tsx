@@ -10,12 +10,14 @@ import { formatDateLong } from "@/lib/format";
 import { SearchWidget } from "@/components/search-widget";
 import { ResultsFilterPanel } from "@/components/results-filter-panel";
 import { RouteMap, type RouteSegment } from "@/components/route-map";
+import type { TaxiRecommendation } from "@/components/taxi-recommendation-card";
 import type { TripDepartureDetail } from "@/db/queries/trips";
 import { getRoadRoute } from "@/lib/routing";
-import { AlertCircleIcon, ArrowRightIcon, MapPinIcon } from "@/components/icons";
+import { AlertCircleIcon } from "@/components/icons";
 import { getLocaleAndDictionary, type Locale } from "@/lib/i18n";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
+import { estimateMapTaxiPriceEur } from "@/lib/taxi-pricing";
 import { buildCityOptions, POPULAR_CITY_NAMES } from "@/lib/city-options";
 import type { Metadata } from "next";
 
@@ -69,6 +71,7 @@ interface LegResultsProps {
   passengers: number;
   dict: Dictionary;
   locale: Locale;
+  taxiRecommendation: TaxiRecommendation | null;
 }
 
 function EmptyState({ children }: { children: React.ReactNode }) {
@@ -80,56 +83,37 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TaxiAlternative({
-  origin,
-  destination,
-  segment,
-  dict,
-}: {
-  origin: string;
-  destination: string;
-  segment?: RouteSegment;
-  dict: Dictionary;
-}) {
-  if (
-    segment &&
-    calculateDistanceKm(
-      { lat: segment.fromLat, lng: segment.fromLng },
-      { lat: segment.toLat, lng: segment.toLng }
-    ) < MIN_INTERCITY_TAXI_DISTANCE_KM
-  ) {
-    return null;
-  }
-
-  const params = new URLSearchParams({ tab: "taxi", taxiFrom: origin, taxiTo: destination });
-  if (segment) {
-    params.set("pickupLat", String(segment.fromLat));
-    params.set("pickupLng", String(segment.fromLng));
-    params.set("destinationLat", String(segment.toLat));
-    params.set("destinationLng", String(segment.toLng));
-  }
-  const sp = dict.searchPage;
-
-  return (
-    <aside className="mb-8 flex flex-col gap-5 overflow-hidden rounded-[2rem] border border-teal/15 bg-[linear-gradient(120deg,#ffffff_0%,#f0f8f6_100%)] p-5 shadow-[0_14px_38px_rgba(7,52,60,0.07)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-      <div className="flex min-w-0 gap-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal text-white shadow-[0_8px_20px_rgba(0,128,128,0.2)]">
-          <MapPinIcon width={18} height={18} />
-        </span>
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-teal">{sp.taxiAlternativeKicker}</p>
-          <h2 className="mt-1 font-display text-xl font-black tracking-[-0.025em] text-brand-navy">{sp.taxiAlternativeTitle}</h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
-            {formatMessage(sp.taxiAlternativeCopy, { origin, destination })}
-          </p>
-        </div>
-      </div>
-      <Link href={`/?${params.toString()}#search`} className="public-secondary-action min-h-12 shrink-0 px-5 text-sm">
-        {sp.taxiAlternativeCta}
-        <ArrowRightIcon width={15} height={15} />
-      </Link>
-    </aside>
+function buildTaxiRecommendation(
+  origin: string,
+  destination: string,
+  segment?: RouteSegment
+): TaxiRecommendation | null {
+  if (!segment) return null;
+  const distanceKm = calculateDistanceKm(
+    { lat: segment.fromLat, lng: segment.fromLng },
+    { lat: segment.toLat, lng: segment.toLng }
   );
+  if (distanceKm < MIN_INTERCITY_TAXI_DISTANCE_KM) return null;
+  const estimate = estimateMapTaxiPriceEur(distanceKm);
+  if (!estimate) return null;
+
+  const params = new URLSearchParams({
+    tab: "taxi",
+    taxiFrom: origin,
+    taxiTo: destination,
+    pickupLat: String(segment.fromLat),
+    pickupLng: String(segment.fromLng),
+    destinationLat: String(segment.toLat),
+    destinationLng: String(segment.toLng),
+  });
+
+  return {
+    origin,
+    destination,
+    priceEur: estimate.priceEur,
+    km: Math.round(estimate.km),
+    requestHref: `/?${params.toString()}#search`,
+  };
 }
 
 function LegResults({
@@ -142,6 +126,7 @@ function LegResults({
   passengers,
   dict,
   locale,
+  taxiRecommendation,
 }: LegResultsProps) {
   const sp = dict.searchPage;
   return (
@@ -169,6 +154,10 @@ function LegResults({
             <Link href="/" className="text-teal underline">
               {sp.tryAnotherSearch}
             </Link>
+            .{" "}
+            <Link href={`/?tab=taxi&taxiFrom=${encodeURIComponent(origin)}&taxiTo=${encodeURIComponent(destination)}#search`} className="text-teal underline">
+              {sp.taxiFallbackCta}
+            </Link>
             .
           </EmptyState>
         ) : (
@@ -177,16 +166,27 @@ function LegResults({
             <Link href="/" className="text-teal underline">
               {sp.tryAnotherSearch}
             </Link>
+            .{" "}
+            <Link href={`/?tab=taxi&taxiFrom=${encodeURIComponent(origin)}&taxiTo=${encodeURIComponent(destination)}#search`} className="text-teal underline">
+              {sp.taxiFallbackCta}
+            </Link>
             .
           </EmptyState>
         ))}
 
       {outcome.results.length > 0 && (
         <>
-          <div className="mb-6">
+          <ResultsFilterPanel
+            results={outcome.results}
+            travelDate={date}
+            passengers={passengers}
+            dict={dict}
+            locale={locale}
+            taxiRecommendation={taxiRecommendation}
+          />
+          <div className="mt-6">
             <RouteMap segments={segments} />
           </div>
-          <ResultsFilterPanel results={outcome.results} travelDate={date} passengers={passengers} dict={dict} locale={locale} />
         </>
       )}
     </div>
@@ -254,6 +254,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     returnOutcome ? buildRouteSegments(returnOutcome.results) : Promise.resolve([]),
   ]);
 
+  const outboundTaxiRecommendation = buildTaxiRecommendation(origin, destination, outboundSegments[0]);
+  const returnTaxiRecommendation = returnOutcome
+    ? buildTaxiRecommendation(destination, origin, returnSegments[0])
+    : null;
+
   return (
     <div className="public-page mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
       <h1 className="sr-only">{`Bus tickets: ${origin} to ${destination}`}</h1>
@@ -273,13 +278,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         />
       </div>
 
-      <TaxiAlternative
-        origin={origin}
-        destination={destination}
-        segment={outboundSegments[0]}
-        dict={dict}
-      />
-
       <div className="public-card-muted flex flex-col gap-12 p-5 sm:p-8">
         <LegResults
           legLabel={isRoundTrip ? dict.searchPage.outbound : dict.searchPage.depart}
@@ -291,6 +289,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           passengers={passengers}
           dict={dict}
           locale={locale}
+          taxiRecommendation={outboundTaxiRecommendation}
         />
 
         {isRoundTrip && returnOutcome && (
@@ -304,6 +303,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             passengers={passengers}
             dict={dict}
             locale={locale}
+            taxiRecommendation={returnTaxiRecommendation}
           />
         )}
       </div>

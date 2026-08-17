@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
 import { MIN_TAXI_LEAD_TIME_HOURS } from "@/lib/taxi-service";
+import { TAXI_COMPANIES } from "@/lib/taxi-companies";
 
 const dateString = z
   .string()
@@ -75,8 +76,12 @@ export const taxiRideRequestSchema = z.object({
   destinationLongitude: taxiCoordinate.pipe(z.number().min(-180).max(180)),
   pickupDate: dateString,
   pickupTime: timeString,
+  passengers: z.coerce.number().int().min(1, "Choose at least 1 passenger").max(8, "Choose at most 8 passengers").default(1),
   passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+  passengerEmail: z.string().trim().email("Enter a valid email address").transform((value) => value.toLowerCase()),
   notes: z.string().trim().max(500, "Keep the note under 500 characters").optional(),
+  preferredTaxiCompany: z.enum(TAXI_COMPANIES).optional(),
+  pricingSource: z.enum(["direct", "map"]).default("map"),
 }).refine(
   (data) => albaniaLocalDateTimeToDate(data.pickupDate, data.pickupTime).getTime() >= Date.now() + MIN_TAXI_LEAD_TIME_HOURS * 60 * 60 * 1000,
   { message: `Choose a pickup time at least ${MIN_TAXI_LEAD_TIME_HOURS} hours from now.`, path: ["pickupTime"] }

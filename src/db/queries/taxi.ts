@@ -19,6 +19,7 @@ export async function createTaxiRideRequest(input: {
   passengerPhone: string;
   passengerEmail: string | null;
   notes: string | null;
+  preferredTaxiCompany: string | null;
   userId: number | null;
 }) {
   const requestReference = `TX-${generateBookingReference()}`;
@@ -35,6 +36,7 @@ export async function getTaxiRideRequestByReference(reference: string) {
       pickupAt: taxiRideRequests.pickupAt,
       passengers: taxiRideRequests.passengers,
       notes: taxiRideRequests.notes,
+      preferredTaxiCompany: taxiRideRequests.preferredTaxiCompany,
       quotedPrice: taxiRideRequests.quotedPrice,
       status: taxiRideRequests.status,
     })
@@ -76,6 +78,7 @@ export async function getTaxiRequestForUser(userId: number, reference: string) {
       passengerPhone: taxiRideRequests.passengerPhone,
       passengerEmail: taxiRideRequests.passengerEmail,
       notes: taxiRideRequests.notes,
+      preferredTaxiCompany: taxiRideRequests.preferredTaxiCompany,
       quotedPrice: taxiRideRequests.quotedPrice,
       status: taxiRideRequests.status,
       providerName: taxiProviders.name,

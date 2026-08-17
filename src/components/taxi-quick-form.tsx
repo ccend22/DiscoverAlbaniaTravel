@@ -1,23 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import { useActionState, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal, useFormStatus } from "react-dom";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { requestTaxiAction } from "@/app/(site)/taxi/actions";
-import { Alert } from "@/components/ui/alert";
-import { AlertCircleIcon, ArrowRightIcon, CheckCircleIcon, ClockIcon, CloseIcon, LocateIcon, MapPinIcon, SwapIcon } from "./icons";
-import { LocationPickerPanel, type PickedLocation } from "./location-picker-modal";
+import {
+  AlertCircleIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  CloseIcon,
+  LocateIcon,
+  MapPinIcon,
+  PlusIcon,
+  SwapIcon,
+  UsersIcon,
+} from "./icons";
+import { LocationPickerModal, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { DatePicker } from "./date-picker";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, MIN_TAXI_LEAD_TIME_HOURS, type Coordinates } from "@/lib/taxi-service";
-import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
+import { estimateMapTaxiPriceEur, TAXI_PRICE_PER_KM_EUR } from "@/lib/taxi-pricing";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
 import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
+import { findDirectTaxiRoute, type DirectTaxiFare } from "@/lib/taxi-fares";
 import type { Locale } from "@/lib/locale";
 
 const ALBANIA_TIME_ZONE = "Europe/Tirane";
@@ -41,40 +53,21 @@ function getDefaultPickup(): { date: string; time: string } {
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
 }
 
-interface TaxiDefaults {
-  pickup?: string;
-  destination?: string;
-  pickupLat?: number;
-  pickupLng?: number;
-  destinationLat?: number;
-  destinationLng?: number;
-}
-
 interface TaxiQuickFormProps {
   dict: Dictionary;
   locale: Locale;
   user: { name: string; phone: string | null; email: string } | null;
   error?: string;
   variant?: "solid" | "glass";
-  defaults?: TaxiDefaults;
   /**
-   * Skips this form's own border/background/shadow/padding so a parent can
-   * own one persistent card shell around it — used by HeroBookingWidget so
-   * switching bus/taxi swaps only the fields, not the whole card.
+   * Skips the standalone outer shell so HeroBookingWidget can supply the
+   * same white card used by the bus form.
    */
   bare?: boolean;
 }
 
-const CONTAINER_STYLES: Record<"solid" | "glass", string> = {
-  solid: "border-[#dce8e6] bg-white shadow-[var(--page-shadow)]",
-  glass: "border-white/80 bg-white/95 shadow-[0_26px_64px_rgba(0,24,32,0.2)] backdrop-blur-xl",
-};
-
 type ActivePicker = "pickup" | "destination" | null;
-
-function validCoordinates(lat?: number, lng?: number): Coordinates | null {
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat: lat!, lng: lng! } : null;
-}
+type LocationSource = "search" | "map" | "current" | "typed" | null;
 
 interface EligibilityModalProps {
   kind: "too-short" | "unverified";
@@ -88,13 +81,39 @@ interface EligibilityModalProps {
 
 function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict, onClose, onAdjust }: EligibilityModalProps) {
   useBodyScrollLock(true);
+  const dialogRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    requestAnimationFrame(() => dialog?.focus());
+
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      previouslyFocused?.focus();
+    };
   }, [onClose]);
 
   const isTooShort = kind === "too-short";
@@ -107,28 +126,29 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
         {...tapToDismiss(onClose)}
       />
       <section
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="taxi-eligibility-title"
-        className="overlay-scroll animate-sheet-up relative max-h-[100dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-[1.5rem] border border-white/70 bg-white shadow-[0_32px_90px_rgba(0,24,32,0.34)] sm:animate-fade-up sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-[2rem]"
+        className="overlay-scroll animate-sheet-up relative max-h-[100dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl bg-white text-brand-navy shadow-[0_32px_90px_rgba(0,24,32,0.34)] outline-none sm:animate-fade-up sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-2xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="relative overflow-hidden bg-[linear-gradient(145deg,#eef8f6_0%,#ffffff_72%)] px-5 pb-5 pt-6 sm:px-8 sm:pb-6 sm:pt-8">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full border-[24px] border-teal/5" aria-hidden="true" />
+        <div className="relative overflow-hidden px-5 pb-5 pt-6 sm:px-8 sm:pb-6 sm:pt-8">
           <button
             type="button"
             {...tapToDismiss(onClose)}
             aria-label={dict.closeDialog}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#dfe8e7] bg-white/90 text-muted shadow-sm transition-colors hover:text-brand-navy"
+            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-[#dce8e6] bg-white text-muted transition-colors hover:text-brand-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
           >
             <CloseIcon width={16} height={16} />
           </button>
 
-          <span className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm ${isTooShort ? "bg-coral-soft text-coral" : "bg-teal-soft text-teal"}`}>
+          <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${isTooShort ? "bg-gold-soft text-gold" : "bg-teal-soft text-teal"}`}>
             {isTooShort ? <AlertCircleIcon width={21} height={21} /> : <MapPinIcon width={21} height={21} />}
           </span>
-          <p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-teal">{dict.eligibilityModalKicker}</p>
-          <h2 id="taxi-eligibility-title" className="mt-2 max-w-md pr-5 font-display text-2xl font-black leading-[1.04] tracking-[-0.035em] text-brand-navy sm:pr-0 sm:text-3xl">
+          <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.15em] text-teal">{dict.eligibilityModalKicker}</p>
+          <h2 id="taxi-eligibility-title" className="mt-2 max-w-md pr-5 font-display text-2xl font-black leading-[1.08] tracking-[-0.03em] text-brand-navy sm:pr-0 sm:text-3xl">
             {isTooShort ? dict.tooShortModalTitle : dict.unverifiedModalTitle}
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted">
@@ -140,7 +160,7 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
 
         <div className="px-5 pb-6 sm:px-8 sm:pb-8">
           {(pickupLocation || destination) && (
-            <div className="rounded-2xl border border-[#e1e9e8] bg-[#f8fbfa] p-4">
+            <div className="rounded-xl bg-[#edf4f3] p-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{dict.selectedJourney}</p>
               <div className="mt-2 flex items-center gap-2 text-sm font-bold text-brand-navy">
                 <span className="min-w-0 flex-1 truncate">{pickupLocation || "—"}</span>
@@ -148,14 +168,14 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
                 <span className="min-w-0 flex-1 truncate text-right">{destination || "—"}</span>
               </div>
               {isTooShort && distanceKm !== null && (
-                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#e1e9e8] pt-4">
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#dce8e6] pt-4">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{dict.measuredDistance}</p>
-                    <p className="mt-1 font-display text-2xl font-black text-coral">{Math.round(distanceKm)} km</p>
+                    <p className="mt-1 text-2xl font-extrabold text-gold">{Math.round(distanceKm)} km</p>
                   </div>
-                  <div className="border-l border-[#e1e9e8] pl-3">
+                  <div className="border-l border-[#dce8e6] pl-3">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{dict.requiredDistance}</p>
-                    <p className="mt-1 font-display text-2xl font-black text-brand-navy">{MIN_INTERCITY_TAXI_DISTANCE_KM} km</p>
+                    <p className="mt-1 text-2xl font-extrabold text-brand-navy">{MIN_INTERCITY_TAXI_DISTANCE_KM} km</p>
                   </div>
                 </div>
               )}
@@ -163,10 +183,10 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
           )}
 
           <div className="mt-5 flex flex-col gap-2.5 sm:flex-row-reverse">
-            <button type="button" onClick={onAdjust} className="public-primary-action min-h-12 flex-1 px-5 text-sm">
+            <button type="button" onClick={onAdjust} className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-teal px-5 text-sm font-bold text-white transition-[background-color,transform] hover:bg-teal-hover active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal">
               {dict.adjustRoute}
             </button>
-            <Link href="/routes" className="public-secondary-action min-h-12 flex-1 px-5 text-sm" onClick={onClose}>
+            <Link href="/routes" className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#dce8e6] bg-white px-5 text-sm font-bold text-brand-navy transition-colors hover:border-teal/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal" onClick={onClose}>
               {dict.browseBusRoutes}
             </Link>
           </div>
@@ -177,18 +197,117 @@ function EligibilityModal({ kind, distanceKm, pickupLocation, destination, dict,
   );
 }
 
-export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", defaults, bare = false }: TaxiQuickFormProps) {
+function TaxiSubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="group flex h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,transform,box-shadow] duration-200 hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+    >
+      <span>{pending ? pendingLabel : label}</span>
+      {pending ? null : <ArrowRightIcon width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />}
+    </button>
+  );
+}
+
+function getLowestDirectFare(fares: DirectTaxiFare[]): DirectTaxiFare | null {
+  const allFares = fares.filter((fare) => fare.currency === "ALL");
+  const comparable = allFares.length > 0 ? allFares : fares.filter((fare) => fare.currency === "EUR");
+  return comparable.sort((a, b) => a.amount - b.amount)[0] ?? null;
+}
+
+function LocationFieldTools({
+  label,
+  canClear,
+  currentLocationLabel,
+  mapLabel,
+  clearLabel,
+  locating,
+  allowCurrentLocation,
+  onCurrentLocation,
+  onMap,
+  onClear,
+}: {
+  label: string;
+  canClear: boolean;
+  currentLocationLabel: string;
+  mapLabel: string;
+  clearLabel: string;
+  locating?: boolean;
+  allowCurrentLocation?: boolean;
+  onCurrentLocation?: () => void;
+  onMap: () => void;
+  onClear: () => void;
+}) {
+  function closeMenu(target: HTMLElement) {
+    target.closest("details")?.removeAttribute("open");
+  }
+
+  return (
+    <details className="group relative shrink-0">
+      <summary
+        aria-label={label}
+        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-muted outline-none transition-colors hover:bg-teal-soft hover:text-teal focus-visible:ring-2 focus-visible:ring-teal [&::-webkit-details-marker]:hidden"
+      >
+        <ChevronDownIcon width={13} height={13} className="transition-transform duration-200 group-open:rotate-180" />
+      </summary>
+      <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-52 overflow-hidden rounded-xl border border-[#dce8e6] bg-white p-1.5 shadow-[0_18px_44px_rgba(0,47,50,0.16)]">
+        {allowCurrentLocation && onCurrentLocation && (
+          <button
+            type="button"
+            disabled={locating}
+            onClick={(event) => {
+              closeMenu(event.currentTarget);
+              onCurrentLocation();
+            }}
+            className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-left text-xs font-semibold text-brand-navy transition-colors hover:bg-[#edf4f3] disabled:opacity-45"
+          >
+            <LocateIcon width={14} height={14} className={locating ? "animate-pulse text-teal" : "text-teal"} />
+            {currentLocationLabel}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={(event) => {
+            closeMenu(event.currentTarget);
+            onMap();
+          }}
+          className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-left text-xs font-semibold text-brand-navy transition-colors hover:bg-[#edf4f3]"
+        >
+          <MapPinIcon width={14} height={14} className="text-teal" />
+          {mapLabel}
+        </button>
+        {canClear && (
+          <button
+            type="button"
+            onClick={(event) => {
+              closeMenu(event.currentTarget);
+              onClear();
+            }}
+            className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-left text-xs font-semibold text-brand-navy transition-colors hover:bg-[#edf4f3]"
+          >
+            <CloseIcon width={14} height={14} className="text-muted" />
+            {clearLabel}
+          </button>
+        )}
+      </div>
+    </details>
+  );
+}
+
+export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", bare = false }: TaxiQuickFormProps) {
   const tq = dict.taxiQuickForm;
   const tf = dict.taxiForm;
   const lp = dict.locationPicker;
-  const [pickupLocation, setPickupLocation] = useState(defaults?.pickup ?? "");
-  const [destination, setDestination] = useState(defaults?.destination ?? "");
-  const [pickupCoordinates, setPickupCoordinates] = useState<Coordinates | null>(() =>
-    validCoordinates(defaults?.pickupLat, defaults?.pickupLng)
-  );
-  const [destinationCoordinates, setDestinationCoordinates] = useState<Coordinates | null>(() =>
-    validCoordinates(defaults?.destinationLat, defaults?.destinationLng)
-  );
+  const sw = dict.searchWidget;
+  const [actionState, formAction] = useActionState(requestTaxiAction, { error: null });
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [destination, setDestination] = useState("");
+  const [pickupCoordinates, setPickupCoordinates] = useState<Coordinates | null>(null);
+  const [destinationCoordinates, setDestinationCoordinates] = useState<Coordinates | null>(null);
+  const [pickupSource, setPickupSource] = useState<LocationSource>(null);
+  const [destinationSource, setDestinationSource] = useState<LocationSource>(null);
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [locating, setLocating] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -199,8 +318,10 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
   const [pickupDateSelected, setPickupDateSelected] = useState(false);
   const [pickupTime, setPickupTime] = useState(defaultPickupDateTime.time);
   const [pickupTimeError, setPickupTimeError] = useState<string | null>(null);
+  const [passengers, setPassengers] = useState(1);
   const [notes, setNotes] = useState("");
   const [showNote, setShowNote] = useState(false);
+  const [showContact, setShowContact] = useState(false);
   const [swapRotation, setSwapRotation] = useState(0);
   const todayAlbania = useMemo(() => getAlbaniaDateInputValue(), []);
 
@@ -211,20 +332,30 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
         : null,
     [pickupCoordinates, destinationCoordinates]
   );
-  const routeIsEligible = distanceKm !== null && distanceKm >= MIN_INTERCITY_TAXI_DISTANCE_KM;
-  const priceEstimate = useMemo(
-    () => (routeIsEligible ? estimateTaxiPriceEur(pickupLocation, destination, distanceKm) : null),
-    [routeIsEligible, pickupLocation, destination, distanceKm]
+  const directRoute = useMemo(() => {
+    const usesCustomPin = [pickupSource, destinationSource].some((source) => source === "map" || source === "current");
+    return usesCustomPin ? null : findDirectTaxiRoute(pickupLocation, destination);
+  }, [pickupLocation, destination, pickupSource, destinationSource]);
+  const routeIsEligible = directRoute !== null || (distanceKm !== null && distanceKm >= MIN_INTERCITY_TAXI_DISTANCE_KM);
+  const mapPriceEstimate = useMemo(
+    () => (routeIsEligible && !directRoute ? estimateMapTaxiPriceEur(distanceKm) : null),
+    [routeIsEligible, directRoute, distanceKm]
+  );
+  const lowestDirectFare = useMemo(
+    () => getLowestDirectFare(Object.values(directRoute?.fares ?? {}).filter((fare): fare is DirectTaxiFare => !!fare)),
+    [directRoute]
   );
 
   function handlePicked(location: PickedLocation) {
     if (activePicker === "pickup") {
       setPickupLocation(location.address);
       setPickupCoordinates({ lat: location.lat, lng: location.lng });
+      setPickupSource("map");
       setLocationEnabled(false);
     } else if (activePicker === "destination") {
       setDestination(location.address);
       setDestinationCoordinates({ lat: location.lat, lng: location.lng });
+      setDestinationSource("map");
     }
     setActivePicker(null);
   }
@@ -237,10 +368,13 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
   function handleSwapLocations() {
     const prevPickupLocation = pickupLocation;
     const prevPickupCoordinates = pickupCoordinates;
+    const prevPickupSource = pickupSource;
     setPickupLocation(destination);
     setPickupCoordinates(destinationCoordinates);
+    setPickupSource(destinationSource);
     setDestination(prevPickupLocation);
     setDestinationCoordinates(prevPickupCoordinates);
+    setDestinationSource(prevPickupSource);
     setLocationEnabled(false);
     setSwapRotation((rotation) => rotation + 180);
   }
@@ -254,6 +388,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
       const coordinateLabel = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
       setPickupCoordinates({ lat: latitude, lng: longitude });
       setPickupLocation(coordinateLabel);
+      setPickupSource("current");
       setLocationEnabled(true);
 
       if (hasGoogleMapsApiKey) {
@@ -300,331 +435,391 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", de
     if (albaniaLocalDateTimeToDate(pickupDate, pickupTime).getTime() < earliestAllowed) {
       event.preventDefault();
       setPickupTimeError(formatMessage(tq.minLeadTimeError, { hours: MIN_TAXI_LEAD_TIME_HOURS }));
+      event.currentTarget.querySelector<HTMLInputElement>('input[name="pickupTime"]')?.focus();
       return;
     }
     setPickupTimeError(null);
+    if (!showContact) {
+      event.preventDefault();
+      setShowContact(true);
+      requestAnimationFrame(() => document.getElementById("taxi-passenger-phone")?.focus());
+    }
   }
 
-  const routeStatus = routeIsEligible
-    ? { tone: "success" as const, Icon: CheckCircleIcon, title: tq.routeReadyTitle }
-    : { tone: "danger" as const, Icon: AlertCircleIcon, title: tq.routeTooShortTitle };
+  const hasVerifiedRoute = directRoute !== null || distanceKm !== null;
+  const priceHeadline = directRoute
+      ? tq.directPriceTitle
+    : mapPriceEstimate
+      ? `~€${mapPriceEstimate.priceEur}`
+      : hasVerifiedRoute
+        ? tq.routeTooShortTitle
+        : tq.priceWaitingTitle;
+  const priceDetail = directRoute
+    ? distanceKm !== null
+      ? `${directRoute.routeName} · ${Math.round(distanceKm)} km`
+      : directRoute.routeName
+    : mapPriceEstimate
+      ? `${Math.round(mapPriceEstimate.km)} km · ${formatMessage(tq.mapPriceHint, { rate: TAXI_PRICE_PER_KM_EUR })}`
+      : hasVerifiedRoute
+        ? `${Math.round(distanceKm ?? 0)} km · ${formatMessage(tq.minimumBadge, { min: MIN_INTERCITY_TAXI_DISTANCE_KM })}`
+        : tq.priceWaitingHint;
+  const fareAmount = lowestDirectFare?.amount ?? mapPriceEstimate?.priceEur ?? null;
+  const fareCurrency = lowestDirectFare?.currency ?? (mapPriceEstimate ? "EUR" : null);
+  const ui = locale === "al"
+    ? {
+        from: "Nga ku",
+        to: "Për ku",
+        distance: "Distancë",
+        fromPrice: "Nga",
+        estimate: "Vlerësim",
+        phone: "Telefoni",
+        email: "Email-i",
+        book: "Rezervo taksinë",
+        complete: "Konfirmo rezervimin",
+        detailsReady: "Plotëso detajet më poshtë",
+        pickupOptions: "Opsionet e pikës së nisjes",
+        destinationOptions: "Opsionet e destinacionit",
+        pickupPlaceholder: "p.sh. Aeroporti i Tiranës",
+        destinationPlaceholder: "p.sh. Durrës, Berat ose Ksamil",
+      }
+    : {
+        from: "From",
+        to: "To",
+        distance: "Distance",
+        fromPrice: "From",
+        estimate: "Estimate",
+        phone: "Phone",
+        email: "Email",
+        book: "Book taxi",
+        complete: "Confirm booking",
+        detailsReady: "Complete the details below",
+        pickupOptions: "Pickup options",
+        destinationOptions: "Destination options",
+        pickupPlaceholder: "e.g. Tirana Airport",
+        destinationPlaceholder: "e.g. Durrës, Berat or Ksamil",
+      };
 
   return (
     <>
       <form
-        action={requestTaxiAction}
+        action={formAction}
         onSubmit={handleSubmit}
-        className={
+        data-variant={variant}
+        className={`taxi-console relative isolate mx-auto w-full text-brand-navy ${
           bare
-            ? "relative isolate mx-auto w-full max-w-5xl"
-            : `relative isolate mx-auto w-full max-w-5xl overflow-hidden rounded-[1.5rem] border p-4 sm:rounded-[2rem] sm:p-7 ${CONTAINER_STYLES[variant]}`
-        }
+            ? ""
+            : "max-w-7xl rounded-[2rem] border border-[#dce8e6] bg-white p-3 shadow-[var(--page-shadow)] sm:p-4"
+        }`}
       >
         <input type="hidden" name="pickupLatitude" value={pickupCoordinates?.lat ?? ""} />
         <input type="hidden" name="pickupLongitude" value={pickupCoordinates?.lng ?? ""} />
         <input type="hidden" name="destinationLatitude" value={destinationCoordinates?.lat ?? ""} />
         <input type="hidden" name="destinationLongitude" value={destinationCoordinates?.lng ?? ""} />
+        <input type="hidden" name="pricingSource" value={directRoute ? "direct" : "map"} />
 
-        <div className="mb-5 sm:mb-6">
-          <h2 className="font-display text-[1.6rem] font-black leading-[1.1] tracking-[-0.02em] text-brand-navy sm:text-3xl">{tq.title}</h2>
-          <p className="mt-1.5 text-sm text-muted">{tq.subtitle}</p>
-        </div>
+        {(actionState.error || error) && (
+          <div role="alert" className="mb-3 rounded-xl border border-coral/20 bg-coral-soft px-4 py-3 text-sm font-semibold text-coral">
+            {actionState.error || error}
+          </div>
+        )}
 
-        {error && <div className="mb-4"><Alert tone="error">{error}</Alert></div>}
-
-        <div className="overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] bg-white/85 shadow-[0_1px_3px_rgba(4,31,38,0.05)] backdrop-blur-sm">
-          {/* PICKUP / DESTINATION — the form's primary, highest-priority unit */}
-          <div className="relative">
-            <div className="grid sm:grid-cols-2">
-              <label className="relative flex flex-col gap-1.5 px-4 py-3.5 sm:pr-9">
-                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tq.fromLabel}</span>
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
-                    <span className="h-2.5 w-2.5 rounded-full border-2 border-teal" />
-                  </span>
-                  <PlacesAutocompleteInput
-                    name="pickupLocation"
-                    required
-                    value={pickupLocation}
-                    onChange={(next) => {
-                      setPickupLocation(next);
-                      setPickupCoordinates(null);
-                      setLocationEnabled(false);
-                    }}
-                    onPlaceSelect={(place) => {
-                      setPickupCoordinates({ lat: place.lat, lng: place.lng });
-                    }}
-                    placeholder={tf.pickupLocationPlaceholder}
-                    className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none placeholder:font-normal placeholder:text-muted/70 sm:text-base"
-                  />
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={handleUseCurrentLocation}
-                      disabled={locating}
-                      aria-label={tq.useCurrentLocationAria}
-                      aria-pressed={locationEnabled}
-                      className={`flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors disabled:opacity-40 ${locationEnabled ? "bg-lime text-lime-foreground" : "text-muted/60 hover:bg-teal-soft hover:text-teal"}`}
-                    >
-                      <LocateIcon width={15} height={15} className={locating ? "animate-pulse" : undefined} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (pickupLocation && hasGoogleMapsApiKey) {
-                          setPickupLocation("");
-                          setPickupCoordinates(null);
-                          setLocationEnabled(false);
-                        } else setActivePicker("pickup");
-                      }}
-                      aria-label={pickupLocation && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                      className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-muted/60 transition-colors hover:bg-teal-soft hover:text-teal"
-                    >
-                      {pickupLocation && hasGoogleMapsApiKey ? <CloseIcon width={14} height={14} /> : <MapPinIcon width={15} height={15} />}
-                    </button>
-                  </div>
-                </div>
-              </label>
-
-              {/* Swap, mobile: embedded in the horizontal seam between the stacked fields */}
-              <div className="flex items-center gap-3 px-4 sm:hidden">
-                <span className="h-px flex-1 bg-[var(--page-line)]" aria-hidden="true" />
-                <button
-                  type="button"
-                  onClick={handleSwapLocations}
-                  aria-label={tq.swapAria}
-                  style={{ transform: `rotate(${swapRotation}deg)` }}
-                  className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[var(--page-line)] bg-white text-teal shadow-sm transition-all duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-teal hover:text-white"
-                >
-                  <SwapIcon width={14} height={14} />
-                </button>
-                <span className="h-px flex-1 bg-[var(--page-line)]" aria-hidden="true" />
+        <div className="overflow-visible rounded-[1.5rem] bg-[#edf4f3] p-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(11rem,1fr)_auto_minmax(11rem,1fr)_minmax(9.5rem,.72fr)_minmax(7.5rem,.56fr)_minmax(12rem,.76fr)_auto] xl:items-stretch">
+            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 xl:col-span-1">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.from}</span>
+              <div className="relative flex min-h-11 min-w-0 items-center">
+                <span className={`absolute left-1 h-2.5 w-2.5 rounded-full bg-teal ${locationEnabled ? "shadow-[0_0_0_4px_rgba(0,128,128,0.12)]" : ""}`} aria-hidden="true" />
+                <PlacesAutocompleteInput
+                  id="taxi-pickup-location"
+                  name="pickupLocation"
+                  required
+                  value={pickupLocation}
+                  onChange={(next) => {
+                    setPickupLocation(next);
+                    setPickupCoordinates(null);
+                    setPickupSource("typed");
+                    setLocationEnabled(false);
+                  }}
+                  onPlaceSelect={(place) => {
+                    setPickupCoordinates({ lat: place.lat, lng: place.lng });
+                    setPickupSource("search");
+                  }}
+                  placeholder={ui.pickupPlaceholder}
+                  className="taxi-location-input min-h-11 min-w-0 flex-1 border-0 bg-transparent py-2.5 pl-6 pr-1 text-sm font-semibold text-brand-navy outline-none placeholder:text-muted"
+                />
+                <LocationFieldTools
+                  label={ui.pickupOptions}
+                  canClear={!!pickupLocation}
+                  currentLocationLabel={tq.useCurrentLocationAria}
+                  mapLabel={tq.mapPickerAria}
+                  clearLabel={tq.clearAria}
+                  locating={locating}
+                  allowCurrentLocation
+                  onCurrentLocation={handleUseCurrentLocation}
+                  onMap={() => setActivePicker("pickup")}
+                  onClear={() => {
+                    setPickupLocation("");
+                    setPickupCoordinates(null);
+                    setPickupSource(null);
+                    setLocationEnabled(false);
+                  }}
+                />
               </div>
+            </label>
 
-              <label className="relative flex flex-col gap-1.5 border-t border-[var(--page-line)] px-4 py-3.5 sm:border-l sm:border-t-0 sm:pl-9">
-                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tq.toLabel}</span>
-                <div className="flex items-center gap-2.5">
-                  <MapPinIcon width={15} height={15} className="shrink-0 text-coral" aria-hidden="true" />
-                  <PlacesAutocompleteInput
-                    name="destination"
-                    required
-                    value={destination}
-                    onChange={(next) => {
-                      setDestination(next);
-                      setDestinationCoordinates(null);
-                    }}
-                    onPlaceSelect={(place) => {
-                      setDestinationCoordinates({ lat: place.lat, lng: place.lng });
-                    }}
-                    placeholder={tf.destinationPlaceholder}
-                    className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none placeholder:font-normal placeholder:text-muted/70 sm:text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (destination && hasGoogleMapsApiKey) {
-                        setDestination("");
-                        setDestinationCoordinates(null);
-                      } else setActivePicker("destination");
-                    }}
-                    aria-label={destination && hasGoogleMapsApiKey ? tq.clearAria : tq.mapPickerAria}
-                    className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-muted/60 transition-colors hover:bg-teal-soft hover:text-teal"
-                  >
-                    {destination && hasGoogleMapsApiKey ? <CloseIcon width={14} height={14} /> : <MapPinIcon width={15} height={15} />}
-                  </button>
-                </div>
-              </label>
-            </div>
-
-            {/* Swap, desktop: sits directly on the vertical seam between the two fields */}
-            <div className="pointer-events-none absolute inset-y-0 left-1/2 z-10 hidden -translate-x-1/2 items-center sm:flex">
+            <div className="flex items-center justify-center md:col-span-2 xl:col-span-1">
               <button
                 type="button"
                 onClick={handleSwapLocations}
                 aria-label={tq.swapAria}
+                title={tq.swapAria}
                 style={{ transform: `rotate(${swapRotation}deg)` }}
-                className="pointer-events-auto flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[var(--page-line)] bg-white text-teal shadow-[0_2px_6px_rgba(4,31,38,0.08)] transition-all duration-300 ease-[var(--ease-spring)] hover:border-teal hover:bg-teal hover:text-white"
+                disabled={!pickupLocation && !destination}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[background-color,color,transform] duration-200 hover:bg-teal hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <SwapIcon width={15} height={15} />
+                <SwapIcon width={14} height={14} />
               </button>
             </div>
-          </div>
 
-          {/* DATE / TIME — trip scheduling, deliberately lighter weight than pickup/destination */}
-          <div className="border-t border-[var(--page-line)] px-4 py-3.5">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <DatePicker
-                name="pickupDate"
-                value={pickupDate}
-                min={todayAlbania}
-                onChange={handlePickupDateChange}
-                dict={dict.datePicker}
-                locale={locale}
-                dialogLabel={tq.pickupDateAria}
-                inlineLabel={tq.dateLabel}
-                hasSelection={pickupDateSelected}
-                iconClassName="text-muted"
-                buttonClassName="min-h-8 w-auto min-w-0 gap-2 rounded-lg border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
-              />
-              <span className="h-4 w-px shrink-0 bg-[var(--page-line)]" aria-hidden="true" />
-              <label className="flex min-w-0 items-center gap-2">
-                <span className="sr-only">{tq.timeLabel}</span>
-                <ClockIcon width={15} height={15} className="shrink-0 text-muted" aria-hidden="true" />
+            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 xl:col-span-1">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.to}</span>
+              <div className="relative flex min-h-11 min-w-0 items-center">
+                <span className="absolute left-1 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
+                <PlacesAutocompleteInput
+                  id="taxi-destination"
+                  name="destination"
+                  required
+                  value={destination}
+                  onChange={(next) => {
+                    setDestination(next);
+                    setDestinationCoordinates(null);
+                    setDestinationSource("typed");
+                  }}
+                  onPlaceSelect={(place) => {
+                    setDestinationCoordinates({ lat: place.lat, lng: place.lng });
+                    setDestinationSource("search");
+                  }}
+                  placeholder={ui.destinationPlaceholder}
+                  className="taxi-location-input min-h-11 min-w-0 flex-1 border-0 bg-transparent py-2.5 pl-6 pr-1 text-sm font-semibold text-brand-navy outline-none placeholder:text-muted"
+                />
+                <LocationFieldTools
+                  label={ui.destinationOptions}
+                  canClear={!!destination}
+                  currentLocationLabel={tq.useCurrentLocationAria}
+                  mapLabel={tq.mapPickerAria}
+                  clearLabel={tq.clearAria}
+                  onMap={() => setActivePicker("destination")}
+                  onClear={() => {
+                    setDestination("");
+                    setDestinationCoordinates(null);
+                    setDestinationSource(null);
+                  }}
+                />
+              </div>
+            </label>
+
+            <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm">
+              <p className="px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.dateLabel}</p>
+              <div>
+                <DatePicker
+                  name="pickupDate"
+                  value={pickupDate}
+                  min={todayAlbania}
+                  onChange={handlePickupDateChange}
+                  dict={dict.datePicker}
+                  locale={locale}
+                  dialogLabel={tq.pickupDateAria}
+                  hasSelection={pickupDateSelected}
+                  labelFormat="short"
+                  iconClassName="text-gold"
+                  buttonClassName="[min-height:44px] w-full min-w-0 justify-start gap-2 rounded-lg border-0 bg-transparent px-3 text-sm font-semibold text-brand-navy shadow-none hover:bg-transparent focus:bg-transparent"
+                />
+              </div>
+            </div>
+
+            <label className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.timeLabel}</span>
+              <div className="flex min-h-11 items-center gap-2">
+                <ClockIcon width={14} height={14} className="shrink-0 text-gold" aria-hidden="true" />
                 <input
+                  id="taxi-pickup-time"
                   type="time"
                   name="pickupTime"
                   required
                   aria-label={tq.pickupTimeAria}
+                  aria-invalid={!!pickupTimeError}
                   value={pickupTime}
                   suppressHydrationWarning
                   onChange={(event) => {
                     setPickupTime(event.target.value);
                     setPickupTimeError(null);
                   }}
-                  className="min-h-8 min-w-0 border-0 bg-transparent p-0 text-[15px] font-semibold text-brand-navy outline-none"
+                  className="taxi-schedule-input min-h-[40px] min-w-0 w-full border-0 bg-transparent p-0 text-sm font-semibold text-brand-navy outline-none"
                 />
-              </label>
+              </div>
+            </label>
+
+            <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{sw.passengers}</p>
+              <div className="flex h-11 items-center gap-1">
+                <UsersIcon width={14} height={14} className="mr-1 shrink-0 text-teal" aria-hidden="true" />
+                {[1, 2, 3, 4].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setPassengers(count)}
+                    aria-label={`${sw.passengers}: ${count}`}
+                    aria-pressed={passengers === count}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold tabular-nums transition-[background-color,color,transform] duration-150 active:scale-90 ${
+                      passengers === count
+                        ? "bg-teal text-white"
+                        : "text-muted hover:bg-teal-soft hover:text-teal"
+                    }`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+              <input type="hidden" name="passengers" value={passengers} suppressHydrationWarning />
             </div>
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
-              <AlertCircleIcon width={12} height={12} className="shrink-0" aria-hidden="true" />
-              {formatMessage(tq.leadTimeCaption, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
-            </p>
-            {pickupTimeError && (
-              <p role="alert" className="mt-1 text-xs font-medium text-red">
-                {pickupTimeError}
-              </p>
+
+            <div className="flex min-w-0 self-stretch items-center">
+              {showContact ? (
+                <div className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-soft px-4 text-center text-xs font-semibold text-teal">
+                  <CheckCircleIcon width={14} height={14} />
+                  {ui.detailsReady}
+                </div>
+              ) : (
+                <TaxiSubmitButton label={ui.book} pendingLabel={tq.sendingRequest} />
+              )}
+            </div>
+          </div>
+
+          {locationFailure && <p role="alert" className="px-4 pb-2 pt-3 text-xs font-semibold text-coral">{currentLocationError}</p>}
+
+          <div className="mt-2 flex min-h-[64px] flex-col gap-3 rounded-[1.1rem] bg-white px-4 py-3 sm:flex-row sm:items-center" aria-live="polite">
+            {fareAmount !== null && routeIsEligible ? (
+              <>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="text-xs text-muted">{ui.distance}</span>
+                  <span className="truncate text-sm font-bold text-brand-navy">{distanceKm !== null ? `${Math.round(distanceKm)} km` : directRoute?.routeName}</span>
+                </div>
+                <div className="hidden h-4 w-px bg-[#dce8e6] sm:block" aria-hidden="true" />
+                <span className="inline-flex w-fit items-center rounded-full bg-teal-soft px-2.5 py-1 text-xs font-semibold text-teal">
+                  {directRoute ? tq.directRouteBadge : `€${TAXI_PRICE_PER_KM_EUR}/km`}
+                </span>
+                <div className="min-w-0 flex-1 text-xs text-muted sm:truncate">{priceDetail}</div>
+                <div className="flex shrink-0 items-baseline gap-1 sm:ml-auto">
+                  <span className="text-xs text-muted">{directRoute ? ui.fromPrice : ui.estimate}</span>
+                  <span className="font-display text-2xl font-black tabular-nums text-brand-navy">
+                    {fareCurrency === "EUR" ? "€" : ""}{new Intl.NumberFormat(locale === "al" ? "sq-AL" : "en-US", { maximumFractionDigits: 0 }).format(fareAmount)}
+                  </span>
+                  {fareCurrency === "ALL" && <span className="text-sm font-bold text-muted">ALL</span>}
+                </div>
+              </>
+            ) : (
+              <div className="min-w-0">
+                <p className={`text-sm font-bold ${hasVerifiedRoute && !routeIsEligible ? "text-gold" : "text-brand-navy"}`}>{priceHeadline}</p>
+                <p className="mt-0.5 text-xs leading-5 text-muted">{priceDetail}</p>
+              </div>
             )}
           </div>
 
-          {locationFailure && (
-            <p role="alert" className="border-t border-[var(--page-line)] px-4 py-3 text-xs font-medium text-red">
-              {currentLocationError}
-            </p>
-          )}
-
-          {distanceKm !== null && (
-            <div
-              aria-live="polite"
-              className={`border-t border-[var(--page-line)] px-4 py-3 ${routeStatus.tone === "success" ? "bg-success-soft/40" : "bg-coral-soft/40"}`}
-            >
-              <div className="flex items-center gap-2.5">
-                <routeStatus.Icon
-                  width={15}
-                  height={15}
-                  className={`shrink-0 ${routeStatus.tone === "success" ? "text-success" : "text-coral"}`}
-                  aria-hidden="true"
-                />
-                <p className="text-sm font-semibold text-brand-navy">{routeStatus.title}</p>
-                <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted">{Math.round(distanceKm)} km</span>
-              </div>
-              {priceEstimate && (
-                <div className="mt-2 flex items-center justify-between gap-2 border-t border-[var(--page-line)]/70 pl-[26px] pt-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{tq.estimatedFare}</span>
-                  <span className="font-display text-base font-black text-brand-navy">~€{priceEstimate.priceEur}</span>
-                </div>
-              )}
-              {priceEstimate && <p className="mt-1.5 pl-[26px] text-xs text-muted">{tq.quoteNote}</p>}
-            </div>
-          )}
-
-          {/* PHONE + NOTE + PRIMARY CTA */}
-          <div className="border-t border-[var(--page-line)] p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="min-w-0 flex-1 sm:max-w-xs">
-                <label className="block">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">{tf.phoneNumber}</span>
-                  <input
-                    name="passengerPhone"
-                    type="tel"
-                    required
-                    minLength={6}
-                    autoComplete="tel"
-                    defaultValue={user?.phone ?? ""}
-                    placeholder={tf.phoneNumberPlaceholder}
-                    className="mt-1 block min-h-8 w-full border-0 border-b border-[var(--page-line)] bg-transparent px-0 pb-1.5 text-[15px] font-semibold text-brand-navy outline-none transition-colors placeholder:font-normal placeholder:text-muted/60 focus:border-teal"
-                  />
-                </label>
-
-                {!showNote ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowNote(true)}
-                    className="-ml-3 mt-1 inline-flex min-h-[44px] items-center px-3 text-xs font-semibold text-teal transition-colors hover:text-teal-hover"
-                  >
-                    {tf.addNote}
-                  </button>
-                ) : (
-                  <label className="mt-3 block animate-fade-up">
-                    <span className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
-                      <span>{tf.note}</span>
-                      <span className="flex items-center gap-2">
-                        <span className="normal-case tracking-normal text-muted/70">{notes.length}/500</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNotes("");
-                            setShowNote(false);
-                          }}
-                          aria-label={tf.removeNote}
-                          className="-m-2.5 flex h-[44px] w-[44px] items-center justify-center normal-case tracking-normal text-muted transition-colors hover:text-red"
-                        >
-                          <CloseIcon width={12} height={12} />
-                        </button>
-                      </span>
-                    </span>
-                    <textarea
-                      name="notes"
-                      rows={2}
-                      maxLength={500}
-                      autoFocus
-                      value={notes}
-                      onChange={(event) => setNotes(event.target.value)}
-                      placeholder={tf.notePlaceholder}
-                      className="mt-1 block w-full resize-none border-0 border-b border-[var(--page-line)] bg-transparent px-0 pb-1.5 text-sm leading-relaxed text-brand-navy outline-none transition-colors placeholder:text-muted/60 focus:border-teal"
-                    />
-                  </label>
-                )}
-              </div>
-
-              <button type="submit" className="public-primary-action min-h-14 shrink-0 px-8 text-sm sm:min-w-[13rem]">
-                <span>{tf.sendRequest}</span>
-                <ArrowRightIcon width={16} height={16} aria-hidden="true" />
-              </button>
-            </div>
+          <div className="flex items-start gap-1.5 px-4 pb-2 pt-3 text-[11px] leading-4 text-muted">
+            <ClockIcon width={12} height={12} className="mt-0.5 shrink-0 text-gold" aria-hidden="true" />
+            {formatMessage(tq.leadTimeCaption, { hours: MIN_TAXI_LEAD_TIME_HOURS })}
           </div>
+          {pickupTimeError && <p role="alert" className="px-4 pb-2 text-xs font-semibold text-coral">{pickupTimeError}</p>}
+
+          {showContact && (
+            <div className="animate-fade-up mt-2 rounded-[1.1rem] bg-white p-4">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+                  <div className="min-w-0">
+                    <label htmlFor="taxi-passenger-phone" className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.phone}</label>
+                    <input
+                      id="taxi-passenger-phone"
+                      name="passengerPhone"
+                      type="tel"
+                      required={showContact}
+                      minLength={6}
+                      maxLength={24}
+                      pattern="[0-9+ \(\)\.\-]{6,24}"
+                      autoComplete="tel"
+                      aria-describedby="taxi-phone-helper"
+                      defaultValue={user?.phone ?? ""}
+                      placeholder={tf.phoneNumberPlaceholder}
+                      onInvalid={(event) => event.currentTarget.setCustomValidity(tq.invalidPhone)}
+                      onInput={(event) => event.currentTarget.setCustomValidity("")}
+                      className="mt-1.5 min-h-11 w-full rounded-xl border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                    />
+                    <p id="taxi-phone-helper" className="mt-1.5 text-[11px] leading-4 text-muted">{tq.phoneHelper}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <label htmlFor="taxi-passenger-email" className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.email}</label>
+                    <input
+                      id="taxi-passenger-email"
+                      name="passengerEmail"
+                      type="email"
+                      required={showContact}
+                      autoComplete="email"
+                      defaultValue={user?.email ?? ""}
+                      placeholder="name@example.com"
+                      className="mt-1.5 min-h-11 w-full rounded-xl border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                    />
+                    <p className="mt-1.5 text-[11px] leading-4 text-muted">{locale === "al" ? "Konfirmimi dërgohet në këtë email." : "Your confirmation is sent to this email."}</p>
+                  </div>
+                  <div className="w-full lg:w-52">
+                    <TaxiSubmitButton label={ui.complete} pendingLabel={tq.sendingRequest} />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowNote((visible) => !visible)}
+                  aria-expanded={showNote}
+                  aria-controls="taxi-trip-note"
+                  className="mt-2 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-muted transition-colors hover:text-teal"
+                >
+                  {showNote ? tf.removeNote : tf.addNote}
+                  <PlusIcon width={14} height={14} className={`transition-transform duration-200 ${showNote ? "rotate-45" : ""}`} aria-hidden="true" />
+                </button>
+
+                {showNote && (
+                  <div id="taxi-trip-note" className="animate-fade-up">
+                    <label className="block pt-1">
+                      <span className="sr-only">{tf.note}</span>
+                      <textarea
+                        name="notes"
+                        rows={2}
+                        maxLength={500}
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                        placeholder={tf.notePlaceholder}
+                        className="block min-h-20 w-full resize-none rounded-xl border border-[#dce8e6] bg-white px-3.5 py-3 text-sm leading-5 text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                      />
+                    </label>
+                  </div>
+                )}
+            </div>
+          )}
         </div>
 
-        {activePicker && (
-          <div className="mt-4 animate-fade-up overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] bg-white shadow-[var(--page-shadow)]">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-[linear-gradient(135deg,#f1f9f7_0%,#ffffff_80%)] px-4 py-3 sm:px-5">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal text-white shadow-[0_8px_18px_rgba(0,128,128,0.18)]">
-                  <MapPinIcon width={15} height={15} />
-                </span>
-                <p className="text-sm font-bold text-brand-navy">{activePicker === "pickup" ? lp.pickupTitle : lp.destinationTitle}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActivePicker(null)}
-                aria-label={lp.close}
-                className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#dfe8e7] bg-white text-muted shadow-sm transition-colors hover:text-brand-navy"
-              >
-                <CloseIcon width={16} height={16} />
-              </button>
-            </div>
-            <LocationPickerPanel
-              searchPlaceholder={lp.searchPlaceholder}
-              hintLabel={lp.hint}
-              coordinatesLabel={lp.coordinatesLabel}
-              confirmLabel={lp.confirm}
-              resolvingLabel={lp.resolving}
-              unavailableLabel={lp.unavailable}
-              onConfirm={handlePicked}
-              mapHeightClassName="h-[320px] sm:h-[380px]"
-            />
-          </div>
-        )}
       </form>
+
+      {activePicker && (
+        <LocationPickerModal
+          title={activePicker === "pickup" ? lp.pickupTitle : lp.destinationTitle}
+          closeLabel={lp.close}
+          searchPlaceholder={lp.searchPlaceholder}
+          hintLabel={lp.hint}
+          coordinatesLabel={lp.coordinatesLabel}
+          confirmLabel={lp.confirm}
+          resolvingLabel={lp.resolving}
+          unavailableLabel={lp.unavailable}
+          onConfirm={handlePicked}
+          onClose={() => setActivePicker(null)}
+        />
+      )}
 
       {eligibilityModal && (
         <EligibilityModal

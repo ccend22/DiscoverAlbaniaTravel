@@ -3,11 +3,10 @@
 import { useMemo, useState } from "react";
 import type { TripDepartureDetail } from "@/db/queries/trips";
 import { TripResultCard } from "./trip-result-card";
+import { TaxiRecommendationCard, type TaxiRecommendation } from "./taxi-recommendation-card";
 import { FilterIcon } from "./icons";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import type { Locale } from "@/lib/i18n";
-
-const RESULTS_PAGE_SIZE = 4;
 
 interface ResultsFilterPanelProps {
   results: TripDepartureDetail[];
@@ -15,6 +14,7 @@ interface ResultsFilterPanelProps {
   passengers: number;
   dict: Dictionary;
   locale: Locale;
+  taxiRecommendation?: TaxiRecommendation | null;
 }
 
 type TimeBucket = "morning" | "afternoon" | "evening";
@@ -26,7 +26,7 @@ function bucketOf(time: string): TimeBucket {
   return "evening";
 }
 
-export function ResultsFilterPanel({ results, travelDate, passengers, dict, locale }: ResultsFilterPanelProps) {
+export function ResultsFilterPanel({ results, travelDate, passengers, dict, locale, taxiRecommendation }: ResultsFilterPanelProps) {
   const rf = dict.resultsFilterPanel;
   const BUCKET_LABELS: Record<TimeBucket, string> = {
     morning: rf.morning,
@@ -67,14 +67,6 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
     }
     return { cheapestId: cheapest?.tripDepartureId ?? null, fastestId: fastest.tripDepartureId };
   }, [filtered]);
-
-  const [visibleCount, setVisibleCount] = useState(RESULTS_PAGE_SIZE);
-  const [prevFiltered, setPrevFiltered] = useState(filtered);
-  if (filtered !== prevFiltered) {
-    setPrevFiltered(filtered);
-    setVisibleCount(RESULTS_PAGE_SIZE);
-  }
-  const visible = filtered.slice(0, visibleCount);
 
   function toggleBucket(bucket: TimeBucket) {
     setSelectedBuckets((prev) => {
@@ -173,71 +165,78 @@ export function ResultsFilterPanel({ results, travelDate, passengers, dict, loca
   );
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <div className="lg:hidden">
-        <button
-          type="button"
-          onClick={() => setIsFiltersOpen((open) => !open)}
-          className="public-card flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:text-teal"
-          aria-expanded={isFiltersOpen}
-          aria-controls="mobile-filters"
-        >
-          <span className="flex items-center gap-2">
-            <FilterIcon
-              width={16}
-              height={16}
-              className={`transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] ${isFiltersOpen ? "rotate-90" : ""}`}
-            />
-            {rf.filters} {activeFilterCount > 0 && `(${activeFilterCount})`}
-          </span>
-        </button>
-        {isFiltersOpen && (
-          <div id="mobile-filters" className="public-card mt-3 animate-fade-up rounded-2xl p-4">
-            {filterContent}
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted">
+        {formatMessage(rf.showingResults, { shown: filtered.length, total: results.length, plural: results.length === 1 ? "" : "s" })}
+      </p>
 
-      <aside className="public-card hidden w-64 shrink-0 rounded-2xl p-5 lg:block">
-        {filterContent}
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <p className="text-sm text-muted">
-          {formatMessage(rf.showingResults, { shown: visible.length, total: results.length, plural: results.length === 1 ? "" : "s" })}
-        </p>
-        {filtered.length === 0 ? (
-          <p className="public-card rounded-2xl p-6 text-center text-sm text-muted">
-            {rf.noResultsMatchFilters}{" "}
-            <button type="button" onClick={clearFilters} className="text-teal hover:underline">
-              {rf.clearFilters}
-            </button>
-          </p>
-        ) : (
-          <>
-            {visible.map((trip) => (
-              <TripResultCard
-                key={trip.tripDepartureId}
-                trip={trip}
-                travelDate={travelDate}
-                passengers={passengers}
-                dict={dict}
-                locale={locale}
-                isCheapest={trip.tripDepartureId === cheapestId}
-                isFastest={trip.tripDepartureId === fastestId}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen((open) => !open)}
+            className="public-card flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium text-foreground transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:text-teal"
+            aria-expanded={isFiltersOpen}
+            aria-controls="mobile-filters"
+          >
+            <span className="flex items-center gap-2">
+              <FilterIcon
+                width={16}
+                height={16}
+                className={`transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] ${isFiltersOpen ? "rotate-90" : ""}`}
               />
-            ))}
-            {visibleCount < filtered.length && (
-              <button
-                type="button"
-                onClick={() => setVisibleCount((count) => count + RESULTS_PAGE_SIZE)}
-                className="public-card mt-1 flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium text-teal transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:border-teal hover:bg-teal-soft"
-              >
-                {rf.loadMore}
+              {rf.filters} {activeFilterCount > 0 && `(${activeFilterCount})`}
+            </span>
+          </button>
+          {isFiltersOpen && (
+            <div id="mobile-filters" className="public-card mt-3 animate-fade-up rounded-2xl p-4">
+              {filterContent}
+            </div>
+          )}
+        </div>
+
+        <aside className="public-card hidden w-64 shrink-0 rounded-2xl p-5 lg:block">
+          {filterContent}
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          {filtered.length === 0 ? (
+            <p className="public-card rounded-2xl p-6 text-center text-sm text-muted">
+              {rf.noResultsMatchFilters}{" "}
+              <button type="button" onClick={clearFilters} className="text-teal hover:underline">
+                {rf.clearFilters}
               </button>
-            )}
-          </>
-        )}
+            </p>
+          ) : (
+            <>
+              {filtered[0] && (
+                <TripResultCard
+                  key={filtered[0].tripDepartureId}
+                  trip={filtered[0]}
+                  travelDate={travelDate}
+                  passengers={passengers}
+                  dict={dict}
+                  locale={locale}
+                  isCheapest={filtered[0].tripDepartureId === cheapestId}
+                  isFastest={filtered[0].tripDepartureId === fastestId}
+                />
+              )}
+              {taxiRecommendation && <TaxiRecommendationCard recommendation={taxiRecommendation} dict={dict} />}
+              {filtered.slice(1).map((trip) => (
+                <TripResultCard
+                  key={trip.tripDepartureId}
+                  trip={trip}
+                  travelDate={travelDate}
+                  passengers={passengers}
+                  dict={dict}
+                  locale={locale}
+                  isCheapest={trip.tripDepartureId === cheapestId}
+                  isFastest={trip.tripDepartureId === fastestId}
+                />
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
