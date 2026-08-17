@@ -77,6 +77,21 @@ const nextConfig: NextConfig = {
         source: "/pay/return",
         headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }],
       },
+      // Same root cause as the override above: the blanket Permissions-Policy
+      // disables the Payment Request API everywhere with `payment=()`, which
+      // also silently strips it from POK's embedded checkout iframe on this
+      // page -- breaking Apple Pay/Google Pay wallet buttons there, even
+      // though normal card entry still works. Delegates it to our own origin
+      // and POK's checkout domain only, nowhere else on the site.
+      {
+        source: "/book/:tripDepartureId",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: 'camera=(), microphone=(), geolocation=(self), payment=(self "https://pay.pokpay.io"), usb=()',
+          },
+        ],
+      },
     ];
   },
 };

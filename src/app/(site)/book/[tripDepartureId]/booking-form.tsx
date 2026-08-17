@@ -75,6 +75,7 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
           <iframe
             src={devOverrideSrc ?? state.confirmUrl}
             title={bp.completePaymentHeading}
+            allow="payment"
             onLoad={() => setIframeLoaded(true)}
             className={`h-full w-full transition-opacity duration-[var(--dur-base)] ${iframeLoaded ? "opacity-100" : "opacity-0"}`}
           />
