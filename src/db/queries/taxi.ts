@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, isNull, notExists, or, sql } from "drizzle-orm";
 import { db } from "../index";
 import {
+  payments,
   taxiProviderUsers,
   taxiProviders,
   taxiRequestDeclines,
@@ -9,6 +10,7 @@ import {
 } from "../schema";
 import { generateBookingReference } from "@/lib/reference-code";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import type { TaxiReservationEmailDetail } from "@/lib/email";
 
 export async function createTaxiRideRequest(input: {
   pickupLocation: string;
@@ -21,10 +23,13 @@ export async function createTaxiRideRequest(input: {
   notes: string | null;
   preferredTaxiCompany: string | null;
   userId: number | null;
-}) {
+}): Promise<{ id: number; reference: string }> {
   const requestReference = `TX-${generateBookingReference()}`;
-  await db.insert(taxiRideRequests).values({ ...input, requestReference });
-  return requestReference;
+  const [row] = await db
+    .insert(taxiRideRequests)
+    .values({ ...input, requestReference })
+    .returning({ id: taxiRideRequests.id });
+  return { id: row.id, reference: requestReference };
 }
 
 export async function getTaxiRideRequestByReference(reference: string) {
@@ -39,9 +44,14 @@ export async function getTaxiRideRequestByReference(reference: string) {
       preferredTaxiCompany: taxiRideRequests.preferredTaxiCompany,
       quotedPrice: taxiRideRequests.quotedPrice,
       status: taxiRideRequests.status,
+      paymentAmount: payments.amount,
+      paymentCurrency: payments.currency,
+      paymentStatus: payments.status,
     })
     .from(taxiRideRequests)
+    .leftJoin(payments, eq(payments.taxiRideRequestId, taxiRideRequests.id))
     .where(eq(taxiRideRequests.requestReference, reference))
+    .orderBy(desc(payments.createdAt))
     .limit(1);
   return request ?? null;
 }
@@ -103,6 +113,39 @@ export async function getTaxiRequestForUser(userId: number, reference: string) {
     )
     .limit(1);
   return request ?? null;
+}
+
+/** System-initiated cancel for a taxi request whose payment failed, expired, or was never completed -- mirrors cancelBookingForUnpaidPayment. No inventory to restore (no seat pool), just the status flip. The `status = 'requested'` guard makes this safe to call more than once for the same request (webhook, return-redirect, and sweep can all race on it). */
+export async function cancelTaxiRequestForUnpaidPayment(taxiRideRequestId: number): Promise<boolean> {
+  const [updated] = await db
+    .update(taxiRideRequests)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(and(eq(taxiRideRequests.id, taxiRideRequestId), eq(taxiRideRequests.status, "requested")))
+    .returning({ id: taxiRideRequests.id });
+  return Boolean(updated);
+}
+
+/** For the reservation email, sent once payment settles as paid (see verifyAndSettlePokPayment) -- that trigger only has a taxiRideRequestId, not a reference. The paid amount/currency come from the linked payments row, the single source of truth for what was actually charged. */
+export async function getTaxiReservationEmailDetail(taxiRideRequestId: number): Promise<TaxiReservationEmailDetail | null> {
+  const [row] = await db
+    .select({
+      requestReference: taxiRideRequests.requestReference,
+      pickupLocation: taxiRideRequests.pickupLocation,
+      destination: taxiRideRequests.destination,
+      pickupAt: taxiRideRequests.pickupAt,
+      passengers: taxiRideRequests.passengers,
+      passengerName: taxiRideRequests.passengerName,
+      passengerPhone: taxiRideRequests.passengerPhone,
+      passengerEmail: taxiRideRequests.passengerEmail,
+      notes: taxiRideRequests.notes,
+      amount: payments.amount,
+      currency: payments.currency,
+    })
+    .from(taxiRideRequests)
+    .innerJoin(payments, eq(payments.taxiRideRequestId, taxiRideRequests.id))
+    .where(eq(taxiRideRequests.id, taxiRideRequestId))
+    .limit(1);
+  return row ?? null;
 }
 
 export async function cancelUserTaxiRequest(userId: number, requestId: number) {

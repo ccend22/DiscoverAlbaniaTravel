@@ -2,7 +2,7 @@
 
 import { bookingFormSchema } from "@/lib/validation";
 import { createBooking, cancelBookingForUnpaidPayment } from "@/db/queries/bookings";
-import { createPendingPaymentForBooking } from "@/db/queries/payments";
+import { createPendingPayment } from "@/db/queries/payments";
 import { createSdkOrder, PokConfigError } from "@/lib/pok-payments";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getSiteOrigin } from "@/lib/google-oauth";
@@ -66,7 +66,7 @@ export async function createBookingAction(
       expiresAfterMinutes: 30,
     });
 
-    await createPendingPaymentForBooking({
+    await createPendingPayment({
       bookingId: result.bookingId,
       amount,
       currency: "ALL",

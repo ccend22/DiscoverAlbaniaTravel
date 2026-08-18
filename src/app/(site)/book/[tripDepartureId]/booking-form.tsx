@@ -33,7 +33,7 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
       if (event.data?.source !== "pok-payment-return") return;
-      if (event.data.bookingReference === bookingReference) {
+      if (event.data.reference === bookingReference) {
         router.push(`/booking/${bookingReference}`);
       }
     }

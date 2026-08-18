@@ -13,6 +13,8 @@ interface PlacesAutocompleteInputProps {
   required?: boolean;
   className?: string;
   onPlaceSelect?: (place: { address: string; lat: number; lng: number }) => void;
+  /** ISO 3166-1 alpha-2 country code (e.g. "al") to restrict autocomplete suggestions to. */
+  countryRestriction?: string;
 }
 
 /**
@@ -21,10 +23,11 @@ interface PlacesAutocompleteInputProps {
  * the full map picker at all — the map stays there as the fallback for
  * addresses that don't resolve to a named place.
  */
-export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder, required, className, onPlaceSelect }: PlacesAutocompleteInputProps) {
+export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder, required, className, onPlaceSelect, countryRestriction }: PlacesAutocompleteInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const onChangeRef = useRef(onChange);
   const onPlaceSelectRef = useRef(onPlaceSelect);
+  const countryRestrictionRef = useRef(countryRestriction);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -33,6 +36,10 @@ export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder
   useEffect(() => {
     onPlaceSelectRef.current = onPlaceSelect;
   }, [onPlaceSelect]);
+
+  useEffect(() => {
+    countryRestrictionRef.current = countryRestriction;
+  }, [countryRestriction]);
 
   useEffect(() => {
     if (!hasGoogleMapsApiKey || !inputRef.current) return;
@@ -55,6 +62,9 @@ export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder
           if (cancelled || !inputRef.current) return;
           const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
             fields: ["formatted_address", "geometry"],
+            ...(countryRestrictionRef.current
+              ? { componentRestrictions: { country: countryRestrictionRef.current } }
+              : {}),
           });
           unpin = pinAutocompleteDropdownBelow(inputRef.current);
           autocomplete.addListener("place_changed", () => {

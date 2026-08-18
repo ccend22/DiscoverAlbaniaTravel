@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal, useFormStatus } from "react-dom";
 import { importLibrary } from "@googlemaps/js-api-loader";
@@ -203,7 +204,7 @@ function TaxiSubmitButton({ label, pendingLabel }: { label: string; pendingLabel
     <button
       type="submit"
       disabled={pending}
-      className="group flex h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,transform,box-shadow] duration-200 hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+      className="group flex h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-teal px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(0,128,128,0.2)] transition-[background-color,transform,box-shadow] duration-200 hover:bg-teal-hover hover:shadow-[0_14px_30px_rgba(0,128,128,0.26)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
     >
       <span>{pending ? pendingLabel : label}</span>
       {pending ? null : <ArrowRightIcon width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />}
@@ -301,7 +302,13 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
   const tf = dict.taxiForm;
   const lp = dict.locationPicker;
   const sw = dict.searchWidget;
-  const [actionState, formAction] = useActionState(requestTaxiAction, { error: null });
+  const bp = dict.bookPage;
+  const [actionState, formAction] = useActionState(requestTaxiAction, { status: "idle" });
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [devOverrideSrc, setDevOverrideSrc] = useState<string | null>(null);
+  const router = useRouter();
+  const actionError = actionState.status === "error" ? actionState.message : null;
+  const showCheckout = actionState.status === "checkout";
   const [pickupLocation, setPickupLocation] = useState("");
   const [destination, setDestination] = useState("");
   const [pickupCoordinates, setPickupCoordinates] = useState<Coordinates | null>(null);
@@ -345,6 +352,22 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
     () => getLowestDirectFare(Object.values(directRoute?.fares ?? {}).filter((fare): fare is DirectTaxiFare => !!fare)),
     [directRoute]
   );
+
+  useEffect(() => {
+    if (actionState.status !== "checkout") return;
+    const requestReference = actionState.requestReference;
+
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.source !== "pok-payment-return") return;
+      if (event.data.reference === requestReference) {
+        router.push(`/taxi/request/${requestReference}`);
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [actionState, router]);
 
   function handlePicked(location: PickedLocation) {
     if (activePicker === "pickup") {
@@ -499,6 +522,52 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         destinationPlaceholder: "e.g. Durrës, Berat or Ksamil",
       };
 
+  if (showCheckout && actionState.status === "checkout") {
+    return (
+      <div className="public-card flex animate-fade-up flex-col gap-2 p-3 sm:gap-3 sm:p-8">
+        <p className="px-1 text-sm font-semibold text-brand-navy">{bp.completePaymentHeading}</p>
+        <div className="relative h-[1010px] overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] sm:h-[840px]">
+          {!iframeLoaded && (
+            <div className="absolute inset-0 flex flex-col gap-3 bg-surface p-4" aria-busy="true" aria-live="polite">
+              <span className="sr-only">{bp.loadingPayment}</span>
+              <div className="h-16 w-full animate-pulse rounded-xl bg-surface-sunken" />
+              <div className="h-28 w-full animate-pulse rounded-xl bg-surface-sunken" />
+              <div className="h-12 w-full animate-pulse rounded-full bg-surface-sunken" />
+              <div className="mt-1 flex flex-col gap-3">
+                <div className="h-14 w-full animate-pulse rounded-xl bg-surface-sunken" />
+                <div className="h-14 w-full animate-pulse rounded-xl bg-surface-sunken" />
+                <div className="flex gap-3">
+                  <div className="h-14 w-1/2 animate-pulse rounded-xl bg-surface-sunken" />
+                  <div className="h-14 w-1/2 animate-pulse rounded-xl bg-surface-sunken" />
+                </div>
+                <div className="h-14 w-full animate-pulse rounded-xl bg-surface-sunken" />
+              </div>
+              <div className="mt-auto h-12 w-full animate-pulse rounded-full bg-surface-sunken" />
+            </div>
+          )}
+          <iframe
+            src={devOverrideSrc ?? actionState.confirmUrl}
+            title={bp.completePaymentHeading}
+            allow="payment"
+            onLoad={() => setIframeLoaded(true)}
+            className={`h-full w-full transition-opacity duration-[var(--dur-base)] ${iframeLoaded ? "opacity-100" : "opacity-0"}`}
+          />
+        </div>
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            type="button"
+            onClick={() =>
+              setDevOverrideSrc(`/pay/return?ref=${encodeURIComponent(actionState.requestReference)}&embedded=1&dev=1`)
+            }
+            className="mt-1 rounded-xl border border-dashed border-warning/50 bg-warning-soft px-3 py-2 text-xs font-medium text-warning"
+          >
+            Dev only: simulate payment success (no real charge)
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <form
@@ -517,15 +586,16 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         <input type="hidden" name="destinationLongitude" value={destinationCoordinates?.lng ?? ""} />
         <input type="hidden" name="pricingSource" value={directRoute ? "direct" : "map"} />
 
-        {(actionState.error || error) && (
-          <div role="alert" className="mb-3 rounded-xl border border-coral/20 bg-coral-soft px-4 py-3 text-sm font-semibold text-coral">
-            {actionState.error || error}
+        {(actionError || error) && (
+          <div role="alert" className="mb-3 rounded-[1.1rem] border border-coral/20 bg-coral-soft px-4 py-3 text-sm font-semibold text-coral">
+            {actionError || error}
           </div>
         )}
 
         <div className="overflow-visible rounded-[1.5rem] bg-[#edf4f3] p-2">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(11rem,1fr)_auto_minmax(11rem,1fr)_minmax(9.5rem,.72fr)_minmax(7.5rem,.56fr)_minmax(12rem,.76fr)_auto] xl:items-stretch">
-            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 xl:col-span-1">
+          <div className="relative flex flex-col rounded-[1.1rem] bg-white md:contents">
+            <label className="relative flex min-w-0 flex-col justify-center px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 md:rounded-[1.1rem] md:bg-white xl:col-span-1">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.from}</span>
               <div className="relative flex min-h-11 min-w-0 items-center">
                 <span className={`absolute left-1 h-2.5 w-2.5 rounded-full bg-teal ${locationEnabled ? "shadow-[0_0_0_4px_rgba(0,128,128,0.12)]" : ""}`} aria-hidden="true" />
@@ -545,6 +615,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                     setPickupSource("search");
                   }}
                   placeholder={ui.pickupPlaceholder}
+                  countryRestriction="al"
                   className="taxi-location-input min-h-11 min-w-0 flex-1 border-0 bg-transparent py-2.5 pl-6 pr-1 text-sm font-semibold text-brand-navy outline-none placeholder:text-muted"
                 />
                 <LocationFieldTools
@@ -581,7 +652,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
               </button>
             </div>
 
-            <label className="relative flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 xl:col-span-1">
+            <label className="relative flex min-w-0 flex-col justify-center px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 md:rounded-[1.1rem] md:bg-white xl:col-span-1">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.to}</span>
               <div className="relative flex min-h-11 min-w-0 items-center">
                 <span className="absolute left-1 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
@@ -600,6 +671,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                     setDestinationSource("search");
                   }}
                   placeholder={ui.destinationPlaceholder}
+                  countryRestriction="al"
                   className="taxi-location-input min-h-11 min-w-0 flex-1 border-0 bg-transparent py-2.5 pl-6 pr-1 text-sm font-semibold text-brand-navy outline-none placeholder:text-muted"
                 />
                 <LocationFieldTools
@@ -617,6 +689,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                 />
               </div>
             </label>
+          </div>
 
             <div className="flex min-w-0 flex-col justify-center rounded-[1.1rem] bg-white text-sm">
               <p className="px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.dateLabel}</p>
@@ -685,7 +758,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
 
             <div className="flex min-w-0 self-stretch items-center">
               {showContact ? (
-                <div className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-soft px-4 text-center text-xs font-semibold text-teal">
+                <div className="flex h-11 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-teal-soft px-4 text-center text-xs font-semibold text-teal">
                   <CheckCircleIcon width={14} height={14} />
                   {ui.detailsReady}
                 </div>
@@ -750,7 +823,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                       placeholder={tf.phoneNumberPlaceholder}
                       onInvalid={(event) => event.currentTarget.setCustomValidity(tq.invalidPhone)}
                       onInput={(event) => event.currentTarget.setCustomValidity("")}
-                      className="mt-1.5 min-h-11 w-full rounded-xl border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                      className="mt-1.5 min-h-11 w-full rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
                     />
                     <p id="taxi-phone-helper" className="mt-1.5 text-[11px] leading-4 text-muted">{tq.phoneHelper}</p>
                   </div>
@@ -764,12 +837,13 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                       autoComplete="email"
                       defaultValue={user?.email ?? ""}
                       placeholder="name@example.com"
-                      className="mt-1.5 min-h-11 w-full rounded-xl border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                      className="mt-1.5 min-h-11 w-full rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
                     />
                     <p className="mt-1.5 text-[11px] leading-4 text-muted">{locale === "al" ? "Konfirmimi dërgohet në këtë email." : "Your confirmation is sent to this email."}</p>
                   </div>
                   <div className="w-full lg:w-52">
                     <TaxiSubmitButton label={ui.complete} pendingLabel={tq.sendingRequest} />
+                    <p className="mt-1.5 text-center text-[11px] leading-4 text-muted">{tq.submitReassurance}</p>
                   </div>
                 </div>
 
@@ -795,7 +869,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                         value={notes}
                         onChange={(event) => setNotes(event.target.value)}
                         placeholder={tf.notePlaceholder}
-                        className="block min-h-20 w-full resize-none rounded-xl border border-[#dce8e6] bg-white px-3.5 py-3 text-sm leading-5 text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                        className="block min-h-20 w-full resize-none rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 py-3 text-sm leading-5 text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
                       />
                     </label>
                   </div>

@@ -177,13 +177,17 @@ export interface TaxiReservationEmailDetail {
   passengerName: string | null;
   passengerPhone: string;
   passengerEmail: string | null;
-  preferredTaxiCompany: string | null;
-  estimatedFare: string | null;
-  pricingSource: "direct" | "map";
+  amount: string;
+  currency: string;
   notes: string | null;
 }
 
-/** Sends every private-transfer booking to the owner and a confirmation to the traveler. */
+function formatTaxiFare(amount: string, currency: string): string {
+  const formatted = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(amount));
+  return `${currency === "EUR" ? "€" : ""}${formatted}${currency === "ALL" ? " ALL" : ""}`;
+}
+
+/** Sends every private-transfer booking to the owner and a confirmation to the traveler -- fired once payment settles as paid (see verifyAndSettlePokPayment), never at booking creation. */
 export async function sendTaxiReservationNotification(
   detail: TaxiReservationEmailDetail
 ): Promise<void> {
@@ -202,8 +206,7 @@ export async function sendTaxiReservationNotification(
     ["Phone", detail.passengerPhone],
     ["Passenger", detail.passengerName || "Guest"],
     ["Passenger email", detail.passengerEmail || "Not provided"],
-    ["Fare", detail.estimatedFare || "Price on request"],
-    ["Pricing", detail.pricingSource === "direct" ? "Direct route fare" : "Map estimate at €1/km"],
+    ["Fare paid", formatTaxiFare(detail.amount, detail.currency)],
     ["Trip details", detail.notes || "None"],
   ];
 

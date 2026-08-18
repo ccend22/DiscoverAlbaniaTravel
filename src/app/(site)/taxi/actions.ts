@@ -1,19 +1,21 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { createTaxiRideRequest } from "@/db/queries/taxi";
+import { createTaxiRideRequest, cancelTaxiRequestForUnpaidPayment } from "@/db/queries/taxi";
+import { createPendingPayment } from "@/db/queries/payments";
+import { createSdkOrder, PokConfigError } from "@/lib/pok-payments";
 import { getUserById } from "@/db/queries/users";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { taxiRideRequestSchema } from "@/lib/validation";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
 import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
-import { findDirectTaxiRoute, formatDirectTaxiFare } from "@/lib/taxi-fares";
+import { findDirectTaxiRoute } from "@/lib/taxi-fares";
 import { estimateMapTaxiPriceEur } from "@/lib/taxi-pricing";
-import { sendTaxiReservationNotification } from "@/lib/email";
+import { getSiteOrigin } from "@/lib/google-oauth";
 
-export interface TaxiRequestActionState {
-  error: string | null;
-}
+export type TaxiRequestActionState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | { status: "checkout"; confirmUrl: string; requestReference: string };
 
 export async function requestTaxiAction(
   _previousState: TaxiRequestActionState,
@@ -36,41 +38,47 @@ export async function requestTaxiAction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Please check the form" };
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Please check the form" };
   }
 
   const distanceKm = calculateDistanceKm(
     { lat: parsed.data.pickupLatitude, lng: parsed.data.pickupLongitude },
     { lat: parsed.data.destinationLatitude, lng: parsed.data.destinationLongitude }
   );
-  const submittedDirectRoute =
+  const directRoute =
     parsed.data.pricingSource === "direct"
       ? findDirectTaxiRoute(parsed.data.pickupLocation, parsed.data.destination)
       : null;
-  if (!submittedDirectRoute && distanceKm < MIN_INTERCITY_TAXI_DISTANCE_KM) {
+  if (!directRoute && distanceKm < MIN_INTERCITY_TAXI_DISTANCE_KM) {
     return {
-      error: `Intercity taxi requests require a journey of at least ${MIN_INTERCITY_TAXI_DISTANCE_KM} km.`,
+      status: "error",
+      message: `Intercity taxi requests require a journey of at least ${MIN_INTERCITY_TAXI_DISTANCE_KM} km.`,
     };
+  }
+
+  // The fare charged is always computed here from the submitted route, never
+  // trusted from the client -- mirrors the direct-route/map-estimate split
+  // shown in the form, preferring a real ALL-denominated fare when one
+  // exists. Every booking now goes through POK for whatever this resolves
+  // to, so a route with no computable fare can't proceed.
+  const comparableDirectFares = directRoute
+    ? Object.values(directRoute.fares).filter((fare): fare is NonNullable<typeof fare> => Boolean(fare))
+    : [];
+  const allFares = comparableDirectFares.filter((fare) => fare.currency === "ALL");
+  const selectedDirectFare = (allFares.length > 0 ? allFares : comparableDirectFares).sort((a, b) => a.amount - b.amount)[0] ?? null;
+  const mapEstimate = directRoute ? null : estimateMapTaxiPriceEur(distanceKm);
+  const amount = selectedDirectFare?.amount ?? mapEstimate?.priceEur ?? null;
+  const currency = selectedDirectFare?.currency ?? (mapEstimate ? "EUR" : null);
+
+  if (amount === null || currency === null) {
+    return { status: "error", message: "We couldn't price this journey. Please adjust your route and try again." };
   }
 
   const userId = await getActiveUserSessionId();
   const user = userId ? await getUserById(userId) : null;
   const pickupAt = albaniaLocalDateTimeToDate(parsed.data.pickupDate, parsed.data.pickupTime);
-  const directRoute = submittedDirectRoute;
-  const comparableDirectFares = directRoute
-    ? Object.values(directRoute.fares).filter((fare): fare is NonNullable<typeof fare> => Boolean(fare))
-    : [];
-  const allFares = comparableDirectFares.filter((fare) => fare.currency === "ALL");
-  const selectedDirectFare = (allFares.length > 0 ? allFares : comparableDirectFares)
-    .sort((a, b) => a.amount - b.amount)[0] ?? null;
-  const mapEstimate = directRoute ? null : estimateMapTaxiPriceEur(distanceKm);
-  const estimatedFare = selectedDirectFare
-    ? formatDirectTaxiFare(selectedDirectFare)
-    : mapEstimate
-      ? `~€${mapEstimate.priceEur}`
-      : null;
 
-  const reference = await createTaxiRideRequest({
+  const result = await createTaxiRideRequest({
     pickupLocation: parsed.data.pickupLocation,
     destination: parsed.data.destination,
     pickupAt,
@@ -83,29 +91,45 @@ export async function requestTaxiAction(
     userId,
   });
 
-  // The reservation is already safely stored at this point. Email remains
-  // best-effort so a temporary SMTP outage never loses or duplicates it.
-  try {
-    await sendTaxiReservationNotification({
-      requestReference: reference,
-      pickupLocation: parsed.data.pickupLocation,
-      destination: parsed.data.destination,
-      pickupAt,
-      passengers: parsed.data.passengers,
-      passengerName: user?.name ?? null,
-      passengerPhone: parsed.data.passengerPhone,
-      passengerEmail: parsed.data.passengerEmail,
-      preferredTaxiCompany: null,
-      estimatedFare,
-      pricingSource: directRoute ? "direct" : "map",
-      notes: parsed.data.notes || null,
-    });
-  } catch (emailError) {
-    console.error("[email] failed to send taxi reservation notification", {
-      requestReference: reference,
-      emailError,
-    });
-  }
+  // The request row now exists (status "requested"). From here, any failure
+  // must cancel it again -- drizzle's neon-http driver can't hold a
+  // transaction open across the network round-trip to POK, so this is a
+  // compensating action, not a rollback.
+  const returnUrl = `${getSiteOrigin()}/pay/return?ref=${encodeURIComponent(result.reference)}&embedded=1`;
 
-  redirect(`/taxi/request/${reference}`);
+  try {
+    const order = await createSdkOrder({
+      amount,
+      currencyCode: currency,
+      description: `Taxi transfer · ${parsed.data.pickupLocation} → ${parsed.data.destination} · ${result.reference}`,
+      merchantCustomReference: result.reference,
+      webhookUrl: `${getSiteOrigin()}/pay/webhook`,
+      redirectUrl: returnUrl,
+      failRedirectUrl: returnUrl,
+      expiresAfterMinutes: 30,
+    });
+
+    await createPendingPayment({
+      taxiRideRequestId: result.id,
+      amount,
+      currency,
+      sdkOrder: order,
+    });
+
+    return { status: "checkout", confirmUrl: order.confirmUrl, requestReference: result.reference };
+  } catch (error) {
+    console.error("[pok-payments] failed to start taxi checkout, cancelling request", {
+      requestReference: result.reference,
+      error: error instanceof PokConfigError ? error.message : error,
+    });
+    try {
+      await cancelTaxiRequestForUnpaidPayment(result.id);
+    } catch (cleanupError) {
+      console.error("[pok-payments] failed to cancel taxi request after checkout setup failed", {
+        requestReference: result.reference,
+        cleanupError,
+      });
+    }
+    return { status: "error", message: "We couldn't start payment for this booking. Please try again." };
+  }
 }
