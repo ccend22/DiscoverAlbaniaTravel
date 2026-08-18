@@ -17,7 +17,7 @@ import { AlertCircleIcon } from "@/components/icons";
 import { getLocaleAndDictionary, type Locale } from "@/lib/i18n";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
-import { estimateMapTaxiPriceEur } from "@/lib/taxi-pricing";
+import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { buildCityOptions, POPULAR_CITY_NAMES } from "@/lib/city-options";
 import type { Metadata } from "next";
 
@@ -94,7 +94,7 @@ function buildTaxiRecommendation(
     { lat: segment.toLat, lng: segment.toLng }
   );
   if (distanceKm < MIN_INTERCITY_TAXI_DISTANCE_KM) return null;
-  const estimate = estimateMapTaxiPriceEur(distanceKm);
+  const estimate = estimateTaxiPriceEur(distanceKm);
   if (!estimate) return null;
 
   const params = new URLSearchParams({

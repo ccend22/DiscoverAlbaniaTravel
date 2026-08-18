@@ -9,7 +9,7 @@ import { taxiRideRequestSchema } from "@/lib/validation";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
 import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
 import { findDirectTaxiRoute } from "@/lib/taxi-fares";
-import { estimateMapTaxiPriceEur } from "@/lib/taxi-pricing";
+import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { getSiteOrigin } from "@/lib/google-oauth";
 
 export type TaxiRequestActionState =
@@ -56,19 +56,12 @@ export async function requestTaxiAction(
     };
   }
 
-  // The fare charged is always computed here from the submitted route, never
-  // trusted from the client -- mirrors the direct-route/map-estimate split
-  // shown in the form, preferring a real ALL-denominated fare when one
-  // exists. Every booking now goes through POK for whatever this resolves
-  // to, so a route with no computable fare can't proceed.
-  const comparableDirectFares = directRoute
-    ? Object.values(directRoute.fares).filter((fare): fare is NonNullable<typeof fare> => Boolean(fare))
-    : [];
-  const allFares = comparableDirectFares.filter((fare) => fare.currency === "ALL");
-  const selectedDirectFare = (allFares.length > 0 ? allFares : comparableDirectFares).sort((a, b) => a.amount - b.amount)[0] ?? null;
-  const mapEstimate = directRoute ? null : estimateMapTaxiPriceEur(distanceKm);
-  const amount = selectedDirectFare?.amount ?? mapEstimate?.priceEur ?? null;
-  const currency = selectedDirectFare?.currency ?? (mapEstimate ? "EUR" : null);
+  // Price every taxi journey from the server-calculated distance. The form's
+  // displayed estimate is informational; the client never controls the
+  // amount or currency sent to POK.
+  const estimate = estimateTaxiPriceEur(distanceKm);
+  const amount = estimate?.priceEur ?? null;
+  const currency = estimate ? "EUR" : null;
 
   if (amount === null || currency === null) {
     return { status: "error", message: "We couldn't price this journey. Please adjust your route and try again." };

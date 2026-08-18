@@ -25,12 +25,12 @@ import { DatePicker } from "./date-picker";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, MIN_TAXI_LEAD_TIME_HOURS, type Coordinates } from "@/lib/taxi-service";
-import { estimateMapTaxiPriceEur, TAXI_PRICE_PER_KM_EUR } from "@/lib/taxi-pricing";
+import { estimateTaxiPriceEur, TAXI_PRICE_PER_KM_EUR } from "@/lib/taxi-pricing";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
 import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
-import { findDirectTaxiRoute, type DirectTaxiFare } from "@/lib/taxi-fares";
+import { findDirectTaxiRoute } from "@/lib/taxi-fares";
 import type { Locale } from "@/lib/locale";
 
 const ALBANIA_TIME_ZONE = "Europe/Tirane";
@@ -212,12 +212,6 @@ function TaxiSubmitButton({ label, pendingLabel }: { label: string; pendingLabel
   );
 }
 
-function getLowestDirectFare(fares: DirectTaxiFare[]): DirectTaxiFare | null {
-  const allFares = fares.filter((fare) => fare.currency === "ALL");
-  const comparable = allFares.length > 0 ? allFares : fares.filter((fare) => fare.currency === "EUR");
-  return comparable.sort((a, b) => a.amount - b.amount)[0] ?? null;
-}
-
 function LocationFieldTools({
   label,
   canClear,
@@ -344,13 +338,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
     return usesCustomPin ? null : findDirectTaxiRoute(pickupLocation, destination);
   }, [pickupLocation, destination, pickupSource, destinationSource]);
   const routeIsEligible = directRoute !== null || (distanceKm !== null && distanceKm >= MIN_INTERCITY_TAXI_DISTANCE_KM);
-  const mapPriceEstimate = useMemo(
-    () => (routeIsEligible && !directRoute ? estimateMapTaxiPriceEur(distanceKm) : null),
-    [routeIsEligible, directRoute, distanceKm]
-  );
-  const lowestDirectFare = useMemo(
-    () => getLowestDirectFare(Object.values(directRoute?.fares ?? {}).filter((fare): fare is DirectTaxiFare => !!fare)),
-    [directRoute]
+  const taxiPriceEstimate = useMemo(
+    () => (routeIsEligible ? estimateTaxiPriceEur(distanceKm) : null),
+    [routeIsEligible, distanceKm]
   );
 
   useEffect(() => {
@@ -470,30 +460,22 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
   }
 
   const hasVerifiedRoute = directRoute !== null || distanceKm !== null;
-  const priceHeadline = directRoute
-      ? tq.directPriceTitle
-    : mapPriceEstimate
-      ? `~€${mapPriceEstimate.priceEur}`
-      : hasVerifiedRoute
-        ? tq.routeTooShortTitle
-        : tq.priceWaitingTitle;
-  const priceDetail = directRoute
-    ? distanceKm !== null
-      ? `${directRoute.routeName} · ${Math.round(distanceKm)} km`
-      : directRoute.routeName
-    : mapPriceEstimate
-      ? `${Math.round(mapPriceEstimate.km)} km · ${formatMessage(tq.mapPriceHint, { rate: TAXI_PRICE_PER_KM_EUR })}`
+  const priceHeadline = taxiPriceEstimate
+    ? `~€${taxiPriceEstimate.priceEur}`
+    : hasVerifiedRoute
+      ? tq.routeTooShortTitle
+      : tq.priceWaitingTitle;
+  const priceDetail = taxiPriceEstimate
+    ? `${directRoute ? `${directRoute.routeName} · ` : ""}${Math.round(taxiPriceEstimate.km)} km · ${formatMessage(tq.mapPriceHint, { rate: TAXI_PRICE_PER_KM_EUR })}`
       : hasVerifiedRoute
         ? `${Math.round(distanceKm ?? 0)} km · ${formatMessage(tq.minimumBadge, { min: MIN_INTERCITY_TAXI_DISTANCE_KM })}`
         : tq.priceWaitingHint;
-  const fareAmount = lowestDirectFare?.amount ?? mapPriceEstimate?.priceEur ?? null;
-  const fareCurrency = lowestDirectFare?.currency ?? (mapPriceEstimate ? "EUR" : null);
+  const fareAmount = taxiPriceEstimate?.priceEur ?? null;
   const ui = locale === "al"
     ? {
         from: "Nga ku",
         to: "Për ku",
         distance: "Distancë",
-        fromPrice: "Nga",
         estimate: "Vlerësim",
         phone: "Telefoni",
         email: "Email-i",
@@ -509,7 +491,6 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         from: "From",
         to: "To",
         distance: "Distance",
-        fromPrice: "From",
         estimate: "Estimate",
         phone: "Phone",
         email: "Email",
@@ -594,10 +575,10 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
 
         <div className="overflow-visible rounded-[1.5rem] bg-[#edf4f3] p-2">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(11rem,1fr)_auto_minmax(11rem,1fr)_minmax(9.5rem,.72fr)_minmax(7.5rem,.56fr)_minmax(12rem,.76fr)_auto] xl:items-stretch">
-          <div className="relative flex flex-col rounded-[1.1rem] bg-white md:contents">
-            <label className="relative flex min-w-0 flex-col justify-center px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 md:rounded-[1.1rem] md:bg-white xl:col-span-1">
+          <div className="relative flex flex-col rounded-[1.1rem] bg-white md:col-span-2 xl:contents">
+            <label className="relative flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 transition-shadow xl:col-span-1 xl:rounded-[1.1rem] xl:bg-white xl:focus-within:z-30 xl:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.from}</span>
-              <div className="relative flex min-h-11 min-w-0 items-center">
+              <div className="relative flex min-h-11 min-w-0 items-center pr-12 xl:pr-0">
                 <span className={`absolute left-1 h-2.5 w-2.5 rounded-full bg-teal ${locationEnabled ? "shadow-[0_0_0_4px_rgba(0,128,128,0.12)]" : ""}`} aria-hidden="true" />
                 <PlacesAutocompleteInput
                   id="taxi-pickup-location"
@@ -638,23 +619,23 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
               </div>
             </label>
 
-            <div className="flex items-center justify-center md:col-span-2 xl:col-span-1">
-              <button
-                type="button"
-                onClick={handleSwapLocations}
-                aria-label={tq.swapAria}
-                title={tq.swapAria}
-                style={{ transform: `rotate(${swapRotation}deg)` }}
-                disabled={!pickupLocation && !destination}
-                className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[background-color,color,transform] duration-200 hover:bg-teal hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <SwapIcon width={14} height={14} />
-              </button>
-            </div>
+            <div className="mx-3 border-t border-[#e4edec] xl:hidden" aria-hidden="true" />
 
-            <label className="relative flex min-w-0 flex-col justify-center px-3 py-2 focus-within:z-30 focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)] md:col-span-2 md:rounded-[1.1rem] md:bg-white xl:col-span-1">
+            <button
+              type="button"
+              onClick={handleSwapLocations}
+              aria-label={tq.swapAria}
+              title={tq.swapAria}
+              style={{ transform: `rotate(${swapRotation}deg)` }}
+              disabled={!pickupLocation && !destination}
+              className="absolute right-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-4 border-[#edf4f3] bg-white text-teal shadow-sm transition-[background-color,color,transform] duration-200 hover:bg-teal hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-not-allowed disabled:opacity-40 [&_svg]:rotate-90 xl:static xl:mx-auto xl:h-11 xl:w-11 xl:translate-y-0 xl:self-center xl:[&_svg]:rotate-0"
+            >
+              <SwapIcon width={14} height={14} />
+            </button>
+
+            <label className="relative flex min-w-0 flex-col justify-center gap-0.5 px-3 py-2 transition-shadow xl:col-span-1 xl:rounded-[1.1rem] xl:bg-white xl:focus-within:z-30 xl:focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.to}</span>
-              <div className="relative flex min-h-11 min-w-0 items-center">
+              <div className="relative flex min-h-11 min-w-0 items-center pr-12 xl:pr-0">
                 <span className="absolute left-1 h-2.5 w-2.5 rounded-full bg-coral" aria-hidden="true" />
                 <PlacesAutocompleteInput
                   id="taxi-destination"
@@ -779,15 +760,14 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                 </div>
                 <div className="hidden h-4 w-px bg-[#dce8e6] sm:block" aria-hidden="true" />
                 <span className="inline-flex w-fit items-center rounded-full bg-teal-soft px-2.5 py-1 text-xs font-semibold text-teal">
-                  {directRoute ? tq.directRouteBadge : `€${TAXI_PRICE_PER_KM_EUR}/km`}
+                  €{TAXI_PRICE_PER_KM_EUR}/km
                 </span>
                 <div className="min-w-0 flex-1 text-xs text-muted sm:truncate">{priceDetail}</div>
                 <div className="flex shrink-0 items-baseline gap-1 sm:ml-auto">
-                  <span className="text-xs text-muted">{directRoute ? ui.fromPrice : ui.estimate}</span>
+                  <span className="text-xs text-muted">{ui.estimate}</span>
                   <span className="font-display text-2xl font-black tabular-nums text-brand-navy">
-                    {fareCurrency === "EUR" ? "€" : ""}{new Intl.NumberFormat(locale === "al" ? "sq-AL" : "en-US", { maximumFractionDigits: 0 }).format(fareAmount)}
+                    €{new Intl.NumberFormat(locale === "al" ? "sq-AL" : "en-US", { maximumFractionDigits: 0 }).format(fareAmount)}
                   </span>
-                  {fareCurrency === "ALL" && <span className="text-sm font-bold text-muted">ALL</span>}
                 </div>
               </>
             ) : (

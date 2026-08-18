@@ -32,7 +32,7 @@ The bus ticket form is the visual authority for the taxi form. Both modes use th
 - The route fields start empty and use example placeholders. No route is preselected.
 - Pickup and destination are followed by date, time, passengers, and one `Book taxi` action.
 - The first action validates the verified route and five-hour lead time, then reveals only phone, email, an optional note, and `Confirm booking`.
-- Taxi-provider choice is removed. Direct-route pricing uses the lowest comparable source-backed fare; custom map journeys remain estimated at €1/km.
+- Taxi-provider choice is removed. Every route, including recognized direct routes and custom map journeys, is estimated and charged in EUR at €1/km.
 - The map opens in the existing viewport-bound light modal. It must never expand the homepage hero or render as an inline full-width panel.
 - The booking is stored before email delivery. The owner receives operational details at `endidiscoveral@gmail.com` by default, and the traveler receives a separate confirmation at the required email entered in the form.
 

@@ -26,8 +26,8 @@ Travelers use the service while planning or already traveling, frequently on mob
 
 - Next.js 16.3 App Router application with React 19, Tailwind CSS 4, Server Actions, Drizzle ORM, Google Maps/Places, and Nodemailer.
 - Taxi transfers require at least five hours' notice. Custom map requests enforce an intercity minimum distance of 20 km; recognized direct routes from the supplied fare table may qualify below that threshold.
-- Known direct journeys from Tirana use provider prices supplied in the owner's Google Sheet. Custom map journeys are estimated at EUR 1 per km.
-- Direct fares come from the owner-supplied provider table, but travelers do not select a taxi provider in the booking form. Do not invent vehicle capacities, availability, or marketing claims.
+- Every taxi journey is displayed and charged in EUR at the fixed rate of €1 per km, including recognized direct routes and custom map journeys.
+- The owner-supplied provider table may be used to recognize direct routes, but provider fares are not shown or charged in the booking form. Travelers do not select a taxi provider. Do not invent vehicle capacities, availability, or marketing claims.
 - Every taxi reservation must be emailed to endidiscoveral@gmail.com, confirmed to the traveler by email, and remain visible in the existing admin/database flow.
 - English and Albanian localization, keyboard operation, long place names, and mobile geolocation/map selection must remain supported.
 
@@ -45,7 +45,7 @@ The product name is Discover Albania Transport. Bus and taxi booking share the e
 ## Product Principles
 
 - Make the journey and price legible before asking for contact details.
-- Preserve local truth: real places, real providers, real direct fares, and explicit estimates for custom routes.
+- Preserve local truth: real places, real providers, recognized direct routes, and explicit €1/km estimates.
 - Keep the request flow personal and reassuring without hiding operational constraints.
 - Treat accessibility, responsive behavior, and error recovery as part of trust.
 - Preserve user-entered data through validation and submission failures.
