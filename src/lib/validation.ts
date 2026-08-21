@@ -168,6 +168,18 @@ export const adminOperatorCreateSchema = z.object({
   city: z.string().trim().optional(),
 });
 
+const photoUrlsField = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) =>
+    (value ?? "")
+      .split(/\r?\n/)
+      .map((url) => url.trim())
+      .filter(Boolean)
+  )
+  .pipe(z.array(z.string().url("Enter a valid photo URL, one per line")));
+
 export const adminStationSchema = z.object({
   name: z.string().trim().min(2, "Enter the station name"),
   code: z.string().trim().min(1, "Enter a station code").max(20),
@@ -175,6 +187,9 @@ export const adminStationSchema = z.object({
   address: z.string().trim().optional(),
   latitude: z.coerce.number().min(-90).max(90).transform((value) => value.toFixed(6)),
   longitude: z.coerce.number().min(-180).max(180).transform((value) => value.toFixed(6)),
+  description: z.string().trim().optional(),
+  category: z.enum(["terminus", "intermediate"]).default("terminus"),
+  photoUrls: photoUrlsField,
 });
 
 export const adminDestinationSchema = z.object({
@@ -248,4 +263,51 @@ export const vendorNewDepartureSchema = z
   .refine((data) => data.fromStationId !== data.toStationId, {
     message: "Origin and destination must be different",
     path: ["toStationId"],
+  });
+
+export const vendorRouteStopSchema = z.object({
+  routeId: z.coerce.number().int().positive(),
+  stationId: z.coerce.number().int().positive(),
+  sequenceOrder: z.coerce.number().int().min(1, "Enter a stop order"),
+  minutesFromDeparture: z.coerce.number().int().min(0, "Minutes from departure can't be negative"),
+  priceToDestination: z.coerce.number().min(0).transform((value) => value.toFixed(2)).optional(),
+});
+
+const vendorStopCoordinate = z
+  .string()
+  .trim()
+  .min(1, "Pick a location from the map suggestions")
+  .transform(Number)
+  .pipe(z.number().finite("Pick a valid location"));
+
+export const vendorRouteStopNewLocationSchema = z.object({
+  routeId: z.coerce.number().int().positive(),
+  stationName: z.string().trim().min(2, "Enter a name for this stop"),
+  city: z.string().trim().min(1, "Enter the stop's city"),
+  latitude: vendorStopCoordinate.pipe(z.number().min(-90).max(90)).transform((value) => value.toFixed(6)),
+  longitude: vendorStopCoordinate.pipe(z.number().min(-180).max(180)).transform((value) => value.toFixed(6)),
+  sequenceOrder: z.coerce.number().int().min(1, "Enter a stop order"),
+  minutesFromDeparture: z.coerce.number().int().min(0, "Minutes from departure can't be negative"),
+  priceToDestination: z.coerce.number().min(0).transform((value) => value.toFixed(2)).optional(),
+});
+
+export const vendorManualBookingSchema = z
+  .object({
+    tripDepartureId: z.coerce.number().int().positive(),
+    travelDate: dateString,
+    passengerName: z.string().trim().min(2, "Enter the passenger's full name"),
+    passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+    passengerEmail: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("Enter a valid email address")
+      .or(z.literal(""))
+      .optional(),
+    seats: z.coerce.number().int().min(1, "At least 1 seat is required").max(9, "Max 9 seats per booking"),
+    routeStopId: z.coerce.number().int().positive().optional(),
+  })
+  .refine((data) => data.travelDate >= todayInAlbania(), {
+    message: "Choose today or a future travel date",
+    path: ["travelDate"],
   });

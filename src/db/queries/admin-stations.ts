@@ -7,7 +7,7 @@ import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
 // negative, monotonically decreasing ID so they never collide, while
 // staying well within Postgres's 32-bit integer range (unlike a raw
 // millisecond timestamp, which overflows it).
-async function nextSyntheticSourceId(): Promise<number> {
+export async function nextSyntheticSourceId(): Promise<number> {
   const [row] = await db.select({ min: sql<number | null>`min(${stations.sourceId})` }).from(stations);
   const current = row?.min ?? 0;
   return current > 0 ? -1 : current - 1;
@@ -22,6 +22,9 @@ export interface StationInput {
   address: string | null;
   latitude: string;
   longitude: string;
+  description: string | null;
+  category: "terminus" | "intermediate";
+  photoUrls: string[];
 }
 
 export async function listStationsForAdmin() {

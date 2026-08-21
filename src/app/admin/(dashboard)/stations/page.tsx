@@ -16,7 +16,7 @@ export default async function AdminStationsPage({ searchParams }: { searchParams
       <div className="mt-6 overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="border-b border-border text-left text-muted">
-            <tr><th className="px-4 py-3 font-medium">Station</th><th className="px-4 py-3 font-medium">City</th><th className="px-4 py-3 font-medium">Address</th><th className="px-4 py-3 font-medium">Code</th><th className="px-4 py-3"><span className="sr-only">Manage</span></th></tr>
+            <tr><th className="px-4 py-3 font-medium">Station</th><th className="px-4 py-3 font-medium">City</th><th className="px-4 py-3 font-medium">Address</th><th className="px-4 py-3 font-medium">Code</th><th className="px-4 py-3 font-medium">Category</th><th className="px-4 py-3"><span className="sr-only">Manage</span></th></tr>
           </thead>
           <tbody>
             {stationsList.map((station) => (
@@ -25,10 +25,11 @@ export default async function AdminStationsPage({ searchParams }: { searchParams
                 <td className="px-4 py-3 text-muted">{station.city}</td>
                 <td className="px-4 py-3 text-muted">{station.address ?? "Not available"}</td>
                 <td className="px-4 py-3 tabular-nums text-muted">{station.code}</td>
+                <td className="px-4 py-3 text-muted capitalize">{station.category}</td>
                 <td className="px-4 py-3 text-right"><Link href={`/admin/stations/${station.id}`} className="text-sm font-medium text-teal hover:underline">Manage</Link></td>
               </tr>
             ))}
-            {stationsList.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-muted">No stations yet.</td></tr>}
+            {stationsList.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted">No stations yet.</td></tr>}
           </tbody>
         </table>
       </div>

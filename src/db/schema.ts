@@ -35,6 +35,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "refunded",
   "cancelled",
 ]);
+export const stationCategoryEnum = pgEnum("station_category", ["terminus", "intermediate"]);
 
 export const operators = pgTable("operators", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -92,6 +93,12 @@ export const stations = pgTable("stations", {
   address: text("address"),
   latitude: numeric("latitude", { precision: 9, scale: 6 }).notNull(),
   longitude: numeric("longitude", { precision: 9, scale: 6 }).notNull(),
+  description: text("description"),
+  category: stationCategoryEnum("category").notNull().default("terminus"),
+  // Pasted image URLs, shown in order -- no upload pipeline exists in this
+  // project yet (destination/blog images are static files under public/),
+  // so this stores externally-hosted URLs rather than owning file storage.
+  photoUrls: text("photo_urls").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -104,6 +111,39 @@ export const routes = pgTable("routes", {
     .references(() => operators.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// An intermediate stop a route passes through between its two trip_departure
+// endpoints. Each route direction is already its own `routes` row (e.g.
+// "Tirane-Himare" and "Himare-Tirane" are two rows), so a stop's timing and
+// price are naturally direction-specific just by belonging to one route.
+// Every scheduled departure on this route reuses the same stops -- a
+// specific departure's clock time at a stop is that departure's
+// departureTime + the stop's minutesFromDeparture, computed on read rather
+// than duplicated per departure.
+export const routeStops = pgTable(
+  "route_stops",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    routeId: integer("route_id")
+      .notNull()
+      .references(() => routes.id, { onDelete: "cascade" }),
+    stationId: integer("station_id")
+      .notNull()
+      .references(() => stations.id, { onDelete: "restrict" }),
+    sequenceOrder: integer("sequence_order").notNull(),
+    // Conservative (minimum) minutes after departure the bus reaches this
+    // stop, per the owner's own instruction: give the value that protects a
+    // customer from missing the bus, not the average/best-case time.
+    minutesFromDeparture: integer("minutes_from_departure").notNull(),
+    priceToDestination: numeric("price_to_destination", { precision: 10, scale: 2 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("route_stops_route_station_key").on(table.routeId, table.stationId),
+    uniqueIndex("route_stops_route_sequence_key").on(table.routeId, table.sequenceOrder),
+    check("route_stops_minutes_nonnegative", sql`${table.minutesFromDeparture} >= 0`),
+  ]
+);
 
 export const tripDepartures = pgTable(
   "trip_departures",
@@ -183,7 +223,10 @@ export const bookings = pgTable(
     travelDate: date("travel_date", { mode: "string" }).notNull(),
     passengerName: text("passenger_name").notNull(),
     passengerPhone: text("passenger_phone").notNull(),
-    passengerEmail: text("passenger_email").notNull(),
+    // Nullable only for vendor-created manual bookings (phone/walk-in
+    // customers who may not give an email) -- the online self-service flow
+    // still requires it via bookingFormSchema.
+    passengerEmail: text("passenger_email"),
     seats: integer("seats").notNull(),
     priceAtBooking: numeric("price_at_booking", { precision: 10, scale: 2 }).notNull(),
     status: bookingStatusEnum("status").notNull().default("confirmed"),
@@ -197,6 +240,13 @@ export const bookings = pgTable(
     // booking reference lookup. Null for bookings created before this
     // existed; those simply have no email-based manage link.
     manageToken: text("manage_token"),
+    // Set only for bookings a vendor entered manually on a customer's
+    // behalf (phone/walk-in) -- null means the customer booked and paid
+    // online themselves. Distinguishes the two in the vendor/admin ledger
+    // without needing a separate "source" enum.
+    createdByVendorUserId: integer("created_by_vendor_user_id").references(() => vendorUsers.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
@@ -358,11 +408,18 @@ export const vendorUsersRelations = relations(vendorUsers, ({ one }) => ({
 export const stationsRelations = relations(stations, ({ many }) => ({
   departuresFrom: many(tripDepartures, { relationName: "departuresFrom" }),
   departuresTo: many(tripDepartures, { relationName: "departuresTo" }),
+  routeStops: many(routeStops),
 }));
 
 export const routesRelations = relations(routes, ({ one, many }) => ({
   operator: one(operators, { fields: [routes.operatorId], references: [operators.id] }),
   departures: many(tripDepartures),
+  stops: many(routeStops),
+}));
+
+export const routeStopsRelations = relations(routeStops, ({ one }) => ({
+  route: one(routes, { fields: [routeStops.routeId], references: [routes.id] }),
+  station: one(stations, { fields: [routeStops.stationId], references: [stations.id] }),
 }));
 
 export const tripDeparturesRelations = relations(tripDepartures, ({ one, many }) => ({
@@ -435,6 +492,10 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
     references: [tripDepartures.id],
   }),
   user: one(users, { fields: [bookings.userId], references: [users.id] }),
+  createdByVendorUser: one(vendorUsers, {
+    fields: [bookings.createdByVendorUserId],
+    references: [vendorUsers.id],
+  }),
 }));
 
 export const paymentsRelations = relations(payments, ({ one }) => ({

@@ -11,10 +11,14 @@ export interface CreateBookingInput {
   travelDate: string;
   passengerName: string;
   passengerPhone: string;
-  passengerEmail: string;
+  passengerEmail: string | null;
   seats: number;
   userId?: number | null;
   locale?: Locale;
+  /** Set for a booking a vendor entered manually on a customer's behalf -- see the `createdByVendorUserId` column comment in schema.ts. */
+  createdByVendorUserId?: number | null;
+  /** Overrides the route's base price -- used when a manual booking boards from an intermediate stop, priced via that stop's own route_stops.priceToDestination rather than the full-route fare. */
+  priceOverride?: string;
 }
 
 /** Bearer secret for the emailed "manage your booking" link -- see the `manageToken` column comment in schema.ts. */
@@ -79,7 +83,8 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${sql.identifier(bookings.seats.name)},
         ${sql.identifier(bookings.priceAtBooking.name)},
         ${sql.identifier(bookings.locale.name)},
-        ${sql.identifier(bookings.manageToken.name)}
+        ${sql.identifier(bookings.manageToken.name)},
+        ${sql.identifier(bookings.createdByVendorUserId.name)}
       )
       select
         ${reference},
@@ -90,9 +95,10 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${input.passengerPhone},
         ${input.passengerEmail},
         ${input.seats},
-        ${trip.basePrice},
+        ${input.priceOverride ?? trip.basePrice},
         ${input.locale ?? "en"},
-        ${manageToken}
+        ${manageToken},
+        ${input.createdByVendorUserId ?? null}
       from reserved
       returning ${sql.identifier(bookings.id.name)}, ${sql.identifier(bookings.bookingReference.name)}
     )
@@ -101,7 +107,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   const row = result.rows[0];
   return row
-    ? { ok: true, reference, bookingId: row.id, priceAtBooking: trip.basePrice }
+    ? { ok: true, reference, bookingId: row.id, priceAtBooking: input.priceOverride ?? trip.basePrice }
     : { ok: false, error: "sold_out" };
 }
 
@@ -153,7 +159,7 @@ export interface BookingDetail {
   travelDate: string;
   passengerName: string;
   passengerPhone: string;
-  passengerEmail: string;
+  passengerEmail: string | null;
   seats: number;
   priceAtBooking: string;
   status: "confirmed" | "cancelled";
@@ -267,10 +273,17 @@ export interface BookingEmailDetail {
   trip: TripDepartureDetail;
 }
 
-/** For the confirmation email, sent once payment settles as paid (see verifyAndSettlePokPayment) -- that trigger only has a bookingId, not a reference. */
+/**
+ * For the confirmation email, sent once payment settles as paid (see
+ * verifyAndSettlePokPayment) -- that trigger only has a bookingId, not a
+ * reference. Also doubles as the "does this booking even have anywhere to
+ * email" check: a manual vendor booking with no passengerEmail on file
+ * returns null here, and the caller skips sending entirely rather than
+ * emailing an empty address.
+ */
 export async function getBookingEmailDetail(bookingId: number): Promise<BookingEmailDetail | null> {
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
-  if (!booking) return null;
+  if (!booking || !booking.passengerEmail) return null;
 
   const trip = await getTripDepartureById(booking.tripDepartureId);
   if (!trip) return null;

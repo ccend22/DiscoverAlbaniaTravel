@@ -558,7 +558,7 @@ export interface AdminBookingRow {
   seats: number;
   priceAtBooking: string;
   passengerName: string;
-  passengerEmail: string;
+  passengerEmail: string | null;
   createdAt: Date;
   trip: TripDepartureDetail;
 }

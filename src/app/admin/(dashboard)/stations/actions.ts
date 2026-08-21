@@ -11,20 +11,31 @@ function optionalString(value: FormDataEntryValue | null) {
   return text || null;
 }
 
-export async function createStationAction(formData: FormData) {
-  await requireAdminSession();
-  const parsed = adminStationSchema.safeParse({
+function stationFieldsFromForm(formData: FormData) {
+  return {
     name: formData.get("name"),
     code: formData.get("code"),
     city: formData.get("city"),
     address: formData.get("address"),
     latitude: formData.get("latitude"),
     longitude: formData.get("longitude"),
-  });
+    description: formData.get("description"),
+    category: formData.get("category"),
+    photoUrls: formData.get("photoUrls"),
+  };
+}
+
+export async function createStationAction(formData: FormData) {
+  await requireAdminSession();
+  const parsed = adminStationSchema.safeParse(stationFieldsFromForm(formData));
   if (!parsed.success) {
     redirect(`/admin/stations/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid station")}`);
   }
-  const result = await createStationForAdmin({ ...parsed.data, address: optionalString(formData.get("address")) });
+  const result = await createStationForAdmin({
+    ...parsed.data,
+    address: optionalString(formData.get("address")),
+    description: optionalString(formData.get("description")),
+  });
   if (!result.ok) redirect(`/admin/stations/new?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/stations");
   redirect("/admin/stations?saved=1");
@@ -33,18 +44,15 @@ export async function createStationAction(formData: FormData) {
 export async function updateStationAction(formData: FormData) {
   await requireAdminSession();
   const stationId = Number(formData.get("stationId"));
-  const parsed = adminStationSchema.safeParse({
-    name: formData.get("name"),
-    code: formData.get("code"),
-    city: formData.get("city"),
-    address: formData.get("address"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
-  });
+  const parsed = adminStationSchema.safeParse(stationFieldsFromForm(formData));
   if (!parsed.success) {
     redirect(`/admin/stations/${stationId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid station")}`);
   }
-  const result = await updateStationForAdmin(stationId, { ...parsed.data, address: optionalString(formData.get("address")) });
+  const result = await updateStationForAdmin(stationId, {
+    ...parsed.data,
+    address: optionalString(formData.get("address")),
+    description: optionalString(formData.get("description")),
+  });
   if (!result.ok) redirect(`/admin/stations/${stationId}?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/stations");
   redirect("/admin/stations?saved=1");

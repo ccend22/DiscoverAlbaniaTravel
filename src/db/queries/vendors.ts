@@ -1,9 +1,11 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
-import { bookings, operators, routes, stations, tripDepartures, vendorUsers } from "../schema";
+import { bookings, operators, payments, routeStops, routes, stations, tripDepartures, vendorUsers } from "../schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
+import { createBooking } from "./bookings";
+import { nextSyntheticSourceId } from "./admin-stations";
 
 /**
  * Operators created by the original data import (and by admin's "new
@@ -96,6 +98,7 @@ export async function listVendorDepartures(vendorUserId: number) {
   return db
     .select({
       id: tripDepartures.id,
+      routeId: tripDepartures.routeId,
       routeCode: routes.code,
       routeLongName: routes.longName,
       fromStationName: stations.name,
@@ -121,7 +124,7 @@ export interface VendorBookingRow {
   travelDate: string;
   passengerName: string;
   passengerPhone: string;
-  passengerEmail: string;
+  passengerEmail: string | null;
   seats: number;
   priceAtBooking: string;
   status: "confirmed" | "cancelled";
@@ -172,6 +175,42 @@ export async function listVendorRoutes(vendorUserId: number) {
     .from(routes)
     .where(eq(routes.operatorId, context.operatorId))
     .orderBy(asc(routes.code));
+}
+
+export interface VendorRouteWithStopCount {
+  id: number;
+  code: string;
+  longName: string;
+  stopCount: number;
+}
+
+export async function listVendorRoutesWithStopCounts(vendorUserId: number): Promise<VendorRouteWithStopCount[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+  const rows = await db
+    .select({
+      id: routes.id,
+      code: routes.code,
+      longName: routes.longName,
+      stopCount: sql<number>`count(${routeStops.id})`,
+    })
+    .from(routes)
+    .leftJoin(routeStops, eq(routeStops.routeId, routes.id))
+    .where(eq(routes.operatorId, context.operatorId))
+    .groupBy(routes.id)
+    .orderBy(asc(routes.code));
+  return rows.map((row) => ({ ...row, stopCount: Number(row.stopCount) }));
+}
+
+export async function getVendorRoute(vendorUserId: number, routeId: number) {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return null;
+  const [route] = await db
+    .select({ id: routes.id, code: routes.code, longName: routes.longName })
+    .from(routes)
+    .where(and(eq(routes.id, routeId), eq(routes.operatorId, context.operatorId)))
+    .limit(1);
+  return route ?? null;
 }
 
 export async function listStationOptions() {
@@ -265,6 +304,291 @@ export async function updateVendorDeparture(
     .where(eq(tripDepartures.id, input.tripDepartureId));
 
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Route stops -- intermediate boarding points along a vendor's own route,
+// each with a conservative ETA (minutesFromDeparture) and an optional fare
+// from that stop to the route's final destination. Scoped to routes the
+// vendor's operator owns; stations themselves stay admin-managed.
+// ---------------------------------------------------------------------------
+
+export interface VendorRouteStopRow {
+  id: number;
+  routeId: number;
+  stationId: number;
+  stationName: string;
+  sequenceOrder: number;
+  minutesFromDeparture: number;
+  priceToDestination: string | null;
+}
+
+async function assertVendorOwnsRoute(vendorUserId: number, routeId: number): Promise<number | null> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return null;
+  const [ownedRoute] = await db
+    .select({ id: routes.id })
+    .from(routes)
+    .where(and(eq(routes.id, routeId), eq(routes.operatorId, context.operatorId)))
+    .limit(1);
+  return ownedRoute ? context.operatorId : null;
+}
+
+export async function listVendorRouteStops(vendorUserId: number, routeId: number): Promise<VendorRouteStopRow[]> {
+  const owned = await assertVendorOwnsRoute(vendorUserId, routeId);
+  if (!owned) return [];
+
+  return db
+    .select({
+      id: routeStops.id,
+      routeId: routeStops.routeId,
+      stationId: routeStops.stationId,
+      stationName: stations.name,
+      sequenceOrder: routeStops.sequenceOrder,
+      minutesFromDeparture: routeStops.minutesFromDeparture,
+      priceToDestination: routeStops.priceToDestination,
+    })
+    .from(routeStops)
+    .innerJoin(stations, eq(routeStops.stationId, stations.id))
+    .where(eq(routeStops.routeId, routeId))
+    .orderBy(asc(routeStops.sequenceOrder));
+}
+
+export interface VendorRouteStopOption {
+  id: number;
+  routeId: number;
+  routeCode: string;
+  stationName: string;
+  priceToDestination: string | null;
+}
+
+/** Every stop across all of the vendor's own routes, for the manual-booking boarding-stop picker. */
+export async function listVendorRouteStopOptions(vendorUserId: number): Promise<VendorRouteStopOption[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+
+  return db
+    .select({
+      id: routeStops.id,
+      routeId: routeStops.routeId,
+      routeCode: routes.code,
+      stationName: stations.name,
+      priceToDestination: routeStops.priceToDestination,
+    })
+    .from(routeStops)
+    .innerJoin(routes, eq(routeStops.routeId, routes.id))
+    .innerJoin(stations, eq(routeStops.stationId, stations.id))
+    .where(eq(routes.operatorId, context.operatorId))
+    .orderBy(asc(routes.code), asc(routeStops.sequenceOrder));
+}
+
+export async function createVendorRouteStop(
+  vendorUserId: number,
+  input: {
+    routeId: number;
+    stationId: number;
+    sequenceOrder: number;
+    minutesFromDeparture: number;
+    priceToDestination?: string;
+  }
+): Promise<AdminMutationResult> {
+  const owned = await assertVendorOwnsRoute(vendorUserId, input.routeId);
+  if (!owned) return { ok: false, error: "That route doesn't belong to your fleet." };
+
+  try {
+    await db.insert(routeStops).values({
+      routeId: input.routeId,
+      stationId: input.stationId,
+      sequenceOrder: input.sequenceOrder,
+      minutesFromDeparture: input.minutesFromDeparture,
+      priceToDestination: input.priceToDestination ?? null,
+    });
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, error: "This station is already a stop on this route, or that stop order is taken." };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Lets a vendor add a stop at a location picked from the map/Places search
+ * rather than one of the admin-curated stations -- creates a new `stations`
+ * row (category "intermediate") on the fly, then a route_stops row pointing
+ * to it. The new station is a first-class row like any admin-created one
+ * (same synthetic sourceId scheme), so it shows up in admin's station list
+ * for cleanup/dedup if needed.
+ */
+export async function createVendorRouteStopAtNewLocation(
+  vendorUserId: number,
+  input: {
+    routeId: number;
+    stationName: string;
+    city: string;
+    latitude: string;
+    longitude: string;
+    sequenceOrder: number;
+    minutesFromDeparture: number;
+    priceToDestination?: string;
+  }
+): Promise<AdminMutationResult> {
+  const owned = await assertVendorOwnsRoute(vendorUserId, input.routeId);
+  if (!owned) return { ok: false, error: "That route doesn't belong to your fleet." };
+
+  const sourceId = await nextSyntheticSourceId();
+  let stationId: number;
+  try {
+    const [station] = await db
+      .insert(stations)
+      .values({
+        sourceId,
+        name: input.stationName,
+        code: `V${Math.abs(sourceId)}`,
+        city: input.city,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        category: "intermediate",
+      })
+      .returning({ id: stations.id });
+    stationId = station.id;
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, error: "A station with that name already exists -- pick it from the existing-station list instead." };
+    }
+    throw error;
+  }
+
+  return createVendorRouteStop(vendorUserId, {
+    routeId: input.routeId,
+    stationId,
+    sequenceOrder: input.sequenceOrder,
+    minutesFromDeparture: input.minutesFromDeparture,
+    priceToDestination: input.priceToDestination,
+  });
+}
+
+export async function updateVendorRouteStop(
+  vendorUserId: number,
+  routeStopId: number,
+  input: { sequenceOrder: number; minutesFromDeparture: number; priceToDestination?: string }
+): Promise<AdminMutationResult> {
+  const [stop] = await db
+    .select({ routeId: routeStops.routeId })
+    .from(routeStops)
+    .where(eq(routeStops.id, routeStopId))
+    .limit(1);
+  if (!stop) return { ok: false, error: "Stop not found." };
+
+  const owned = await assertVendorOwnsRoute(vendorUserId, stop.routeId);
+  if (!owned) return { ok: false, error: "That route doesn't belong to your fleet." };
+
+  try {
+    await db
+      .update(routeStops)
+      .set({
+        sequenceOrder: input.sequenceOrder,
+        minutesFromDeparture: input.minutesFromDeparture,
+        priceToDestination: input.priceToDestination ?? null,
+      })
+      .where(eq(routeStops.id, routeStopId));
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) return { ok: false, error: "That stop order is already taken on this route." };
+    throw error;
+  }
+}
+
+export async function deleteVendorRouteStop(vendorUserId: number, routeStopId: number): Promise<AdminMutationResult> {
+  const [stop] = await db
+    .select({ routeId: routeStops.routeId })
+    .from(routeStops)
+    .where(eq(routeStops.id, routeStopId))
+    .limit(1);
+  if (!stop) return { ok: false, error: "Stop not found." };
+
+  const owned = await assertVendorOwnsRoute(vendorUserId, stop.routeId);
+  if (!owned) return { ok: false, error: "That route doesn't belong to your fleet." };
+
+  await db.delete(routeStops).where(eq(routeStops.id, routeStopId));
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Manual bookings -- lets a vendor record a phone-in/walk-in reservation on a
+// customer's behalf. Reuses the same atomic seat-reservation path as online
+// bookings (createBooking), tagging the row with createdByVendorUserId, then
+// records an immediately-"paid" payments row (provider "manual") since no
+// online payment ever happens for these.
+// ---------------------------------------------------------------------------
+
+export type CreateManualBookingResult = { ok: true; reference: string } | { ok: false; error: string };
+
+const MANUAL_BOOKING_ERROR_MESSAGES: Record<string, string> = {
+  invalid_date: "This departure doesn't run on that date.",
+  trip_not_found: "That departure no longer exists.",
+  sold_out: "Not enough free seats left on that departure.",
+  price_unavailable: "This route doesn't have a price set yet.",
+};
+
+export async function createManualBookingForVendor(
+  vendorUserId: number,
+  input: {
+    tripDepartureId: number;
+    travelDate: string;
+    passengerName: string;
+    passengerPhone: string;
+    passengerEmail: string | null;
+    seats: number;
+    routeStopId?: number;
+  }
+): Promise<CreateManualBookingResult> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return { ok: false, error: "Not authorized." };
+
+  const [ownedDeparture] = await db
+    .select({ id: tripDepartures.id, routeId: tripDepartures.routeId })
+    .from(tripDepartures)
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(and(eq(tripDepartures.id, input.tripDepartureId), eq(routes.operatorId, context.operatorId)))
+    .limit(1);
+  if (!ownedDeparture) return { ok: false, error: "That departure doesn't belong to your fleet." };
+
+  let priceOverride: string | undefined;
+  if (input.routeStopId) {
+    const [stop] = await db
+      .select({ priceToDestination: routeStops.priceToDestination })
+      .from(routeStops)
+      .where(and(eq(routeStops.id, input.routeStopId), eq(routeStops.routeId, ownedDeparture.routeId)))
+      .limit(1);
+    if (!stop) return { ok: false, error: "That boarding stop isn't on this route." };
+    if (stop.priceToDestination) priceOverride = stop.priceToDestination;
+  }
+
+  const result = await createBooking({
+    tripDepartureId: input.tripDepartureId,
+    travelDate: input.travelDate,
+    passengerName: input.passengerName,
+    passengerPhone: input.passengerPhone,
+    passengerEmail: input.passengerEmail,
+    seats: input.seats,
+    createdByVendorUserId: vendorUserId,
+    priceOverride,
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: MANUAL_BOOKING_ERROR_MESSAGES[result.error] ?? "Couldn't create that booking." };
+  }
+
+  await db.insert(payments).values({
+    bookingId: result.bookingId,
+    provider: "manual",
+    amount: result.priceAtBooking,
+    currency: "ALL",
+    status: "paid",
+  });
+
+  return { ok: true, reference: result.reference };
 }
 
 export interface PendingVendor {

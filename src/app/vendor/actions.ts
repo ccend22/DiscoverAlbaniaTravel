@@ -6,19 +6,27 @@ import {
   vendorClaimSignupSchema,
   vendorDepartureSchema,
   vendorLoginSchema,
+  vendorManualBookingSchema,
   vendorNewOperatorSignupSchema,
   vendorOperatorSchema,
   vendorRouteSchema,
+  vendorRouteStopSchema,
+  vendorRouteStopNewLocationSchema,
   vendorNewDepartureSchema,
 } from "@/lib/validation";
 import {
   applyAsNewOperator,
   applyForExistingOperator,
   authenticateVendor,
+  createManualBookingForVendor,
   createVendorDeparture,
   createVendorRoute,
+  createVendorRouteStop,
+  createVendorRouteStopAtNewLocation,
+  deleteVendorRouteStop,
   updateVendorDeparture,
   updateVendorOperator,
+  updateVendorRouteStop,
 } from "@/db/queries/vendors";
 import {
   clearVendorSession,
@@ -128,7 +136,7 @@ export async function updateVendorOperatorAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid operator details")}`);
+    redirect(`/vendor/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid operator details")}`);
   }
 
   await updateVendorOperator(vendorUserId, {
@@ -139,8 +147,8 @@ export async function updateVendorOperatorAction(formData: FormData) {
     city: cleanOptional(parsed.data.city),
   });
 
-  revalidatePath("/vendor");
-  redirect("/vendor?saved=operator");
+  revalidatePath("/vendor/profile");
+  redirect("/vendor/profile?saved=1");
 }
 
 export async function updateVendorDepartureAction(formData: FormData) {
@@ -157,7 +165,7 @@ export async function updateVendorDepartureAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
+    redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
   }
 
   const updated = await updateVendorDeparture(vendorUserId, {
@@ -167,24 +175,24 @@ export async function updateVendorDepartureAction(formData: FormData) {
   });
 
   if (!updated) {
-    redirect("/vendor?error=Departure%20not%20found");
+    redirect("/vendor/departures?error=Departure%20not%20found");
   }
 
-  revalidatePath("/vendor");
-  redirect("/vendor?saved=departure");
+  revalidatePath("/vendor/departures");
+  redirect("/vendor/departures?saved=1");
 }
 
 export async function createVendorRouteAction(formData: FormData) {
   const vendorUserId = await requireVendorSession();
   const parsed = vendorRouteSchema.safeParse({ code: formData.get("code"), longName: formData.get("longName") });
-  if (!parsed.success) redirect(`/vendor?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid route")}`);
+  if (!parsed.success) redirect(`/vendor/routes?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid route")}`);
   try {
     await createVendorRoute(vendorUserId, parsed.data);
   } catch {
-    redirect("/vendor?error=That%20route%20code%20is%20already%20in%20use");
+    redirect("/vendor/routes?error=That%20route%20code%20is%20already%20in%20use");
   }
-  revalidatePath("/vendor");
-  redirect("/vendor?saved=route");
+  revalidatePath("/vendor/routes");
+  redirect("/vendor/routes?saved=1");
 }
 
 export async function createVendorDepartureAction(formData: FormData) {
@@ -201,7 +209,7 @@ export async function createVendorDepartureAction(formData: FormData) {
     plannedSeats: formData.get("plannedSeats"),
     weekdays: formData.getAll("weekdays"),
   });
-  if (!parsed.success) redirect(`/vendor?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
+  if (!parsed.success) redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
   let created = false;
   try {
     created = await createVendorDeparture(vendorUserId, {
@@ -209,9 +217,113 @@ export async function createVendorDepartureAction(formData: FormData) {
       weekdays: parsed.data.weekdays.sort((a, b) => a - b),
     });
   } catch {
-    redirect("/vendor?error=A%20departure%20with%20these%20details%20already%20exists");
+    redirect("/vendor/departures?error=A%20departure%20with%20these%20details%20already%20exists");
   }
-  if (!created) redirect("/vendor?error=Route%20not%20found");
-  revalidatePath("/vendor");
-  redirect("/vendor?saved=departure");
+  if (!created) redirect("/vendor/departures?error=Route%20not%20found");
+  revalidatePath("/vendor/departures");
+  redirect("/vendor/departures?saved=1");
+}
+
+export async function createVendorRouteStopAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const routeId = Number(formData.get("routeId"));
+  const parsed = vendorRouteStopSchema.safeParse({
+    routeId: formData.get("routeId"),
+    stationId: formData.get("stationId"),
+    sequenceOrder: formData.get("sequenceOrder"),
+    minutesFromDeparture: formData.get("minutesFromDeparture"),
+    priceToDestination: formData.get("priceToDestination") || undefined,
+  });
+  if (!parsed.success) {
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+  }
+  const result = await createVendorRouteStop(vendorUserId, parsed.data);
+  if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
+  revalidatePath(`/vendor/routes/${routeId}`);
+  redirect(`/vendor/routes/${routeId}?saved=1`);
+}
+
+export async function createVendorRouteStopAtNewLocationAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const routeId = Number(formData.get("routeId"));
+  const parsed = vendorRouteStopNewLocationSchema.safeParse({
+    routeId: formData.get("routeId"),
+    stationName: formData.get("stationName"),
+    city: formData.get("city"),
+    latitude: formData.get("latitude"),
+    longitude: formData.get("longitude"),
+    sequenceOrder: formData.get("sequenceOrder"),
+    minutesFromDeparture: formData.get("minutesFromDeparture"),
+    priceToDestination: formData.get("priceToDestination") || undefined,
+  });
+  if (!parsed.success) {
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+  }
+  const result = await createVendorRouteStopAtNewLocation(vendorUserId, parsed.data);
+  if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
+  revalidatePath(`/vendor/routes/${routeId}`);
+  redirect(`/vendor/routes/${routeId}?saved=1`);
+}
+
+export async function updateVendorRouteStopAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const routeId = Number(formData.get("routeId"));
+  const routeStopId = Number(formData.get("routeStopId"));
+  const parsed = vendorRouteStopSchema
+    .pick({ sequenceOrder: true, minutesFromDeparture: true, priceToDestination: true })
+    .safeParse({
+      sequenceOrder: formData.get("sequenceOrder"),
+      minutesFromDeparture: formData.get("minutesFromDeparture"),
+      priceToDestination: formData.get("priceToDestination") || undefined,
+    });
+  if (!parsed.success) {
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+  }
+  const result = await updateVendorRouteStop(vendorUserId, routeStopId, parsed.data);
+  if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
+  revalidatePath(`/vendor/routes/${routeId}`);
+  redirect(`/vendor/routes/${routeId}?saved=1`);
+}
+
+export async function deleteVendorRouteStopAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const routeId = Number(formData.get("routeId"));
+  const routeStopId = Number(formData.get("routeStopId"));
+  const result = await deleteVendorRouteStop(vendorUserId, routeStopId);
+  if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
+  revalidatePath(`/vendor/routes/${routeId}`);
+  redirect(`/vendor/routes/${routeId}?saved=1`);
+}
+
+export async function createManualBookingAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const parsed = vendorManualBookingSchema.safeParse({
+    tripDepartureId: formData.get("tripDepartureId"),
+    travelDate: formData.get("travelDate"),
+    passengerName: formData.get("passengerName"),
+    passengerPhone: formData.get("passengerPhone"),
+    passengerEmail: formData.get("passengerEmail") || undefined,
+    seats: formData.get("seats"),
+    routeStopId: formData.get("routeStopId") || undefined,
+  });
+  if (!parsed.success) {
+    redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
+  }
+
+  const result = await createManualBookingForVendor(vendorUserId, {
+    tripDepartureId: parsed.data.tripDepartureId,
+    travelDate: parsed.data.travelDate,
+    passengerName: parsed.data.passengerName,
+    passengerPhone: parsed.data.passengerPhone,
+    passengerEmail: parsed.data.passengerEmail ? parsed.data.passengerEmail : null,
+    seats: parsed.data.seats,
+    routeStopId: parsed.data.routeStopId,
+  });
+
+  if (!result.ok) {
+    redirect(`/vendor/bookings/new?error=${encodeURIComponent(result.error)}`);
+  }
+
+  revalidatePath("/vendor/bookings");
+  redirect(`/vendor/bookings?saved=${result.reference}`);
 }

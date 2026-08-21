@@ -12,9 +12,15 @@ interface PlacesAutocompleteInputProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
-  onPlaceSelect?: (place: { address: string; lat: number; lng: number }) => void;
+  onPlaceSelect?: (place: { address: string; lat: number; lng: number; name?: string; city?: string }) => void;
   /** ISO 3166-1 alpha-2 country code (e.g. "al") to restrict autocomplete suggestions to. */
   countryRestriction?: string;
+}
+
+function cityFromAddressComponents(components: google.maps.GeocoderAddressComponent[] | undefined): string | undefined {
+  if (!components) return undefined;
+  const byType = (type: string) => components.find((c) => c.types.includes(type))?.long_name;
+  return byType("locality") ?? byType("administrative_area_level_2") ?? byType("administrative_area_level_1");
 }
 
 /**
@@ -61,7 +67,7 @@ export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder
         .then(() => {
           if (cancelled || !inputRef.current) return;
           const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-            fields: ["formatted_address", "geometry"],
+            fields: ["formatted_address", "geometry", "name", "address_components"],
             ...(countryRestrictionRef.current
               ? { componentRestrictions: { country: countryRestrictionRef.current } }
               : {}),
@@ -73,7 +79,13 @@ export function PlacesAutocompleteInput({ id, name, value, onChange, placeholder
             const location = place.geometry?.location;
             if (address) onChangeRef.current(address);
             if (address && location) {
-              onPlaceSelectRef.current?.({ address, lat: location.lat(), lng: location.lng() });
+              onPlaceSelectRef.current?.({
+                address,
+                lat: location.lat(),
+                lng: location.lng(),
+                name: place.name,
+                city: cityFromAddressComponents(place.address_components),
+              });
             }
           });
         })

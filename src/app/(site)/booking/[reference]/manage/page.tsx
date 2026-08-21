@@ -98,7 +98,7 @@ export default async function ManageBookingPage({ params, searchParams }: Manage
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{bm.email}</span>
-              <input name="passengerEmail" type="email" required defaultValue={booking.passengerEmail} className="public-input min-h-13 rounded-2xl px-4 py-3" />
+              <input name="passengerEmail" type="email" required defaultValue={booking.passengerEmail ?? ""} className="public-input min-h-13 rounded-2xl px-4 py-3" />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{bm.phone}</span>

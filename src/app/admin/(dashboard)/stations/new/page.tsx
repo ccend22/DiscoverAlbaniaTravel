@@ -17,6 +17,14 @@ export default async function NewStationPage({ searchParams }: { searchParams: P
         <label className="flex flex-col gap-1 text-sm sm:col-span-2"><span className="font-medium">Address <span className="font-normal text-muted">(optional)</span></span><input name="address" className="rounded-md border border-border bg-background px-3 py-2" /></label>
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Latitude</span><input name="latitude" type="number" step="any" required placeholder="41.327500" className="rounded-md border border-border bg-background px-3 py-2" /></label>
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Longitude</span><input name="longitude" type="number" step="any" required placeholder="19.818900" className="rounded-md border border-border bg-background px-3 py-2" /></label>
+        <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Category</span>
+          <select name="category" defaultValue="terminus" className="rounded-md border border-border bg-background px-3 py-2">
+            <option value="terminus">Terminus</option>
+            <option value="intermediate">Intermediate stop</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm sm:col-span-2"><span className="font-medium">Description <span className="font-normal text-muted">(optional)</span></span><textarea name="description" rows={3} className="rounded-md border border-border bg-background px-3 py-2" /></label>
+        <label className="flex flex-col gap-1 text-sm sm:col-span-2"><span className="font-medium">Photos <span className="font-normal text-muted">(one URL per line, optional)</span></span><textarea name="photoUrls" rows={3} placeholder="https://..." className="rounded-md border border-border bg-background px-3 py-2" /></label>
         <div className="sm:col-span-2"><Button type="submit">Create station</Button></div>
       </form>
     </div>
