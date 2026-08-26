@@ -203,13 +203,18 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
                 <td className="px-4 py-3">
                   {booking.paymentStatus === "paid" ? (
                     <Badge tone="success">Paid</Badge>
-                  ) : booking.paymentStatus ? (
+                  ) : booking.paymentStatus && booking.channel !== "online" ? (
+                    // Only a manually-taken booking can be marked paid here -- an
+                    // online booking's payment status must only ever come from the
+                    // real POK confirmation (webhook/return/sweep), never a manual override.
                     <form action={markPaidAction} onClick={(e) => e.stopPropagation()}>
                       <input type="hidden" name="bookingId" value={booking.bookingId} />
                       <button className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning hover:bg-warning/20">
                         Mark paid
                       </button>
                     </form>
+                  ) : booking.paymentStatus ? (
+                    <Badge tone="warning">{booking.paymentStatus}</Badge>
                   ) : (
                     <Badge tone="neutral">—</Badge>
                   )}

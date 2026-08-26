@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "./brand-mark";
-import { LogOutIcon } from "./icons";
+import { ChevronDownIcon, LogOutIcon, SettingsIcon } from "./icons";
 import { logoutVendorAction } from "@/app/vendor/actions";
 
 interface NavLink {
@@ -11,29 +12,17 @@ interface NavLink {
   label: string;
 }
 
-interface NavSection {
-  label: string;
-  links: NavLink[];
-}
+const MAIN_LINKS: NavLink[] = [
+  { href: "/vendor", label: "Overview" },
+  { href: "/vendor/bookings", label: "Bookings" },
+  { href: "/vendor/reports", label: "Reports" },
+];
 
-const SECTIONS: NavSection[] = [
-  {
-    label: "",
-    links: [
-      { href: "/vendor", label: "Overview" },
-      { href: "/vendor/bookings", label: "Bookings" },
-      { href: "/vendor/reports", label: "Reports" },
-    ],
-  },
-  {
-    label: "Settings",
-    links: [
-      { href: "/vendor/profile", label: "Profile" },
-      { href: "/vendor/routes", label: "Routes & stops" },
-      { href: "/vendor/departures", label: "Departures" },
-      { href: "/vendor/users", label: "Users" },
-    ],
-  },
+const SETTINGS_LINKS: NavLink[] = [
+  { href: "/vendor/profile", label: "Profile" },
+  { href: "/vendor/routes", label: "Routes & stops" },
+  { href: "/vendor/departures", label: "Departures" },
+  { href: "/vendor/users", label: "Users" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -41,8 +30,32 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function NavLinkItem({ pathname, link }: { pathname: string; link: NavLink }) {
+  const active = isActive(pathname, link.href);
+  return (
+    <Link
+      href={link.href}
+      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors duration-[var(--dur-fast)] ${
+        active ? "bg-teal/15 text-teal" : "text-muted hover:bg-brand-soft hover:text-foreground"
+      }`}
+    >
+      {link.label}
+    </Link>
+  );
+}
+
 export function VendorSidebar() {
   const pathname = usePathname();
+  const onSettingsPage = SETTINGS_LINKS.some((link) => isActive(pathname, link.href));
+  const [settingsOpen, setSettingsOpen] = useState(onSettingsPage);
+  // Auto-expand on navigation into a Settings page, without fighting a
+  // manual collapse elsewhere -- adjusting state during render (React's
+  // documented alternative to an effect here) rather than after the fact.
+  const [trackedOnSettingsPage, setTrackedOnSettingsPage] = useState(onSettingsPage);
+  if (onSettingsPage !== trackedOnSettingsPage) {
+    setTrackedOnSettingsPage(onSettingsPage);
+    if (onSettingsPage) setSettingsOpen(true);
+  }
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface-sunken text-foreground">
@@ -52,33 +65,37 @@ export function VendorSidebar() {
       </Link>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Vendor sections">
-        {SECTIONS.map((section) => (
-          <div key={section.label || "root"} className="mb-4 last:mb-0">
-            {section.label && (
-              <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-[0.1em] text-muted/70">
-                {section.label}
-              </p>
-            )}
-            <div className="flex flex-col gap-0.5">
-              {section.links.map((link) => {
-                const active = isActive(pathname, link.href);
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`rounded-md px-3 py-2 text-sm font-medium transition-colors duration-[var(--dur-fast)] ${
-                      active
-                        ? "bg-teal/15 text-teal"
-                        : "text-muted hover:bg-brand-soft hover:text-foreground"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
+        <div className="flex flex-col gap-0.5">
+          {MAIN_LINKS.map((link) => (
+            <NavLinkItem key={link.href} pathname={pathname} link={link} />
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+            aria-expanded={settingsOpen}
+            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-[var(--dur-fast)] ${
+              onSettingsPage ? "text-teal" : "text-muted hover:bg-brand-soft hover:text-foreground"
+            }`}
+          >
+            <SettingsIcon width={16} height={16} />
+            <span className="flex-1 text-left">Settings</span>
+            <ChevronDownIcon
+              width={14}
+              height={14}
+              className={`transition-transform duration-[var(--dur-fast)] ${settingsOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {settingsOpen && (
+            <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+              {SETTINGS_LINKS.map((link) => (
+                <NavLinkItem key={link.href} pathname={pathname} link={link} />
+              ))}
             </div>
-          </div>
-        ))}
+          )}
+        </div>
       </nav>
 
       <form action={logoutVendorAction} className="border-t border-border p-3">

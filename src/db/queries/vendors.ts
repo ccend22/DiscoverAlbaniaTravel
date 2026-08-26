@@ -657,6 +657,13 @@ export async function markVendorBookingPaid(vendorUserId: number, bookingId: num
   if (!(await verifyVendorOwnsBooking(vendorUserId, bookingId))) {
     return { ok: false, error: "That booking doesn't belong to your fleet." };
   }
+  const [booking] = await db.select({ channel: bookings.channel }).from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  // An online booking's payment status must only ever come from the real POK
+  // confirmation (webhook/return/sweep) -- never a manual override, or anyone
+  // could hand out a "paid" seat that was never actually charged.
+  if (booking?.channel === "online") {
+    return { ok: false, error: "Online bookings are paid automatically -- this can't be marked paid manually." };
+  }
   const [latestPayment] = await db
     .select({ id: payments.id })
     .from(payments)
