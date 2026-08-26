@@ -5,21 +5,28 @@ import { useRouter } from "next/navigation";
 import { createBookingAction, type CreateBookingActionState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { ChevronLeftIcon } from "@/components/icons";
+import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
 import type { Dictionary } from "@/lib/dictionary";
 
 interface BookingFormProps {
   tripDepartureId: number;
   date: string;
   defaultSeats: number;
+  pricePerSeat: string;
   profile: { name: string; email: string; phone: string | null } | null;
   bp: Dictionary["bookPage"];
+  common: Dictionary["common"];
 }
 
 const initialState: CreateBookingActionState = { status: "idle" };
 
-export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }: BookingFormProps) {
+export function BookingForm({ tripDepartureId, date, defaultSeats, pricePerSeat, profile, bp, common }: BookingFormProps) {
   const [state, formAction, isPending] = useActionState(createBookingAction, initialState);
+  const [seats, setSeats] = useState(defaultSeats);
+  const fareTotal = Number(pricePerSeat) * seats;
+  const grandTotal = fareTotal + BUS_BOOKING_SERVICE_FEE_EUR;
   const [dismissed, setDismissed] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [devOverrideSrc, setDevOverrideSrc] = useState<string | null>(null);
@@ -145,10 +152,29 @@ export function BookingForm({ tripDepartureId, date, defaultSeats, profile, bp }
             type="number"
             min={1}
             max={9}
-            defaultValue={defaultSeats}
+            value={seats}
+            onChange={(e) => setSeats(Math.min(9, Math.max(1, Number(e.target.value) || 1)))}
             className="public-input min-h-13 w-24 rounded-2xl px-4 py-3"
           />
         </label>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-surface-sunken p-4 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-muted">{bp.pricePerSeat} × {seats}</span>
+          <span className="font-medium text-foreground">€{fareTotal.toFixed(2)}</span>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-muted">
+            {common.serviceFee}
+            <InfoTooltip label={common.serviceFee}>{common.busServiceFeeInfo}</InfoTooltip>
+          </span>
+          <span className="font-medium text-foreground">+€{BUS_BOOKING_SERVICE_FEE_EUR.toFixed(2)}</span>
+        </div>
+        <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2.5">
+          <span className="font-semibold text-foreground">{bp.total}</span>
+          <span className="text-lg font-semibold text-foreground">€{grandTotal.toFixed(2)}</span>
+        </div>
       </div>
 
       <Button type="submit" className="mt-2" disabled={isPending}>

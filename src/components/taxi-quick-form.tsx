@@ -22,10 +22,12 @@ import {
 import { LocationPickerModal, type PickedLocation } from "./location-picker-modal";
 import { PlacesAutocompleteInput } from "./places-autocomplete-input";
 import { DatePicker } from "./date-picker";
+import { InfoTooltip } from "./info-tooltip";
 import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-loader";
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, MIN_TAXI_LEAD_TIME_HOURS, type Coordinates } from "@/lib/taxi-service";
 import { estimateTaxiPriceEur, TAXI_PRICE_PER_KM_EUR } from "@/lib/taxi-pricing";
+import { TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR } from "@/lib/service-fees";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
@@ -65,6 +67,15 @@ interface TaxiQuickFormProps {
    * same white card used by the bus form.
    */
   bare?: boolean;
+  /** Pre-fills pickup/destination -- set when arriving from the bus search page's "Book taxi instead" card, so the traveler doesn't have to re-enter a journey they already searched. */
+  initialJourney?: {
+    pickupLocation: string;
+    pickupLat?: number;
+    pickupLng?: number;
+    destination: string;
+    destinationLat?: number;
+    destinationLng?: number;
+  } | null;
 }
 
 type ActivePicker = "pickup" | "destination" | null;
@@ -291,7 +302,7 @@ function LocationFieldTools({
   );
 }
 
-export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", bare = false }: TaxiQuickFormProps) {
+export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", bare = false, initialJourney = null }: TaxiQuickFormProps) {
   const tq = dict.taxiQuickForm;
   const tf = dict.taxiForm;
   const lp = dict.locationPicker;
@@ -303,12 +314,20 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
   const router = useRouter();
   const actionError = actionState.status === "error" ? actionState.message : null;
   const showCheckout = actionState.status === "checkout";
-  const [pickupLocation, setPickupLocation] = useState("");
-  const [destination, setDestination] = useState("");
-  const [pickupCoordinates, setPickupCoordinates] = useState<Coordinates | null>(null);
-  const [destinationCoordinates, setDestinationCoordinates] = useState<Coordinates | null>(null);
-  const [pickupSource, setPickupSource] = useState<LocationSource>(null);
-  const [destinationSource, setDestinationSource] = useState<LocationSource>(null);
+  const [pickupLocation, setPickupLocation] = useState(initialJourney?.pickupLocation ?? "");
+  const [destination, setDestination] = useState(initialJourney?.destination ?? "");
+  const [pickupCoordinates, setPickupCoordinates] = useState<Coordinates | null>(
+    initialJourney?.pickupLat !== undefined && initialJourney?.pickupLng !== undefined
+      ? { lat: initialJourney.pickupLat, lng: initialJourney.pickupLng }
+      : null
+  );
+  const [destinationCoordinates, setDestinationCoordinates] = useState<Coordinates | null>(
+    initialJourney?.destinationLat !== undefined && initialJourney?.destinationLng !== undefined
+      ? { lat: initialJourney.destinationLat, lng: initialJourney.destinationLng }
+      : null
+  );
+  const [pickupSource, setPickupSource] = useState<LocationSource>(initialJourney ? "search" : null);
+  const [destinationSource, setDestinationSource] = useState<LocationSource>(initialJourney ? "search" : null);
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [locating, setLocating] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -471,6 +490,8 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         ? `${Math.round(distanceKm ?? 0)} km · ${formatMessage(tq.minimumBadge, { min: MIN_INTERCITY_TAXI_DISTANCE_KM })}`
         : tq.priceWaitingHint;
   const fareAmount = taxiPriceEstimate?.priceEur ?? null;
+  const taxiServiceFee = TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR * passengers;
+  const taxiGrandTotal = fareAmount !== null ? (fareAmount + taxiServiceFee).toFixed(0) : null;
   const ui = locale === "al"
     ? {
         from: "Nga ku",
@@ -777,6 +798,18 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
               </div>
             )}
           </div>
+
+          {fareAmount !== null && routeIsEligible && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-[#eef4f2] px-4 py-2.5 text-xs">
+              <span className="flex items-center gap-1.5 text-muted">
+                {dict.common.serviceFee} (€{TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR} × {passengers})
+                <InfoTooltip label={dict.common.serviceFee}>{dict.common.taxiServiceFeeInfo}</InfoTooltip>
+              </span>
+              <span className="font-semibold text-brand-navy">+€{taxiServiceFee}</span>
+              <span className="ml-auto text-muted">{bp.total}</span>
+              <span className="font-display text-base font-black tabular-nums text-brand-navy">€{taxiGrandTotal}</span>
+            </div>
+          )}
 
           <div className="flex items-start gap-1.5 px-4 pb-2 pt-3 text-[11px] leading-4 text-muted">
             <ClockIcon width={12} height={12} className="mt-0.5 shrink-0 text-gold" aria-hidden="true" />

@@ -19,6 +19,14 @@ interface HeroBookingWidgetProps {
   user: { name: string; phone: string | null; email: string } | null;
   initialMode?: Mode;
   taxiError?: string;
+  initialTaxiJourney?: {
+    pickupLocation: string;
+    pickupLat?: number;
+    pickupLng?: number;
+    destination: string;
+    destinationLat?: number;
+    destinationLng?: number;
+  } | null;
 }
 
 export function HeroBookingWidget({
@@ -30,6 +38,7 @@ export function HeroBookingWidget({
   user,
   initialMode = "bus",
   taxiError,
+  initialTaxiJourney,
 }: HeroBookingWidgetProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -146,7 +155,7 @@ export function HeroBookingWidget({
                 locale={locale}
               />
             ) : (
-              <TaxiQuickForm bare dict={dict} locale={locale} user={user} error={taxiError} />
+              <TaxiQuickForm bare dict={dict} locale={locale} user={user} error={taxiError} initialJourney={initialTaxiJourney} />
             )}
           </div>
         </div>

@@ -8,6 +8,9 @@ const en = {
     weekdayFull: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     durationUnavailable: "Duration unavailable",
     priceUnavailable: "No online payment available",
+    serviceFee: "Service fee",
+    busServiceFeeInfo: "Covers secure online payment processing and customer support for your booking.",
+    taxiServiceFeeInfo: "Covers secure online payment processing and customer support -- charged per passenger.",
   },
   nav: {
     home: "Home",
@@ -498,6 +501,9 @@ const al: typeof en = {
     weekdayFull: ["e diel", "e hënë", "e martë", "e mërkurë", "e enjte", "e premte", "e shtunë"],
     durationUnavailable: "Kohëzgjatja nuk disponohet",
     priceUnavailable: "Pagesa online nuk disponohet",
+    serviceFee: "Tarifa e shërbimit",
+    busServiceFeeInfo: "Mbulon procesimin e sigurt të pagesës online dhe mbështetjen për klientin për rezervimin tënd.",
+    taxiServiceFeeInfo: "Mbulon procesimin e sigurt të pagesës online dhe mbështetjen për klientin -- ngarkohet për çdo pasagjer.",
   },
   nav: {
     home: "Kreu",

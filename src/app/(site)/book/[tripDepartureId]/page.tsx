@@ -9,6 +9,7 @@ import { BookingForm } from "./booking-form";
 import { Alert } from "@/components/ui/alert";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
+import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
 
 interface BookPageProps {
   params: Promise<{ tripDepartureId: string }>;
@@ -108,8 +109,10 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
               tripDepartureId={id}
               date={date}
               defaultSeats={defaultSeats}
+              pricePerSeat={trip.basePrice ?? "0"}
               profile={profile ? { name: profile.name, email: profile.email, phone: profile.phone } : null}
               bp={bp}
+              common={dict.common}
             />
 
             <section className="mt-10 border-t border-border pt-6">
@@ -180,10 +183,14 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                 <span className="text-muted">{bp.seats}</span>
                 <span className="font-medium text-foreground">{defaultSeats}</span>
               </div>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <span className="text-muted">{dict.common.serviceFee}</span>
+                <span className="font-medium text-foreground">+€{BUS_BOOKING_SERVICE_FEE_EUR.toFixed(2)}</span>
+              </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
                 <span className="font-semibold text-foreground">{bp.total}</span>
                 <span className="text-lg font-semibold text-foreground">
-                  {formatPrice(trip.basePrice, defaultSeats, locale)}
+                  €{(Number(trip.basePrice) * defaultSeats + BUS_BOOKING_SERVICE_FEE_EUR).toFixed(2)}
                 </span>
               </div>
             </div>

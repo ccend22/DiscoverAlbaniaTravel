@@ -7,6 +7,7 @@ import { createSdkOrder, PokConfigError } from "@/lib/pok-payments";
 import { getActiveUserSessionId } from "@/lib/user-session";
 import { getSiteOrigin } from "@/lib/google-oauth";
 import { getLocale } from "@/lib/i18n";
+import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
 
 export type CreateBookingActionState =
   | { status: "idle" }
@@ -51,7 +52,7 @@ export async function createBookingAction(
   // any failure must release it again -- drizzle's neon-http driver can't
   // hold a transaction open across the network round-trip to POK, so this
   // is a compensating action, not a rollback.
-  const amount = Number(result.priceAtBooking) * parsed.data.seats;
+  const amount = Number(result.priceAtBooking) * parsed.data.seats + BUS_BOOKING_SERVICE_FEE_EUR;
   const returnUrl = `${getSiteOrigin()}/pay/return?ref=${encodeURIComponent(result.reference)}&embedded=1`;
 
   try {
