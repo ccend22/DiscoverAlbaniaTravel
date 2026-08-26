@@ -209,6 +209,83 @@ export async function getVendorDepartureCalendar(vendorUserId: number, days = 14
   }));
 }
 
+export interface VendorManifestPassenger {
+  bookingReference: string;
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail: string | null;
+  seats: number;
+  channel: "online" | "walk_in" | "phone" | "touch_screen";
+}
+
+export interface VendorManifest {
+  tripDepartureId: number;
+  date: string;
+  routeCode: string;
+  routeLongName: string;
+  operatorName: string;
+  fromStationName: string;
+  toStationName: string;
+  departureTime: string;
+  arrivalTime: string;
+  totalSeatsBooked: number;
+  passengers: VendorManifestPassenger[];
+}
+
+/** Boarding list for one departure on one specific date -- confirmed bookings only, ordered by name so a driver can find someone quickly. */
+export async function getVendorManifest(vendorUserId: number, tripDepartureId: number, date: string): Promise<VendorManifest | null> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return null;
+
+  const fromStation = alias(stations, "manifest_from_station");
+  const toStation = alias(stations, "manifest_to_station");
+
+  const [departure] = await db
+    .select({
+      id: tripDepartures.id,
+      routeCode: routes.code,
+      routeLongName: routes.longName,
+      departureTime: tripDepartures.departureTime,
+      arrivalTime: tripDepartures.arrivalTime,
+      fromStationName: fromStation.name,
+      toStationName: toStation.name,
+    })
+    .from(tripDepartures)
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .where(and(eq(tripDepartures.id, tripDepartureId), eq(routes.operatorId, context.operatorId)))
+    .limit(1);
+  if (!departure) return null;
+
+  const passengers = await db
+    .select({
+      bookingReference: bookings.bookingReference,
+      passengerName: bookings.passengerName,
+      passengerPhone: bookings.passengerPhone,
+      passengerEmail: bookings.passengerEmail,
+      seats: bookings.seats,
+      channel: bookings.channel,
+    })
+    .from(bookings)
+    .where(and(eq(bookings.tripDepartureId, tripDepartureId), eq(bookings.travelDate, date), eq(bookings.status, "confirmed")))
+    .orderBy(asc(bookings.passengerName));
+
+  return {
+    tripDepartureId: departure.id,
+    date,
+    routeCode: departure.routeCode,
+    routeLongName: departure.routeLongName,
+    operatorName: context.operatorName,
+    fromStationName: departure.fromStationName,
+    toStationName: departure.toStationName,
+    departureTime: departure.departureTime,
+    arrivalTime: departure.arrivalTime,
+    totalSeatsBooked: passengers.reduce((sum, p) => sum + p.seats, 0),
+    passengers,
+  };
+}
+
 export interface VendorBookingRow {
   bookingId: number;
   bookingReference: string;

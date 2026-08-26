@@ -44,7 +44,18 @@ export default async function VendorOverviewPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="animate-fade-up border-b border-border pb-6">
         <p className="text-xs font-bold uppercase tracking-[0.1em] text-teal">Bus operations</p>
-        <h1 className="mt-1 font-display text-2xl font-bold text-foreground">{context.operatorName}</h1>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-2xl font-bold text-foreground">{context.operatorName}</h1>
+          {context.operatorRatingCount > 0 ? (
+            <span className="flex items-center gap-1 rounded-full bg-gold-soft px-2.5 py-1 text-sm font-semibold text-gold">
+              <span aria-hidden="true">★</span>
+              {Number(context.operatorRating).toFixed(1)}
+              <span className="font-normal text-gold/80">({context.operatorRatingCount})</span>
+            </span>
+          ) : (
+            <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-muted">No ratings yet</span>
+          )}
+        </div>
         <p className="mt-1 text-sm text-muted">{context.vendorEmail}</p>
       </div>
 

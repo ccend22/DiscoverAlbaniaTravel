@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getVendorContext, getVendorDepartureCalendar } from "@/db/queries/vendors";
 import { requireVendorSession } from "@/lib/vendor-session";
@@ -53,16 +54,20 @@ export default async function VendorCalendarPage() {
                   </td>
                   {row.days.map((day) => (
                     <td key={day.date} className="p-1.5 text-center align-top">
-                      <div className={`rounded-lg px-1.5 py-2 ${cellTone(day.running, day.bookedSeats, day.plannedSeats)}`}>
-                        {day.running ? (
-                          <>
-                            <p className="font-semibold tabular-nums">{day.availableSeats}</p>
-                            {row.basePrice && <p className="text-[11px] tabular-nums opacity-80">€{Number(row.basePrice).toFixed(2)}</p>}
-                          </>
-                        ) : (
+                      {day.running ? (
+                        <Link
+                          href={`/vendor/manifest/${row.id}?date=${day.date}`}
+                          title="View boarding list"
+                          className={`block rounded-lg px-1.5 py-2 transition-transform hover:-translate-y-px hover:shadow-[var(--shadow-xs)] ${cellTone(day.running, day.bookedSeats, day.plannedSeats)}`}
+                        >
+                          <p className="font-semibold tabular-nums">{day.availableSeats}</p>
+                          {row.basePrice && <p className="text-[11px] tabular-nums opacity-80">€{Number(row.basePrice).toFixed(2)}</p>}
+                        </Link>
+                      ) : (
+                        <div className={`rounded-lg px-1.5 py-2 ${cellTone(day.running, day.bookedSeats, day.plannedSeats)}`}>
                           <p className="text-xs">—</p>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </td>
                   ))}
                 </tr>

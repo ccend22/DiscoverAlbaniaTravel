@@ -59,7 +59,7 @@ export function VendorSidebar() {
   }
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface-sunken text-foreground">
+    <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface-sunken text-foreground print:hidden">
       <Link href="/vendor" aria-label="Discover Albania Transport vendor portal" className="group flex flex-col items-start gap-1.5 border-b border-border px-5 py-5">
         <BrandMark size={26} className="transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-110" />
         <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Transport · Vendor</span>

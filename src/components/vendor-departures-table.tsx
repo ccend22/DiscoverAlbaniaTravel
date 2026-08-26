@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { formatWeekdays } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { SearchIcon } from "@/components/icons";
@@ -102,6 +103,9 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                   <p className="mt-1 max-w-56 truncate text-xs text-muted">
                     {departure.routeLongName}
                   </p>
+                  <Link href={`/vendor/manifest/${departure.id}`} className="mt-1 inline-block text-xs font-medium text-teal hover:underline">
+                    Boarding list
+                  </Link>
                 </td>
                 <td className="px-4 py-3 align-top text-foreground">
                   {departure.fromStationName}
