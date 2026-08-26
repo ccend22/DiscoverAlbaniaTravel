@@ -1,0 +1,2 @@
+CREATE TYPE "public"."booking_channel" AS ENUM('online', 'walk_in', 'phone', 'touch_screen');--> statement-breakpoint
+ALTER TABLE "bookings" ADD COLUMN "channel" "booking_channel" DEFAULT 'online' NOT NULL;

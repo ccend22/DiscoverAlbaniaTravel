@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
+  vendorBookingEditSchema,
   vendorClaimSignupSchema,
   vendorDepartureSchema,
   vendorLoginSchema,
@@ -18,12 +19,15 @@ import {
   applyAsNewOperator,
   applyForExistingOperator,
   authenticateVendor,
+  cancelVendorBooking,
   createManualBookingForVendor,
   createVendorDeparture,
   createVendorRoute,
   createVendorRouteStop,
   createVendorRouteStopAtNewLocation,
   deleteVendorRouteStop,
+  markVendorBookingPaid,
+  updateVendorBookingDetails,
   updateVendorDeparture,
   updateVendorOperator,
   updateVendorRouteStop,
@@ -305,6 +309,9 @@ export async function createManualBookingAction(formData: FormData) {
     passengerEmail: formData.get("passengerEmail") || undefined,
     seats: formData.get("seats"),
     routeStopId: formData.get("routeStopId") || undefined,
+    channel: formData.get("channel") || undefined,
+    paid: formData.get("paid") ? "true" : "false",
+    amountOverride: formData.get("amountOverride") || undefined,
   });
   if (!parsed.success) {
     redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
@@ -318,6 +325,9 @@ export async function createManualBookingAction(formData: FormData) {
     passengerEmail: parsed.data.passengerEmail ? parsed.data.passengerEmail : null,
     seats: parsed.data.seats,
     routeStopId: parsed.data.routeStopId,
+    channel: parsed.data.channel,
+    paid: parsed.data.paid,
+    amountOverride: parsed.data.amountOverride,
   });
 
   if (!result.ok) {
@@ -326,4 +336,45 @@ export async function createManualBookingAction(formData: FormData) {
 
   revalidatePath("/vendor/bookings");
   redirect(`/vendor/bookings?saved=${result.reference}`);
+}
+
+export async function updateVendorBookingAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const parsed = vendorBookingEditSchema.safeParse({
+    passengerName: formData.get("passengerName"),
+    passengerPhone: formData.get("passengerPhone"),
+    passengerEmail: formData.get("passengerEmail") || undefined,
+    channel: formData.get("channel"),
+  });
+  if (!parsed.success) {
+    redirect(`/vendor/bookings?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
+  }
+  const result = await updateVendorBookingDetails(vendorUserId, bookingId, {
+    passengerName: parsed.data.passengerName,
+    passengerPhone: parsed.data.passengerPhone,
+    passengerEmail: parsed.data.passengerEmail ? parsed.data.passengerEmail : null,
+    channel: parsed.data.channel,
+  });
+  if (!result.ok) redirect(`/vendor/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/bookings");
+  redirect("/vendor/bookings?saved=1");
+}
+
+export async function cancelVendorBookingAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const result = await cancelVendorBooking(vendorUserId, bookingId);
+  if (!result.ok) redirect(`/vendor/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/bookings");
+  redirect("/vendor/bookings?saved=1");
+}
+
+export async function markVendorBookingPaidAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const result = await markVendorBookingPaid(vendorUserId, bookingId);
+  if (!result.ok) redirect(`/vendor/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/bookings");
+  redirect("/vendor/bookings?saved=1");
 }

@@ -4,8 +4,9 @@ import { db } from "../index";
 import { bookings, operators, payments, routeStops, routes, stations, tripDepartures, vendorUsers } from "../schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
-import { createBooking } from "./bookings";
+import { cancelBookingForVendor, createBooking } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
+import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
 
 /**
  * Operators created by the original data import (and by admin's "new
@@ -120,6 +121,7 @@ export async function listVendorDepartures(vendorUserId: number) {
 }
 
 export interface VendorBookingRow {
+  bookingId: number;
   bookingReference: string;
   travelDate: string;
   passengerName: string;
@@ -128,6 +130,8 @@ export interface VendorBookingRow {
   seats: number;
   priceAtBooking: string;
   status: "confirmed" | "cancelled";
+  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
   createdAt: Date;
   routeCode: string;
   fromStationName: string;
@@ -144,6 +148,7 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
 
   return db
     .select({
+      bookingId: bookings.id,
       bookingReference: bookings.bookingReference,
       travelDate: bookings.travelDate,
       passengerName: bookings.passengerName,
@@ -152,6 +157,13 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
       seats: bookings.seats,
       priceAtBooking: bookings.priceAtBooking,
       status: bookings.status,
+      channel: bookings.channel,
+      paymentStatus: sql<VendorBookingRow["paymentStatus"]>`(
+        select ${payments.status} from ${payments}
+        where ${payments.bookingId} = ${bookings.id}
+        order by ${payments.createdAt} desc
+        limit 1
+      )`,
       createdAt: bookings.createdAt,
       routeCode: routes.code,
       fromStationName: fromStation.name,
@@ -541,6 +553,10 @@ export async function createManualBookingForVendor(
     passengerEmail: string | null;
     seats: number;
     routeStopId?: number;
+    channel: "walk_in" | "phone" | "touch_screen";
+    paid: boolean;
+    /** Overrides the computed fare+fee total -- lets a vendor adjust for a discount, etc. */
+    amountOverride?: string;
   }
 ): Promise<CreateManualBookingResult> {
   const context = await getVendorContext(vendorUserId);
@@ -574,21 +590,82 @@ export async function createManualBookingForVendor(
     seats: input.seats,
     createdByVendorUserId: vendorUserId,
     priceOverride,
+    channel: input.channel,
   });
 
   if (!result.ok) {
     return { ok: false, error: MANUAL_BOOKING_ERROR_MESSAGES[result.error] ?? "Couldn't create that booking." };
   }
 
+  const fareTotal = Number(result.priceAtBooking) * input.seats;
+  const defaultAmount = (fareTotal + Number(MANUAL_BOOKING_SERVICE_FEE_EUR)).toFixed(2);
+
   await db.insert(payments).values({
     bookingId: result.bookingId,
     provider: "manual",
-    amount: result.priceAtBooking,
-    currency: "ALL",
-    status: "paid",
+    amount: input.amountOverride ?? defaultAmount,
+    currency: "EUR",
+    status: input.paid ? "paid" : "pending",
   });
 
   return { ok: true, reference: result.reference };
+}
+
+async function verifyVendorOwnsBooking(vendorUserId: number, bookingId: number): Promise<boolean> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return false;
+  const [owned] = await db
+    .select({ id: bookings.id })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(and(eq(bookings.id, bookingId), eq(routes.operatorId, context.operatorId)))
+    .limit(1);
+  return Boolean(owned);
+}
+
+export async function cancelVendorBooking(vendorUserId: number, bookingId: number): Promise<AdminMutationResult> {
+  if (!(await verifyVendorOwnsBooking(vendorUserId, bookingId))) {
+    return { ok: false, error: "That booking doesn't belong to your fleet." };
+  }
+  const cancelled = await cancelBookingForVendor(bookingId);
+  return cancelled ? { ok: true } : { ok: false, error: "This booking is already cancelled." };
+}
+
+export async function updateVendorBookingDetails(
+  vendorUserId: number,
+  bookingId: number,
+  input: { passengerName: string; passengerPhone: string; passengerEmail: string | null; channel: "walk_in" | "phone" | "touch_screen" }
+): Promise<AdminMutationResult> {
+  if (!(await verifyVendorOwnsBooking(vendorUserId, bookingId))) {
+    return { ok: false, error: "That booking doesn't belong to your fleet." };
+  }
+  await db
+    .update(bookings)
+    .set({
+      passengerName: input.passengerName,
+      passengerPhone: input.passengerPhone,
+      passengerEmail: input.passengerEmail,
+      channel: input.channel,
+      updatedAt: new Date(),
+    })
+    .where(eq(bookings.id, bookingId));
+  return { ok: true };
+}
+
+export async function markVendorBookingPaid(vendorUserId: number, bookingId: number): Promise<AdminMutationResult> {
+  if (!(await verifyVendorOwnsBooking(vendorUserId, bookingId))) {
+    return { ok: false, error: "That booking doesn't belong to your fleet." };
+  }
+  const [latestPayment] = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .where(eq(payments.bookingId, bookingId))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  if (!latestPayment) return { ok: false, error: "This booking has no payment record to update." };
+  await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, latestPayment.id));
+  return { ok: true };
 }
 
 export interface PendingVendor {

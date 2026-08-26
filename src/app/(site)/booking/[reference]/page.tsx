@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { getBookingByReference } from "@/db/queries/bookings";
+import { getBookingReviewRating } from "@/db/queries/reviews";
 import { formatDuration, formatPrice, formatWeekdays, formatDateLong, formatTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircleIcon, XCircleIcon, ClockIcon, MapPinIcon } from "@/components/icons";
 import { PrintButton } from "@/components/print-button";
+import { TripReviewSection } from "@/components/trip-review-section";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
 
@@ -13,7 +15,10 @@ interface BookingDetailPageProps {
 
 export default async function BookingDetailPage({ params }: BookingDetailPageProps) {
   const { reference } = await params;
-  const booking = await getBookingByReference(reference.toUpperCase());
+  const [booking, reviewRating] = await Promise.all([
+    getBookingByReference(reference.toUpperCase()),
+    getBookingReviewRating(reference.toUpperCase()),
+  ]);
   if (!booking) notFound();
   const { locale, dict } = await getLocaleAndDictionary();
   const bc = dict.bookingConfirmation;
@@ -102,6 +107,8 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           </div>
         </div>
       </div>
+
+      {isPaid && <TripReviewSection reference={booking.bookingReference} initialRating={reviewRating} />}
 
       <p className="mt-6 text-xs text-muted">
         {bc.keepReference}

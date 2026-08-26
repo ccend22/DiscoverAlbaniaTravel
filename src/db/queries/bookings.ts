@@ -19,6 +19,8 @@ export interface CreateBookingInput {
   createdByVendorUserId?: number | null;
   /** Overrides the route's base price -- used when a manual booking boards from an intermediate stop, priced via that stop's own route_stops.priceToDestination rather than the full-route fare. */
   priceOverride?: string;
+  /** Defaults to "online" -- pass a vendor-side channel for manually-entered bookings. */
+  channel?: "online" | "walk_in" | "phone" | "touch_screen";
 }
 
 /** Bearer secret for the emailed "manage your booking" link -- see the `manageToken` column comment in schema.ts. */
@@ -84,7 +86,8 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${sql.identifier(bookings.priceAtBooking.name)},
         ${sql.identifier(bookings.locale.name)},
         ${sql.identifier(bookings.manageToken.name)},
-        ${sql.identifier(bookings.createdByVendorUserId.name)}
+        ${sql.identifier(bookings.createdByVendorUserId.name)},
+        ${sql.identifier(bookings.channel.name)}
       )
       select
         ${reference},
@@ -98,7 +101,8 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${input.priceOverride ?? trip.basePrice},
         ${input.locale ?? "en"},
         ${manageToken},
-        ${input.createdByVendorUserId ?? null}
+        ${input.createdByVendorUserId ?? null},
+        ${input.channel ?? "online"}
       from reserved
       returning ${sql.identifier(bookings.id.name)}, ${sql.identifier(bookings.bookingReference.name)}
     )
@@ -154,6 +158,11 @@ export async function cancelBookingForUnpaidPayment(bookingId: number): Promise<
   return restoreInventoryAndCancelBooking(bookingId);
 }
 
+/** Cancel initiated from the vendor dashboard -- caller (src/db/queries/vendors.ts) has already verified the vendor owns this booking's route. */
+export async function cancelBookingForVendor(bookingId: number): Promise<boolean> {
+  return restoreInventoryAndCancelBooking(bookingId);
+}
+
 export interface BookingDetail {
   bookingReference: string;
   travelDate: string;
@@ -169,7 +178,7 @@ export interface BookingDetail {
   paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
 }
 
-async function getLatestPaymentStatus(bookingId: number) {
+export async function getLatestPaymentStatus(bookingId: number) {
   const [payment] = await db
     .select({ status: payments.status })
     .from(payments)

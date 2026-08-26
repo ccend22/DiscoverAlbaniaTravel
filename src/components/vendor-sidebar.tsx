@@ -17,21 +17,21 @@ interface NavSection {
 }
 
 const SECTIONS: NavSection[] = [
-  { label: "", links: [{ href: "/vendor", label: "Overview" }] },
   {
-    label: "Business",
-    links: [{ href: "/vendor/profile", label: "Profile" }],
-  },
-  {
-    label: "Catalog",
+    label: "",
     links: [
-      { href: "/vendor/routes", label: "Routes & stops" },
-      { href: "/vendor/departures", label: "Departures" },
+      { href: "/vendor", label: "Overview" },
+      { href: "/vendor/bookings", label: "Bookings" },
+      { href: "/vendor/reports", label: "Reports" },
     ],
   },
   {
-    label: "Commerce",
-    links: [{ href: "/vendor/bookings", label: "Bookings" }],
+    label: "Settings",
+    links: [
+      { href: "/vendor/profile", label: "Profile" },
+      { href: "/vendor/routes", label: "Routes & stops" },
+      { href: "/vendor/departures", label: "Departures" },
+    ],
   },
 ];
 

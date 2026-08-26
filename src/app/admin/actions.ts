@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { adminLoginSchema } from "@/lib/validation";
+import { resolveOperatorReportForAdmin } from "@/db/queries/reviews";
 import {
   vendorDepartureSchema,
   vendorOperatorSchema,
@@ -338,4 +339,12 @@ export async function deleteAdminPaymentAction(formData: FormData) {
   await deletePaymentForAdmin(paymentId);
   revalidatePath("/admin/payments");
   redirect("/admin/payments?saved=1");
+}
+
+export async function resolveOperatorReportAction(formData: FormData) {
+  await requireAdminSession();
+  const reportId = Number(formData.get("reportId"));
+  await resolveOperatorReportForAdmin(reportId);
+  revalidatePath("/admin/reports");
+  redirect("/admin/reports?saved=1");
 }

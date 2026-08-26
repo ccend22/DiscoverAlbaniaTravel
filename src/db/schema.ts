@@ -36,6 +36,12 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "cancelled",
 ]);
 export const stationCategoryEnum = pgEnum("station_category", ["terminus", "intermediate"]);
+// How a booking was taken: "online" is a customer self-service booking on the
+// site; the other three are all vendor-entered (see createdByVendorUserId) --
+// "walk_in"/"phone" for a counter or telephone sale, "touch_screen" for a
+// vendor-run self-service kiosk.
+export const bookingChannelEnum = pgEnum("booking_channel", ["online", "walk_in", "phone", "touch_screen"]);
+export const operatorReportStatusEnum = pgEnum("operator_report_status", ["open", "resolved"]);
 
 export const operators = pgTable("operators", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -242,15 +248,23 @@ export const bookings = pgTable(
     manageToken: text("manage_token"),
     // Set only for bookings a vendor entered manually on a customer's
     // behalf (phone/walk-in) -- null means the customer booked and paid
-    // online themselves. Distinguishes the two in the vendor/admin ledger
-    // without needing a separate "source" enum.
+    // online themselves.
     createdByVendorUserId: integer("created_by_vendor_user_id").references(() => vendorUsers.id, {
       onDelete: "set null",
     }),
+    channel: bookingChannelEnum("channel").notNull().default("online"),
+    // The 1-5 star rating this booking's passenger left for the operator, if
+    // any -- lets a resubmission edit the operator's rolling average
+    // correctly instead of double-counting it. No text attaches here; a
+    // written complaint goes to operator_reports instead.
+    reviewRating: integer("review_rating"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
-  (table) => [check("bookings_seats_range", sql`${table.seats} > 0 and ${table.seats} <= 9`)]
+  (table) => [
+    check("bookings_seats_range", sql`${table.seats} > 0 and ${table.seats} <= 9`),
+    check("bookings_review_rating_range", sql`${table.reviewRating} is null or (${table.reviewRating} >= 1 and ${table.reviewRating} <= 5)`),
+  ]
 );
 
 export const tripInventories = pgTable(
@@ -397,8 +411,25 @@ export const payments = pgTable(
   ]
 );
 
+// A private complaint tied to a specific trip -- distinct from the public
+// 1-5 star rating (operators.rating/ratingCount), which carries no text.
+// Visible to both the operator (their own vendor dashboard) and admin.
+export const operatorReports = pgTable("operator_reports", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  operatorId: integer("operator_id")
+    .notNull()
+    .references(() => operators.id, { onDelete: "cascade" }),
+  bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  reporterName: text("reporter_name").notNull(),
+  reporterEmail: text("reporter_email").notNull(),
+  message: text("message").notNull(),
+  status: operatorReportStatusEnum("status").notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const operatorsRelations = relations(operators, ({ many }) => ({
   routes: many(routes),
+  reports: many(operatorReports),
 }));
 
 export const vendorUsersRelations = relations(vendorUsers, ({ one }) => ({
@@ -504,4 +535,9 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     fields: [payments.taxiRideRequestId],
     references: [taxiRideRequests.id],
   }),
+}));
+
+export const operatorReportsRelations = relations(operatorReports, ({ one }) => ({
+  operator: one(operators, { fields: [operatorReports.operatorId], references: [operators.id] }),
+  booking: one(bookings, { fields: [operatorReports.bookingId], references: [bookings.id] }),
 }));

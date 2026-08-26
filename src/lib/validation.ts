@@ -306,8 +306,24 @@ export const vendorManualBookingSchema = z
       .optional(),
     seats: z.coerce.number().int().min(1, "At least 1 seat is required").max(9, "Max 9 seats per booking"),
     routeStopId: z.coerce.number().int().positive().optional(),
+    channel: z.enum(["walk_in", "phone", "touch_screen"]).default("walk_in"),
+    paid: z.coerce.boolean().default(true),
+    amountOverride: z.coerce.number().min(0).transform((value) => value.toFixed(2)).optional(),
   })
   .refine((data) => data.travelDate >= todayInAlbania(), {
     message: "Choose today or a future travel date",
     path: ["travelDate"],
   });
+
+export const vendorBookingEditSchema = z.object({
+  passengerName: z.string().trim().min(2, "Enter the passenger's full name"),
+  passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+  passengerEmail: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Enter a valid email address")
+    .or(z.literal(""))
+    .optional(),
+  channel: z.enum(["walk_in", "phone", "touch_screen"]),
+});

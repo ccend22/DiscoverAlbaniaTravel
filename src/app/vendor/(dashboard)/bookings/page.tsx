@@ -4,6 +4,7 @@ import { requireVendorSession } from "@/lib/vendor-session";
 import { VendorBookingsTable } from "@/components/vendor-bookings-table";
 import { LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { cancelVendorBookingAction, markVendorBookingPaidAction, updateVendorBookingAction } from "../../actions";
 
 export default async function VendorBookingsPage({
   searchParams,
@@ -38,7 +39,12 @@ export default async function VendorBookingsPage({
         </div>
       )}
       <div className="mt-6">
-        <VendorBookingsTable bookings={vendorBookings} />
+        <VendorBookingsTable
+          bookings={vendorBookings}
+          updateAction={updateVendorBookingAction}
+          cancelAction={cancelVendorBookingAction}
+          markPaidAction={markVendorBookingPaidAction}
+        />
       </div>
     </div>
   );

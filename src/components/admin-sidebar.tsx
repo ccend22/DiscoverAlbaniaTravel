@@ -41,6 +41,7 @@ const SECTIONS: NavSection[] = [
       { href: "/admin/bookings", label: "Bookings" },
       { href: "/admin/payments", label: "Payments" },
       { href: "/admin/taxi-requests", label: "Taxi requests" },
+      { href: "/admin/reports", label: "Reports" },
     ],
   },
 ];

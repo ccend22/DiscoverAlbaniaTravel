@@ -1,20 +1,118 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Badge } from "@/components/ui/badge";
-import { SearchIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { CloseIcon, SearchIcon } from "@/components/icons";
 import { formatDateLong, formatPrice } from "@/lib/format";
+import { BOOKING_CHANNEL_OPTIONS } from "@/lib/manual-booking";
+import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import type { VendorBookingRow } from "@/db/queries/vendors";
 
 type StatusFilter = "all" | "confirmed" | "cancelled";
 
 interface VendorBookingsTableProps {
   bookings: VendorBookingRow[];
+  updateAction: (formData: FormData) => void;
+  cancelAction: (formData: FormData) => void;
+  markPaidAction: (formData: FormData) => void;
 }
 
-export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
+const CHANNEL_LABELS: Record<VendorBookingRow["channel"], string> = {
+  online: "Online",
+  walk_in: "Walk-in",
+  phone: "Phone",
+  touch_screen: "Touch screen",
+};
+
+function EditBookingModal({
+  booking,
+  onClose,
+  updateAction,
+  cancelAction,
+}: {
+  booking: VendorBookingRow;
+  onClose: () => void;
+  updateAction: (formData: FormData) => void;
+  cancelAction: (formData: FormData) => void;
+}) {
+  useBodyScrollLock(true);
+  const isManual = booking.channel !== "online";
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-5">
+      <div className="fixed inset-0 bg-brand-deep/55 backdrop-blur-[3px]" aria-hidden="true" {...tapToDismiss(onClose)} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit booking"
+        className="relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[1.5rem] border border-white/70 bg-surface p-6 shadow-[0_32px_90px_rgba(0,24,32,0.34)] sm:rounded-[1.5rem]"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-bold text-foreground">{booking.bookingReference}</h2>
+          <button type="button" {...tapToDismiss(onClose)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground">
+            <CloseIcon width={16} height={16} />
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-muted">
+          {booking.routeCode} · {booking.fromStationName} → {booking.toStationName} · {formatDateLong(booking.travelDate)}
+        </p>
+
+        <form action={updateAction} className="mt-5 grid gap-3">
+          <input type="hidden" name="bookingId" value={booking.bookingId} />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Passenger name</span>
+            <input name="passengerName" defaultValue={booking.passengerName} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Phone</span>
+            <input name="passengerPhone" defaultValue={booking.passengerPhone} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Email <span className="font-normal text-muted">(optional)</span></span>
+            <input name="passengerEmail" type="email" defaultValue={booking.passengerEmail ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Channel</span>
+            {isManual ? (
+              <select name="channel" defaultValue={booking.channel} className="min-h-11 rounded-md border border-border bg-background px-3 py-2">
+                {BOOKING_CHANNEL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="min-h-11 rounded-md border border-border bg-surface-sunken px-3 py-2 text-muted">Online (customer self-service)</p>
+            )}
+          </label>
+          <Button type="submit" className="mt-1">Save changes</Button>
+        </form>
+
+        {booking.status === "confirmed" && (
+          <form
+            action={cancelAction}
+            className="mt-4 border-t border-border pt-4"
+            onSubmit={(e) => {
+              if (!window.confirm(`Cancel booking ${booking.bookingReference}? This releases the seat back to inventory.`)) {
+                e.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="bookingId" value={booking.bookingId} />
+            <Button type="submit" variant="danger" className="w-full">Cancel booking</Button>
+          </form>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+export function VendorBookingsTable({ bookings, updateAction, cancelAction, markPaidAction }: VendorBookingsTableProps) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+  const [editingBooking, setEditingBooking] = useState<VendorBookingRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,8 +165,9 @@ export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
         </label>
       </div>
 
+      <p className="mb-2 text-xs text-muted sm:hidden">Tap a row to edit or cancel it.</p>
       <div className="overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
-        <table className="w-full min-w-[820px] border-collapse text-sm">
+        <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="border-b border-border text-left text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Reference</th>
@@ -77,12 +176,21 @@ export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
               <th className="px-4 py-3 font-medium">Travel date</th>
               <th className="px-4 py-3 font-medium">Seats</th>
               <th className="px-4 py-3 font-medium">Total</th>
+              <th className="px-4 py-3 font-medium">Channel</th>
+              <th className="px-4 py-3 font-medium">Payment</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((booking) => (
-              <tr key={booking.bookingReference} className="border-b border-border last:border-0">
+              <tr
+                key={booking.bookingReference}
+                onDoubleClick={() => setEditingBooking(booking)}
+                onClick={() => {
+                  if (window.matchMedia("(pointer: coarse)").matches) setEditingBooking(booking);
+                }}
+                className="cursor-pointer border-b border-border last:border-0 hover:bg-surface-sunken"
+              >
                 <td className="px-4 py-3 font-mono text-xs text-muted">{booking.bookingReference}</td>
                 <td className="px-4 py-3 align-top">
                   <p className="font-medium text-foreground">{booking.routeCode}</p>
@@ -100,6 +208,23 @@ export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
                   {formatPrice(booking.priceAtBooking, booking.seats)}
                 </td>
                 <td className="px-4 py-3 align-top">
+                  <Badge tone={booking.channel === "online" ? "info" : "neutral"}>{CHANNEL_LABELS[booking.channel]}</Badge>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  {booking.paymentStatus === "paid" ? (
+                    <Badge tone="success">Paid</Badge>
+                  ) : booking.paymentStatus ? (
+                    <form action={markPaidAction} onClick={(e) => e.stopPropagation()}>
+                      <input type="hidden" name="bookingId" value={booking.bookingId} />
+                      <button className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning hover:bg-warning/20">
+                        Mark paid
+                      </button>
+                    </form>
+                  ) : (
+                    <Badge tone="neutral">—</Badge>
+                  )}
+                </td>
+                <td className="px-4 py-3 align-top">
                   <Badge tone={booking.status === "confirmed" ? "success" : "danger"}>
                     {booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
                   </Badge>
@@ -108,7 +233,7 @@ export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted">
                   {bookings.length === 0 ? "No bookings yet." : "No bookings match this filter."}
                 </td>
               </tr>
@@ -116,6 +241,15 @@ export function VendorBookingsTable({ bookings }: VendorBookingsTableProps) {
           </tbody>
         </table>
       </div>
+
+      {editingBooking && (
+        <EditBookingModal
+          booking={editingBooking}
+          onClose={() => setEditingBooking(null)}
+          updateAction={updateAction}
+          cancelAction={cancelAction}
+        />
+      )}
     </div>
   );
 }

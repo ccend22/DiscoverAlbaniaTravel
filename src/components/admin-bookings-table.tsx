@@ -13,6 +13,13 @@ interface AdminBookingsTableProps {
   deleteAction?: (formData: FormData) => void;
 }
 
+/** A "confirmed" booking whose payment hasn't actually cleared yet is still mid-checkout, not a completed sale -- don't show it as Confirmed. */
+function displayStatus(booking: AdminBookingRow): { label: string; tone: "success" | "danger" | "warning" } {
+  if (booking.status === "cancelled") return { label: "Cancelled", tone: "danger" };
+  if (booking.paymentStatus === "paid") return { label: "Confirmed", tone: "success" };
+  return { label: "Awaiting payment", tone: "warning" };
+}
+
 export function AdminBookingsTable({ bookings, deleteAction }: AdminBookingsTableProps) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -80,9 +87,7 @@ export function AdminBookingsTable({ bookings, deleteAction }: AdminBookingsTabl
                   {formatPrice(booking.priceAtBooking, booking.seats)}
                 </td>
                 <td className="px-4 py-3">
-                  <Badge tone={booking.status === "confirmed" ? "success" : "danger"}>
-                    {booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
-                  </Badge>
+                  <Badge tone={displayStatus(booking).tone}>{displayStatus(booking).label}</Badge>
                 </td>
                 {deleteAction && (
                   <td className="px-4 py-3 text-right">

@@ -19,6 +19,7 @@ import {
 } from "../schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
+import { getLatestPaymentStatus } from "./bookings";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
@@ -253,7 +254,7 @@ export async function deleteUserForAdmin(userId: number): Promise<AdminMutationR
 }
 
 export async function listPaymentsForAdmin(limit = 100) {
-  return db
+  const rows = await db
     .select({
       id: payments.id,
       provider: payments.provider,
@@ -263,6 +264,12 @@ export async function listPaymentsForAdmin(limit = 100) {
       status: payments.status,
       bookingReference: bookings.bookingReference,
       taxiRequestReference: taxiRideRequests.requestReference,
+      bookingPassengerName: bookings.passengerName,
+      bookingPassengerPhone: bookings.passengerPhone,
+      bookingPassengerEmail: bookings.passengerEmail,
+      taxiPassengerName: taxiRideRequests.passengerName,
+      taxiPassengerPhone: taxiRideRequests.passengerPhone,
+      taxiPassengerEmail: taxiRideRequests.passengerEmail,
       createdAt: payments.createdAt,
     })
     .from(payments)
@@ -270,6 +277,13 @@ export async function listPaymentsForAdmin(limit = 100) {
     .leftJoin(taxiRideRequests, eq(payments.taxiRideRequestId, taxiRideRequests.id))
     .orderBy(desc(payments.createdAt))
     .limit(limit);
+
+  return rows.map(({ bookingPassengerName, bookingPassengerPhone, bookingPassengerEmail, taxiPassengerName, taxiPassengerPhone, taxiPassengerEmail, ...row }) => ({
+    ...row,
+    passengerName: bookingPassengerName ?? taxiPassengerName,
+    passengerPhone: bookingPassengerPhone ?? taxiPassengerPhone,
+    passengerEmail: bookingPassengerEmail ?? taxiPassengerEmail,
+  }));
 }
 
 export async function getOperatorForAdmin(operatorId: number) {
@@ -554,6 +568,8 @@ export async function deleteTaxiRequestForAdmin(requestId: number): Promise<Admi
 export interface AdminBookingRow {
   bookingReference: string;
   status: "confirmed" | "cancelled";
+  /** From the linked payments row -- a "confirmed" booking whose payment isn't "paid" yet is still mid-checkout, not a completed sale. */
+  paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
   travelDate: string;
   seats: number;
   priceAtBooking: string;
@@ -568,11 +584,15 @@ export async function listBookingsForAdmin(limit = 50): Promise<AdminBookingRow[
 
   const results: AdminBookingRow[] = [];
   for (const row of rows) {
-    const trip = await getTripDepartureById(row.tripDepartureId);
+    const [trip, paymentStatus] = await Promise.all([
+      getTripDepartureById(row.tripDepartureId),
+      getLatestPaymentStatus(row.id),
+    ]);
     if (!trip) continue;
     results.push({
       bookingReference: row.bookingReference,
       status: row.status,
+      paymentStatus,
       travelDate: row.travelDate,
       seats: row.seats,
       priceAtBooking: row.priceAtBooking,
