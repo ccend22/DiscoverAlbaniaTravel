@@ -8,6 +8,8 @@ import { PrintButton } from "@/components/print-button";
 import { TripReviewSection } from "@/components/trip-review-section";
 import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
+import { TicketQr } from "@/components/ticket-qr";
+import { formatAlbaniaDateTime } from "@/lib/timezone";
 
 interface BookingDetailPageProps {
   params: Promise<{ reference: string }>;
@@ -28,6 +30,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   // payment status to actually reflect reality (see src/db/queries/payments.ts).
   const isPaid = booking.status === "confirmed" && booking.paymentStatus === "paid";
   const isPending = booking.status === "confirmed" && !isPaid;
+  const boardingTime = booking.boardingStop
+    ? new Date(`1970-01-01T${booking.trip.departureTime}Z`).getTime() + booking.boardingStop.minutesFromDeparture * 60_000
+    : null;
+  const boardingTimeLabel = boardingTime === null
+    ? formatTime(booking.trip.departureTime)
+    : new Date(boardingTime).toISOString().slice(11, 16);
 
   return (
     <div className="public-page mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
@@ -62,8 +70,13 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <div className="mt-5 flex items-start gap-2">
             <MapPinIcon width={16} height={16} className="mt-0.5 shrink-0 text-teal" />
             <div className="text-sm">
-              <p className="font-medium text-foreground">{booking.trip.fromStationName}</p>
-              <p className="tabular-nums text-muted">{formatTime(booking.trip.departureTime)}</p>
+              <p className="font-medium text-foreground">{booking.boardingStop?.stationName ?? booking.trip.fromStationName}</p>
+              <p className="tabular-nums text-muted">{boardingTimeLabel}</p>
+              {booking.boardingStop && (
+                <p className="mt-0.5 text-xs text-muted">
+                  {locale === "al" ? "Stacioni i hipjes" : "Boarding station"}
+                </p>
+              )}
             </div>
           </div>
           <div className="ml-2 my-1 h-4 border-l border-dashed border-border" />
@@ -106,6 +119,21 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             </p>
           </div>
         </div>
+
+        {isPaid && (
+          <div className="border-t border-dashed border-border bg-surface-sunken p-5 sm:p-6 print:bg-white">
+            <TicketQr
+              ticketToken={booking.ticketToken}
+              bookingReference={booking.bookingReference}
+              locale={locale}
+            />
+            {booking.checkedInAt && (
+              <p className="mx-auto mt-3 w-fit rounded-md bg-success-soft px-3 py-1 text-xs font-semibold text-success print:border print:border-black print:bg-white print:text-black">
+                {locale === "al" ? "Validuar" : "Validated"} · {formatAlbaniaDateTime(booking.checkedInAt, locale)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {isPaid && <TripReviewSection reference={booking.bookingReference} initialRating={reviewRating} />}

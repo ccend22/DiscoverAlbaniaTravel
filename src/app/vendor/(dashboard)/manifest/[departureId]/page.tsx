@@ -5,6 +5,8 @@ import { requireVendorSession } from "@/lib/vendor-session";
 import { PrintButton } from "@/components/print-button";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { CheckCircleIcon } from "@/components/icons";
+import { LinkButton } from "@/components/ui/button";
 
 const CHANNEL_LABELS: Record<string, string> = {
   online: "Online",
@@ -43,7 +45,10 @@ export default async function VendorManifestPage({
             {manifest.operatorName} · Departs {formatTime(manifest.departureTime)}, arrives {formatTime(manifest.arrivalTime)} · {formatDateLong(date)}
           </p>
         </div>
-        <PrintButton />
+        <div className="flex gap-2 print:hidden">
+          <LinkButton href="/vendor/scanner" variant="outline" size="sm">Scan tickets</LinkButton>
+          <PrintButton />
+        </div>
       </div>
 
       <form method="get" className="mt-4 flex items-end gap-2 print:hidden">
@@ -76,7 +81,11 @@ export default async function VendorManifestPage({
             {manifest.passengers.map((passenger) => (
               <tr key={passenger.bookingReference} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 print:hidden">
-                  <span className="block h-5 w-5 rounded border border-border" aria-hidden="true" />
+                  {passenger.checkedInAt ? (
+                    <CheckCircleIcon width={20} height={20} className="text-success" aria-label="Boarded" />
+                  ) : (
+                    <span className="block h-5 w-5 rounded border border-border" aria-label="Not scanned" />
+                  )}
                 </td>
                 <td className="px-4 py-3 align-top text-foreground">
                   <p className="font-medium">{passenger.passengerName}</p>

@@ -492,7 +492,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         : tq.priceWaitingHint;
   const fareAmount = taxiPriceEstimate?.priceEur ?? null;
   const taxiServiceFee = TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR * passengers;
-  const taxiGrandTotal = fareAmount !== null ? (fareAmount + taxiServiceFee).toFixed(0) : null;
+  const taxiEstimateTotal = fareAmount !== null ? fareAmount + taxiServiceFee : null;
   const ui = locale === "al"
     ? {
         from: "Nga ku",
@@ -788,7 +788,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                 <div className="flex shrink-0 items-baseline gap-1 sm:ml-auto">
                   <span className="text-xs text-muted">{ui.estimate}</span>
                   <span className="font-display text-2xl font-black tabular-nums text-brand-navy">
-                    €{new Intl.NumberFormat(locale === "al" ? "sq-AL" : "en-US", { maximumFractionDigits: 0 }).format(fareAmount)}
+                    €{new Intl.NumberFormat(locale === "al" ? "sq-AL" : "en-US", { maximumFractionDigits: 0 }).format(taxiEstimateTotal ?? 0)}
                   </span>
                 </div>
               </>
@@ -801,14 +801,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
           </div>
 
           {fareAmount !== null && routeIsEligible && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-[#eef4f2] px-4 py-2.5 text-xs">
-              <span className="flex items-center gap-1.5 text-muted">
-                {dict.common.serviceFee} (€{TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR} × {passengers})
-                <InfoTooltip label={dict.common.serviceFee}>{dict.common.taxiServiceFeeInfo}</InfoTooltip>
-              </span>
-              <span className="font-semibold text-brand-navy">+€{taxiServiceFee}</span>
-              <span className="ml-auto text-muted">{bp.total}</span>
-              <span className="font-display text-base font-black tabular-nums text-brand-navy">€{taxiGrandTotal}</span>
+            <div className="flex items-start gap-1.5 border-t border-[#eef4f2] px-4 py-2.5 text-xs text-muted">
+              <span>{formatMessage(dict.common.taxiPriceIncludesFee, { fee: TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR })}</span>
+              <InfoTooltip label={dict.common.serviceFee}>{dict.common.taxiServiceFeeInfo}</InfoTooltip>
             </div>
           )}
 

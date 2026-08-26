@@ -304,6 +304,7 @@ export async function deleteVendorRouteStopAction(formData: FormData) {
 
 export async function createManualBookingAction(formData: FormData) {
   const vendorUserId = await requireVendorSession();
+  const touchScreenMode = formData.get("channel") === "touch_screen";
   const parsed = vendorManualBookingSchema.safeParse({
     tripDepartureId: formData.get("tripDepartureId"),
     travelDate: formData.get("travelDate"),
@@ -317,7 +318,8 @@ export async function createManualBookingAction(formData: FormData) {
     amountOverride: formData.get("amountOverride") || undefined,
   });
   if (!parsed.success) {
-    redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
+    const mode = touchScreenMode ? "&mode=touch_screen" : "";
+    redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}${mode}`);
   }
 
   const result = await createManualBookingForVendor(vendorUserId, {
@@ -334,10 +336,14 @@ export async function createManualBookingAction(formData: FormData) {
   });
 
   if (!result.ok) {
-    redirect(`/vendor/bookings/new?error=${encodeURIComponent(result.error)}`);
+    const mode = touchScreenMode ? "&mode=touch_screen" : "";
+    redirect(`/vendor/bookings/new?error=${encodeURIComponent(result.error)}${mode}`);
   }
 
   revalidatePath("/vendor/bookings");
+  if (parsed.data.channel === "walk_in" || parsed.data.channel === "touch_screen") {
+    redirect(`/booking/${result.reference}`);
+  }
   redirect(`/vendor/bookings?saved=${result.reference}`);
 }
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CloseIcon, SearchIcon } from "@/components/icons";
@@ -178,6 +179,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
               <th className="px-4 py-3 font-medium">Total</th>
               <th className="px-4 py-3 font-medium">Channel</th>
               <th className="px-4 py-3 font-medium">Payment</th>
+              <th className="px-4 py-3 font-medium">Check-in</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -191,7 +193,18 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                 }}
                 className="cursor-pointer border-b border-border last:border-0 hover:bg-surface-sunken"
               >
-                <td className="px-4 py-3 font-mono text-xs text-muted">{booking.bookingReference}</td>
+                <td className="px-4 py-3 font-mono text-xs">
+                  <Link
+                    href={`/booking/${booking.bookingReference}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="text-teal underline decoration-teal/35 underline-offset-4 hover:decoration-teal"
+                    title="Open and print QR ticket"
+                  >
+                    {booking.bookingReference}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 align-top">
                   <p className="font-medium text-foreground">{booking.routeCode}</p>
                   <p className="mt-0.5 text-xs text-muted">
@@ -230,6 +243,9 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                   )}
                 </td>
                 <td className="px-4 py-3 align-top">
+                  {booking.checkedInAt ? <Badge tone="success">Boarded</Badge> : <Badge tone="neutral">Not scanned</Badge>}
+                </td>
+                <td className="px-4 py-3 align-top">
                   <Badge tone={booking.status === "confirmed" ? "success" : "danger"}>
                     {booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
                   </Badge>
@@ -238,7 +254,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-muted">
+                <td colSpan={10} className="px-4 py-8 text-center text-muted">
                   {bookings.length === 0 ? "No bookings yet." : "No bookings match this filter."}
                 </td>
               </tr>

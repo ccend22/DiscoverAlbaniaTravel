@@ -1,14 +1,15 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
 import { bookings, operators, payments, routeStops, routes, stations, tripDepartures, tripInventories, vendorUsers } from "../schema";
-import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
 import { cancelBookingForVendor, createBooking } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
 import { recordAdminDelete } from "./audit-log";
 import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
+import { parseTicketQrPayload } from "@/lib/ticket-code";
 
 /**
  * Operators created by the original data import (and by admin's "new
@@ -222,6 +223,7 @@ export interface VendorManifestPassenger {
   passengerEmail: string | null;
   seats: number;
   channel: "online" | "walk_in" | "phone" | "touch_screen";
+  checkedInAt: Date | null;
 }
 
 export interface VendorManifest {
@@ -272,6 +274,7 @@ export async function getVendorManifest(vendorUserId: number, tripDepartureId: n
       passengerEmail: bookings.passengerEmail,
       seats: bookings.seats,
       channel: bookings.channel,
+      checkedInAt: bookings.ticketCheckedInAt,
     })
     .from(bookings)
     .where(and(eq(bookings.tripDepartureId, tripDepartureId), eq(bookings.travelDate, date), eq(bookings.status, "confirmed")))
@@ -304,6 +307,7 @@ export interface VendorBookingRow {
   status: "confirmed" | "cancelled";
   channel: "online" | "walk_in" | "phone" | "touch_screen";
   paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
+  checkedInAt: Date | null;
   createdAt: Date;
   routeCode: string;
   fromStationName: string;
@@ -336,6 +340,7 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
         order by ${payments.createdAt} desc
         limit 1
       )`,
+      checkedInAt: bookings.ticketCheckedInAt,
       createdAt: bookings.createdAt,
       routeCode: routes.code,
       fromStationName: fromStation.name,
@@ -761,6 +766,7 @@ export async function createManualBookingForVendor(
     passengerEmail: input.passengerEmail,
     seats: input.seats,
     createdByVendorUserId: vendorUserId,
+    routeStopId: input.routeStopId,
     priceOverride,
     channel: input.channel,
   });
@@ -781,6 +787,136 @@ export async function createManualBookingForVendor(
   });
 
   return { ok: true, reference: result.reference };
+}
+
+export interface TicketValidationDetails {
+  bookingReference: string;
+  passengerName: string;
+  seats: number;
+  travelDate: string;
+  routeCode: string;
+  fromStationName: string;
+  toStationName: string;
+  boardingStationName: string;
+  scheduledBoardingAt: string;
+  checkedInAt: string | null;
+}
+
+export type TicketValidationResult =
+  | ({ status: "valid" | "already_used" | "too_early" | "expired" | "cancelled" | "unpaid" } & TicketValidationDetails)
+  | { status: "invalid_code" | "not_found" };
+
+/**
+ * Validates and consumes one ticket for the signed-in vendor. A ticket is
+ * accepted from two hours before its boarding time until two hours after the
+ * scheduled arrival, which covers station boarding and onboard inspections.
+ */
+export async function validateTicketForVendor(
+  vendorUserId: number,
+  scannedValue: string,
+  now = new Date()
+): Promise<TicketValidationResult> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return { status: "not_found" };
+
+  const ticketToken = parseTicketQrPayload(scannedValue);
+  const bookingReference = scannedValue.trim().toUpperCase();
+  const referenceIsValid = /^DA-[A-Z0-9]{4,32}$/.test(bookingReference);
+  if (!ticketToken && !referenceIsValid) return { status: "invalid_code" };
+
+  const fromStation = alias(stations, "ticket_validation_from_station");
+  const toStation = alias(stations, "ticket_validation_to_station");
+  const boardingStation = alias(stations, "ticket_validation_boarding_station");
+
+  const [ticket] = await db
+    .select({
+      bookingId: bookings.id,
+      bookingReference: bookings.bookingReference,
+      passengerName: bookings.passengerName,
+      seats: bookings.seats,
+      travelDate: bookings.travelDate,
+      bookingStatus: bookings.status,
+      checkedInAt: bookings.ticketCheckedInAt,
+      routeCode: routes.code,
+      fromStationName: fromStation.name,
+      toStationName: toStation.name,
+      boardingStationName: sql<string>`coalesce(${boardingStation.name}, ${fromStation.name})`,
+      minutesFromDeparture: sql<number>`coalesce(${routeStops.minutesFromDeparture}, 0)`,
+      departureTime: tripDepartures.departureTime,
+      arrivalTime: tripDepartures.arrivalTime,
+      paymentStatus: sql<VendorBookingRow["paymentStatus"]>`(
+        select ${payments.status} from ${payments}
+        where ${payments.bookingId} = ${bookings.id}
+        order by ${payments.createdAt} desc
+        limit 1
+      )`,
+    })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .leftJoin(routeStops, eq(bookings.routeStopId, routeStops.id))
+    .leftJoin(boardingStation, eq(routeStops.stationId, boardingStation.id))
+    .where(
+      and(
+        eq(routes.operatorId, context.operatorId),
+        ticketToken
+          ? eq(bookings.ticketToken, ticketToken)
+          : eq(bookings.bookingReference, bookingReference)
+      )
+    )
+    .limit(1);
+
+  if (!ticket) return { status: "not_found" };
+
+  const departureAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.departureTime);
+  const boardingAt = new Date(departureAt.getTime() + Number(ticket.minutesFromDeparture) * 60_000);
+  let arrivalAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.arrivalTime);
+  if (arrivalAt <= departureAt) arrivalAt = new Date(arrivalAt.getTime() + 24 * 60 * 60_000);
+
+  const details: TicketValidationDetails = {
+    bookingReference: ticket.bookingReference,
+    passengerName: ticket.passengerName,
+    seats: ticket.seats,
+    travelDate: ticket.travelDate,
+    routeCode: ticket.routeCode,
+    fromStationName: ticket.fromStationName,
+    toStationName: ticket.toStationName,
+    boardingStationName: ticket.boardingStationName,
+    scheduledBoardingAt: boardingAt.toISOString(),
+    checkedInAt: ticket.checkedInAt?.toISOString() ?? null,
+  };
+
+  if (ticket.bookingStatus !== "confirmed") return { status: "cancelled", ...details };
+  if (ticket.paymentStatus !== "paid") return { status: "unpaid", ...details };
+  if (ticket.checkedInAt) return { status: "already_used", ...details };
+
+  const validFrom = boardingAt.getTime() - 2 * 60 * 60_000;
+  const validUntil = arrivalAt.getTime() + 2 * 60 * 60_000;
+  if (now.getTime() < validFrom) return { status: "too_early", ...details };
+  if (now.getTime() > validUntil) return { status: "expired", ...details };
+
+  const [checkedIn] = await db
+    .update(bookings)
+    .set({ ticketCheckedInAt: now, ticketCheckedInByVendorUserId: vendorUserId, updatedAt: now })
+    .where(and(eq(bookings.id, ticket.bookingId), isNull(bookings.ticketCheckedInAt)))
+    .returning({ checkedInAt: bookings.ticketCheckedInAt });
+
+  if (!checkedIn?.checkedInAt) {
+    const [alreadyUsed] = await db
+      .select({ checkedInAt: bookings.ticketCheckedInAt })
+      .from(bookings)
+      .where(eq(bookings.id, ticket.bookingId))
+      .limit(1);
+    return {
+      status: "already_used",
+      ...details,
+      checkedInAt: alreadyUsed?.checkedInAt?.toISOString() ?? details.checkedInAt,
+    };
+  }
+
+  return { status: "valid", ...details, checkedInAt: checkedIn.checkedInAt.toISOString() };
 }
 
 async function verifyVendorOwnsBooking(vendorUserId: number, bookingId: number): Promise<boolean> {

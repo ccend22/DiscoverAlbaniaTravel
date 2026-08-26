@@ -226,6 +226,7 @@ export const bookings = pgTable(
     tripDepartureId: integer("trip_departure_id")
       .notNull()
       .references(() => tripDepartures.id, { onDelete: "restrict" }),
+    routeStopId: integer("route_stop_id").references(() => routeStops.id, { onDelete: "set null" }),
     userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
     travelDate: date("travel_date", { mode: "string" }).notNull(),
     passengerName: text("passenger_name").notNull(),
@@ -254,6 +255,16 @@ export const bookings = pgTable(
       onDelete: "set null",
     }),
     channel: bookingChannelEnum("channel").notNull().default("online"),
+    // Opaque, unguessable credential encoded in the ticket QR. The booking
+    // reference remains human-readable; validation always uses this token.
+    ticketToken: text("ticket_token").notNull().unique(),
+    // Named with the "ticket" prefix (rather than a plain checked_in_at) to
+    // stay clear of any other check-in concept -- e.g. a driver-shift
+    // check-in -- that might land on this table from unrelated work.
+    ticketCheckedInAt: timestamp("ticket_checked_in_at", { withTimezone: true }),
+    ticketCheckedInByVendorUserId: integer("ticket_checked_in_by_vendor_user_id").references(() => vendorUsers.id, {
+      onDelete: "set null",
+    }),
     // The 1-5 star rating this booking's passenger left for the operator, if
     // any -- lets a resubmission edit the operator's rolling average
     // correctly instead of double-counting it. No text attaches here; a
@@ -546,6 +557,16 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   createdByVendorUser: one(vendorUsers, {
     fields: [bookings.createdByVendorUserId],
     references: [vendorUsers.id],
+    relationName: "bookingCreator",
+  }),
+  routeStop: one(routeStops, {
+    fields: [bookings.routeStopId],
+    references: [routeStops.id],
+  }),
+  ticketCheckedInByVendorUser: one(vendorUsers, {
+    fields: [bookings.ticketCheckedInByVendorUserId],
+    references: [vendorUsers.id],
+    relationName: "ticketValidator",
   }),
 }));
 

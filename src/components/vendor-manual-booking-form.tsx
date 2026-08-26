@@ -27,6 +27,8 @@ interface VendorManualBookingFormProps {
   routeStopOptions: RouteStopOption[];
   serviceFeeEur: string;
   todayDate: string;
+  initialChannel?: "walk_in" | "phone" | "touch_screen";
+  touchScreenMode?: boolean;
   action: (formData: FormData) => void;
 }
 
@@ -35,7 +37,15 @@ interface VendorManualBookingFormProps {
 // mouse/keyboard form for a vendor at a desk.
 const FIELD_CLASS = "min-h-14 rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-teal";
 
-export function VendorManualBookingForm({ departures, routeStopOptions, serviceFeeEur, todayDate, action }: VendorManualBookingFormProps) {
+export function VendorManualBookingForm({
+  departures,
+  routeStopOptions,
+  serviceFeeEur,
+  todayDate,
+  initialChannel = "walk_in",
+  touchScreenMode = false,
+  action,
+}: VendorManualBookingFormProps) {
   const [departureId, setDepartureId] = useState("");
   const [routeStopId, setRouteStopId] = useState("");
   const [seats, setSeats] = useState(1);
@@ -133,14 +143,18 @@ export function VendorManualBookingForm({ departures, routeStopOptions, serviceF
         </label>
       )}
 
-      <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-        <span className="font-medium">Channel</span>
-        <select name="channel" defaultValue="walk_in" className={FIELD_CLASS}>
-          {BOOKING_CHANNEL_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-      </label>
+      {touchScreenMode ? (
+        <input type="hidden" name="channel" value="touch_screen" />
+      ) : (
+        <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+          <span className="font-medium">Channel</span>
+          <select name="channel" defaultValue={initialChannel} className={FIELD_CLASS}>
+            {BOOKING_CHANNEL_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label className="flex flex-col gap-1 text-sm sm:col-span-2">
         <span className="font-medium">Passenger name</span>
@@ -192,7 +206,9 @@ export function VendorManualBookingForm({ departures, routeStopOptions, serviceF
       </div>
 
       <div className="sm:col-span-2">
-        <Button type="submit" className="min-h-14 w-full text-base sm:w-auto">Create booking</Button>
+        <Button type="submit" className={`min-h-14 w-full text-base ${touchScreenMode ? "sm:min-h-16 sm:text-lg" : "sm:w-auto"}`}>
+          {touchScreenMode ? "Create and show QR ticket" : "Create booking"}
+        </Button>
       </div>
     </form>
   );

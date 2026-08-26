@@ -1,7 +1,7 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../index";
-import { bookings, payments, tripInventories } from "../schema";
+import { bookings, payments, routeStops, stations, tripInventories } from "../schema";
 import { generateBookingReference } from "@/lib/reference-code";
 import { getTripDepartureById, isDepartureValidOnDate, type TripDepartureDetail } from "./trips";
 import type { Locale } from "@/lib/locale";
@@ -17,6 +17,8 @@ export interface CreateBookingInput {
   locale?: Locale;
   /** Set for a booking a vendor entered manually on a customer's behalf -- see the `createdByVendorUserId` column comment in schema.ts. */
   createdByVendorUserId?: number | null;
+  /** Intermediate boarding point selected for a vendor-created ticket. */
+  routeStopId?: number | null;
   /** Overrides the route's base price -- used when a manual booking boards from an intermediate stop, priced via that stop's own route_stops.priceToDestination rather than the full-route fare. */
   priceOverride?: string;
   /** Defaults to "online" -- pass a vendor-side channel for manually-entered bookings. */
@@ -49,6 +51,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   const reference = generateBookingReference();
   const manageToken = generateManageToken();
+  const ticketToken = randomBytes(24).toString("base64url");
 
   const initialSeats = Math.min(trip.freeSeats, trip.plannedSeats);
   if (input.seats > initialSeats) return { ok: false, error: "sold_out" };
@@ -77,6 +80,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
       insert into ${bookings} (
         ${sql.identifier(bookings.bookingReference.name)},
         ${sql.identifier(bookings.tripDepartureId.name)},
+        ${sql.identifier(bookings.routeStopId.name)},
         ${sql.identifier(bookings.userId.name)},
         ${sql.identifier(bookings.travelDate.name)},
         ${sql.identifier(bookings.passengerName.name)},
@@ -87,11 +91,13 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${sql.identifier(bookings.locale.name)},
         ${sql.identifier(bookings.manageToken.name)},
         ${sql.identifier(bookings.createdByVendorUserId.name)},
-        ${sql.identifier(bookings.channel.name)}
+        ${sql.identifier(bookings.channel.name)},
+        ${sql.identifier(bookings.ticketToken.name)}
       )
       select
         ${reference},
         ${input.tripDepartureId},
+        ${input.routeStopId ?? null},
         ${input.userId ?? null},
         ${input.travelDate},
         ${input.passengerName},
@@ -102,7 +108,8 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         ${input.locale ?? "en"},
         ${manageToken},
         ${input.createdByVendorUserId ?? null},
-        ${input.channel ?? "online"}
+        ${input.channel ?? "online"},
+        ${ticketToken}
       from reserved
       returning ${sql.identifier(bookings.id.name)}, ${sql.identifier(bookings.bookingReference.name)}
     )
@@ -177,6 +184,9 @@ export interface BookingDetail {
   seats: number;
   priceAtBooking: string;
   status: "confirmed" | "cancelled";
+  ticketToken: string;
+  checkedInAt: Date | null;
+  boardingStop: { stationName: string; minutesFromDeparture: number } | null;
   createdAt: Date;
   trip: TripDepartureDetail;
   /** From the linked `payments` row, if any -- this design keeps `bookings.status` as a plain reservation flag and tracks payment truth separately (see src/db/queries/payments.ts). Null means no payment attempt was ever recorded for this booking. */
@@ -208,6 +218,15 @@ export async function getBookingByReference(reference: string): Promise<BookingD
   ]);
   if (!trip) return null;
 
+  const [boardingStop] = booking.routeStopId
+    ? await db
+        .select({ stationName: stations.name, minutesFromDeparture: routeStops.minutesFromDeparture })
+        .from(routeStops)
+        .innerJoin(stations, eq(routeStops.stationId, stations.id))
+        .where(eq(routeStops.id, booking.routeStopId))
+        .limit(1)
+    : [];
+
   return {
     bookingReference: booking.bookingReference,
     travelDate: booking.travelDate,
@@ -217,6 +236,9 @@ export async function getBookingByReference(reference: string): Promise<BookingD
     seats: booking.seats,
     priceAtBooking: booking.priceAtBooking,
     status: booking.status,
+    ticketToken: booking.ticketToken,
+    checkedInAt: booking.ticketCheckedInAt,
+    boardingStop: boardingStop ?? null,
     createdAt: booking.createdAt,
     trip,
     paymentStatus,
@@ -237,6 +259,14 @@ export async function getBookingsForUser(userId: number): Promise<BookingDetail[
       getLatestPaymentStatus(row.id),
     ]);
     if (!trip) continue;
+    const [boardingStop] = row.routeStopId
+      ? await db
+          .select({ stationName: stations.name, minutesFromDeparture: routeStops.minutesFromDeparture })
+          .from(routeStops)
+          .innerJoin(stations, eq(routeStops.stationId, stations.id))
+          .where(eq(routeStops.id, row.routeStopId))
+          .limit(1)
+      : [];
     results.push({
       bookingReference: row.bookingReference,
       travelDate: row.travelDate,
@@ -246,6 +276,9 @@ export async function getBookingsForUser(userId: number): Promise<BookingDetail[
       seats: row.seats,
       priceAtBooking: row.priceAtBooking,
       status: row.status,
+      ticketToken: row.ticketToken,
+      checkedInAt: row.ticketCheckedInAt,
+      boardingStop: boardingStop ?? null,
       createdAt: row.createdAt,
       trip,
       paymentStatus,

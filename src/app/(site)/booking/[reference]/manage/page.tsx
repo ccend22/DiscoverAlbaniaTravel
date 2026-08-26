@@ -7,6 +7,8 @@ import { Alert } from "@/components/ui/alert";
 import { MapPinIcon, AlertCircleIcon } from "@/components/icons";
 import { cancelBookingByTokenAction, updatePassengerDetailsAction } from "./actions";
 import { getLocaleAndDictionary } from "@/lib/i18n";
+import { TicketQr } from "@/components/ticket-qr";
+import { formatAlbaniaDateTime } from "@/lib/timezone";
 
 interface ManageBookingPageProps {
   params: Promise<{ reference: string }>;
@@ -83,6 +85,16 @@ export default async function ManageBookingPage({ params, searchParams }: Manage
           {booking.seats} {booking.seats > 1 ? dict.accountPage.seats : dict.accountPage.seat} ·{" "}
           {formatPrice(booking.priceAtBooking, booking.seats, locale)}
         </p>
+        {isPaid && (
+          <div className="mt-6 border-t border-dashed border-border pt-6">
+            <TicketQr ticketToken={booking.ticketToken} bookingReference={booking.bookingReference} locale={locale} />
+            {booking.checkedInAt && (
+              <p className="mx-auto mt-3 w-fit rounded-md bg-success-soft px-3 py-1 text-xs font-semibold text-success">
+                {locale === "al" ? "Validuar" : "Validated"} · {formatAlbaniaDateTime(booking.checkedInAt, locale)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {!isCancelled && (

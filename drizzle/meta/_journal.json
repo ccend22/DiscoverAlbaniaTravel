@@ -134,6 +134,13 @@
       "when": 1787746091762,
       "tag": "0018_giant_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1787754135298,
+      "tag": "0019_odd_juggernaut",
+      "breakpoints": true
     }
   ]
 }
