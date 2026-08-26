@@ -22,6 +22,7 @@ const SECTIONS: NavSection[] = [
     label: "Catalog",
     links: [
       { href: "/admin/operators", label: "Operators" },
+      { href: "/admin/calendar", label: "Calendar" },
       { href: "/admin/stations", label: "Stations" },
       { href: "/admin/destinations", label: "Destinations" },
       { href: "/admin/blog", label: "Blog" },

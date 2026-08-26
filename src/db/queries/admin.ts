@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../index";
 import {
   adminUsers,
@@ -319,6 +319,91 @@ export async function listDeparturesForAdminOperator(operatorId: number) {
     .innerJoin(stations, eq(tripDepartures.fromStationId, stations.id))
     .where(eq(routes.operatorId, operatorId))
     .orderBy(asc(routes.code), asc(tripDepartures.departureTime));
+}
+
+export interface AdminCalendarDay {
+  date: string;
+  running: boolean;
+  plannedSeats: number;
+  availableSeats: number;
+  bookedSeats: number;
+}
+
+export interface AdminCalendarRow {
+  id: number;
+  routeCode: string;
+  fromStationName: string;
+  toStationName: string;
+  departureTime: string;
+  basePrice: string | null;
+  days: AdminCalendarDay[];
+}
+
+/**
+ * A rolling per-departure, per-date view of seat availability for one
+ * operator -- trip_inventories only ever gets a row once a booking actually
+ * happens for that specific date (see createBooking's atomic CTE), so a
+ * date with no row yet is full availability, not "unknown".
+ */
+export async function getOperatorDepartureCalendar(operatorId: number, days = 14): Promise<AdminCalendarRow[]> {
+  const departures = await db
+    .select({
+      id: tripDepartures.id,
+      routeCode: routes.code,
+      fromStationName: stations.name,
+      departureTime: tripDepartures.departureTime,
+      basePrice: tripDepartures.basePrice,
+      plannedSeats: tripDepartures.plannedSeats,
+      weekdays: tripDepartures.weekdays,
+      toStationId: tripDepartures.toStationId,
+    })
+    .from(tripDepartures)
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(stations, eq(tripDepartures.fromStationId, stations.id))
+    .where(eq(routes.operatorId, operatorId))
+    .orderBy(asc(routes.code), asc(tripDepartures.departureTime));
+
+  if (departures.length === 0) return [];
+
+  const toStationIds = [...new Set(departures.map((d) => d.toStationId))];
+  const toStations = await db.select({ id: stations.id, name: stations.name }).from(stations).where(inArray(stations.id, toStationIds));
+  const toStationNameById = new Map(toStations.map((s) => [s.id, s.name]));
+
+  const startDate = new Date(`${getAlbaniaDateInputValue()}T00:00:00Z`);
+  const dateList = Array.from({ length: days }, (_, i) => {
+    const d = new Date(startDate);
+    d.setUTCDate(d.getUTCDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+
+  const departureIds = departures.map((d) => d.id);
+  const inventoryRows = await db
+    .select({ tripDepartureId: tripInventories.tripDepartureId, travelDate: tripInventories.travelDate, availableSeats: tripInventories.availableSeats })
+    .from(tripInventories)
+    .where(and(inArray(tripInventories.tripDepartureId, departureIds), inArray(tripInventories.travelDate, dateList)));
+
+  const inventoryByKey = new Map(inventoryRows.map((row) => [`${row.tripDepartureId}:${row.travelDate}`, row.availableSeats]));
+
+  return departures.map((departure) => ({
+    id: departure.id,
+    routeCode: departure.routeCode,
+    fromStationName: departure.fromStationName,
+    toStationName: toStationNameById.get(departure.toStationId) ?? "",
+    departureTime: departure.departureTime,
+    basePrice: departure.basePrice,
+    days: dateList.map((date) => {
+      const isoDow = ((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
+      const running = departure.weekdays.includes(isoDow);
+      const availableSeats = inventoryByKey.get(`${departure.id}:${date}`) ?? departure.plannedSeats;
+      return {
+        date,
+        running,
+        plannedSeats: departure.plannedSeats,
+        availableSeats,
+        bookedSeats: departure.plannedSeats - availableSeats,
+      };
+    }),
+  }));
 }
 
 export async function updateOperatorForAdmin(

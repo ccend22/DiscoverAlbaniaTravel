@@ -14,6 +14,7 @@ interface NavLink {
 
 const MAIN_LINKS: NavLink[] = [
   { href: "/vendor", label: "Overview" },
+  { href: "/vendor/calendar", label: "Calendar" },
   { href: "/vendor/bookings", label: "Bookings" },
   { href: "/vendor/reports", label: "Reports" },
 ];
