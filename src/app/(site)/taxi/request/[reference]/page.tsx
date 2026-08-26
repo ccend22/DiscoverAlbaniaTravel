@@ -18,6 +18,14 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
   const { locale, dict } = await getLocaleAndDictionary();
   const tc = dict.taxiRequestConfirmation;
   const bc = dict.bookingConfirmation;
+  const ap = dict.accountPage;
+  const statusLabels: Record<string, string> = {
+    requested: ap.taxiStatusRequested,
+    accepted: ap.taxiStatusAccepted,
+    declined: ap.taxiStatusDeclined,
+    completed: ap.taxiStatusCompleted,
+    cancelled: ap.taxiStatusCancelled,
+  };
 
   const isCancelled = request.status === "cancelled";
   const paymentArrivedAfterCancellation = isCancelled && request.paymentStatus === "paid";
@@ -59,7 +67,7 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
         <div><dt className="text-xs uppercase text-muted">{tc.journey}</dt><dd className="mt-1 font-medium text-foreground">{request.pickupLocation} to {request.destination}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatAlbaniaDateTime(request.pickupAt, locale)}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.passengers}</dt><dd className="mt-1 font-medium text-foreground">{request.passengers}</dd></div>
-        <div><dt className="text-xs uppercase text-muted">{tc.status}</dt><dd className="mt-1 font-medium capitalize text-foreground">{request.status}</dd></div>
+        <div><dt className="text-xs uppercase text-muted">{tc.status}</dt><dd className="mt-1 font-medium text-foreground">{statusLabels[request.status] ?? request.status}</dd></div>
         {request.paymentAmount && request.paymentCurrency && (
           <div><dt className="text-xs uppercase text-muted">{bc.totalPrice}</dt><dd className="mt-1 font-medium text-foreground">{formatTaxiFare(request.paymentAmount, request.paymentCurrency)}</dd></div>
         )}
