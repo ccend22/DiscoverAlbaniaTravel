@@ -57,7 +57,7 @@ export async function createBookingAction(
   try {
     const order = await createSdkOrder({
       amount,
-      currencyCode: "ALL",
+      currencyCode: "EUR",
       description: `Bus ticket · ${parsed.data.seats} seat(s) · ${result.reference}`,
       merchantCustomReference: result.reference,
       webhookUrl: `${getSiteOrigin()}/pay/webhook`,
@@ -69,7 +69,7 @@ export async function createBookingAction(
     await createPendingPayment({
       bookingId: result.bookingId,
       amount,
-      currency: "ALL",
+      currency: "EUR",
       sdkOrder: order,
     });
 

@@ -25,7 +25,7 @@ export function formatPrice(
 ): string {
   if (price === null) return getDictionary(locale).common.priceUnavailable;
   const total = Number(price) * seats;
-  return `${total.toLocaleString("en-US")} ALL`;
+  return `€${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function formatDuration(

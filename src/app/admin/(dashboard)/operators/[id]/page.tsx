@@ -140,7 +140,7 @@ export default async function AdminOperatorDetailPage({
             <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Arrival time</span><input name="arrivalTime" type="time" required className="rounded-md border border-border bg-background px-3 py-2" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Duration (min)</span><input name="durationMin" type="number" step="1" min="1" required className="rounded-md border border-border bg-background px-3 py-2" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Distance (km)</span><input name="distanceKm" type="number" step="0.1" min="1" required className="rounded-md border border-border bg-background px-3 py-2" /></label>
-            <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Base price</span><input name="basePrice" type="number" step="0.01" min="0" required className="rounded-md border border-border bg-background px-3 py-2" /></label>
+            <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Base price (EUR)</span><input name="basePrice" type="number" step="0.01" min="0" required className="rounded-md border border-border bg-background px-3 py-2" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Planned seats</span><input name="plannedSeats" type="number" min="1" max="500" required defaultValue={50} className="rounded-md border border-border bg-background px-3 py-2" /></label>
             <div className="sm:col-span-2">
               <p className="mb-2 text-sm font-medium">Operating days</p>
