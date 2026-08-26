@@ -163,6 +163,11 @@ export async function cancelBookingForVendor(bookingId: number): Promise<boolean
   return restoreInventoryAndCancelBooking(bookingId);
 }
 
+/** Cancel initiated from the admin panel -- no ownership check, admin can act on any booking. */
+export async function cancelBookingForAdmin(bookingId: number): Promise<boolean> {
+  return restoreInventoryAndCancelBooking(bookingId);
+}
+
 export interface BookingDetail {
   bookingReference: string;
   travelDate: string;

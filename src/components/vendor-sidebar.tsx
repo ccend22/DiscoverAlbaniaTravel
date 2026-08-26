@@ -31,6 +31,7 @@ const SECTIONS: NavSection[] = [
       { href: "/vendor/profile", label: "Profile" },
       { href: "/vendor/routes", label: "Routes & stops" },
       { href: "/vendor/departures", label: "Departures" },
+      { href: "/vendor/users", label: "Users" },
     ],
   },
 ];

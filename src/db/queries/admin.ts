@@ -19,7 +19,7 @@ import {
 } from "../schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
-import { getLatestPaymentStatus } from "./bookings";
+import { cancelBookingForAdmin, getLatestPaymentStatus } from "./bookings";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
@@ -566,14 +566,17 @@ export async function deleteTaxiRequestForAdmin(requestId: number): Promise<Admi
 }
 
 export interface AdminBookingRow {
+  bookingId: number;
   bookingReference: string;
   status: "confirmed" | "cancelled";
   /** From the linked payments row -- a "confirmed" booking whose payment isn't "paid" yet is still mid-checkout, not a completed sale. */
   paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
+  channel: "online" | "walk_in" | "phone" | "touch_screen";
   travelDate: string;
   seats: number;
   priceAtBooking: string;
   passengerName: string;
+  passengerPhone: string;
   passengerEmail: string | null;
   createdAt: Date;
   trip: TripDepartureDetail;
@@ -590,17 +593,55 @@ export async function listBookingsForAdmin(limit = 50): Promise<AdminBookingRow[
     ]);
     if (!trip) continue;
     results.push({
+      bookingId: row.id,
       bookingReference: row.bookingReference,
       status: row.status,
       paymentStatus,
+      channel: row.channel,
       travelDate: row.travelDate,
       seats: row.seats,
       priceAtBooking: row.priceAtBooking,
       passengerName: row.passengerName,
+      passengerPhone: row.passengerPhone,
       passengerEmail: row.passengerEmail,
       createdAt: row.createdAt,
       trip,
     });
   }
   return results;
+}
+
+export async function updateBookingDetailsForAdmin(
+  bookingId: number,
+  input: { passengerName: string; passengerPhone: string; passengerEmail: string | null; channel: "online" | "walk_in" | "phone" | "touch_screen" }
+): Promise<AdminMutationResult> {
+  const [updated] = await db
+    .update(bookings)
+    .set({
+      passengerName: input.passengerName,
+      passengerPhone: input.passengerPhone,
+      passengerEmail: input.passengerEmail,
+      channel: input.channel,
+      updatedAt: new Date(),
+    })
+    .where(eq(bookings.id, bookingId))
+    .returning({ id: bookings.id });
+  return updated ? { ok: true } : { ok: false, error: "Booking not found." };
+}
+
+export async function cancelBookingForAdminPanel(bookingId: number): Promise<AdminMutationResult> {
+  const cancelled = await cancelBookingForAdmin(bookingId);
+  return cancelled ? { ok: true } : { ok: false, error: "This booking is already cancelled." };
+}
+
+export async function markBookingPaidForAdmin(bookingId: number): Promise<AdminMutationResult> {
+  const [latestPayment] = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .where(eq(payments.bookingId, bookingId))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  if (!latestPayment) return { ok: false, error: "This booking has no payment record to update." };
+  await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, latestPayment.id));
+  return { ok: true };
 }

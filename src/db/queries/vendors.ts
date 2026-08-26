@@ -668,6 +668,71 @@ export async function markVendorBookingPaid(vendorUserId: number, bookingId: num
   return { ok: true };
 }
 
+// ---------------------------------------------------------------------------
+// Team users -- an approved vendor can invite co-workers to log in under the
+// same operator (vendor_users.operatorId already allows more than one row
+// per operator). New teammates go straight to "approved": the admin queue
+// exists to vet a new company, not each person on an already-vetted one.
+// ---------------------------------------------------------------------------
+
+export interface VendorTeamUserRow {
+  id: number;
+  name: string;
+  email: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: Date;
+}
+
+export async function listVendorTeamUsers(vendorUserId: number): Promise<VendorTeamUserRow[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+  return db
+    .select({
+      id: vendorUsers.id,
+      name: vendorUsers.name,
+      email: vendorUsers.email,
+      status: vendorUsers.status,
+      createdAt: vendorUsers.createdAt,
+    })
+    .from(vendorUsers)
+    .where(eq(vendorUsers.operatorId, context.operatorId))
+    .orderBy(asc(vendorUsers.createdAt));
+}
+
+export async function createVendorTeamUser(
+  vendorUserId: number,
+  input: { name: string; email: string; password: string }
+): Promise<AdminMutationResult> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return { ok: false, error: "Not authorized." };
+
+  try {
+    await db.insert(vendorUsers).values({
+      operatorId: context.operatorId,
+      name: input.name,
+      email: input.email,
+      passwordHash: hashPassword(input.password),
+      status: "approved",
+    });
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) return { ok: false, error: "That email is already in use." };
+    throw error;
+  }
+}
+
+export async function deleteVendorTeamUser(vendorUserId: number, targetUserId: number): Promise<AdminMutationResult> {
+  if (vendorUserId === targetUserId) return { ok: false, error: "You can't remove your own account." };
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return { ok: false, error: "Not authorized." };
+
+  const [deleted] = await db
+    .delete(vendorUsers)
+    .where(and(eq(vendorUsers.id, targetUserId), eq(vendorUsers.operatorId, context.operatorId)))
+    .returning({ id: vendorUsers.id });
+  return deleted ? { ok: true } : { ok: false, error: "That teammate doesn't belong to your company." };
+}
+
 export interface PendingVendor {
   id: number;
   name: string;

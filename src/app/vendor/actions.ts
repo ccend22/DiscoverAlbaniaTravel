@@ -14,6 +14,7 @@ import {
   vendorRouteStopSchema,
   vendorRouteStopNewLocationSchema,
   vendorNewDepartureSchema,
+  vendorTeamUserSchema,
 } from "@/lib/validation";
 import {
   applyAsNewOperator,
@@ -25,7 +26,9 @@ import {
   createVendorRoute,
   createVendorRouteStop,
   createVendorRouteStopAtNewLocation,
+  createVendorTeamUser,
   deleteVendorRouteStop,
+  deleteVendorTeamUser,
   markVendorBookingPaid,
   updateVendorBookingDetails,
   updateVendorDeparture,
@@ -377,4 +380,29 @@ export async function markVendorBookingPaidAction(formData: FormData) {
   if (!result.ok) redirect(`/vendor/bookings?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/vendor/bookings");
   redirect("/vendor/bookings?saved=1");
+}
+
+export async function createVendorTeamUserAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const parsed = vendorTeamUserSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    redirect(`/vendor/users?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+  }
+  const result = await createVendorTeamUser(vendorUserId, parsed.data);
+  if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/users");
+  redirect("/vendor/users?saved=1");
+}
+
+export async function deleteVendorTeamUserAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const targetUserId = Number(formData.get("targetUserId"));
+  const result = await deleteVendorTeamUser(vendorUserId, targetUserId);
+  if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/users");
+  redirect("/vendor/users?saved=1");
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { adminLoginSchema } from "@/lib/validation";
 import { resolveOperatorReportForAdmin } from "@/db/queries/reviews";
 import {
+  vendorBookingEditSchema,
   vendorDepartureSchema,
   vendorOperatorSchema,
   vendorRouteSchema,
@@ -27,6 +28,9 @@ import {
   createDepartureForAdmin,
   deleteDepartureForAdmin,
   deleteBookingForAdmin,
+  updateBookingDetailsForAdmin,
+  cancelBookingForAdminPanel,
+  markBookingPaidForAdmin,
   deletePaymentForAdmin,
   deleteTaxiRequestForAdmin,
   updateUserForAdmin,
@@ -328,6 +332,47 @@ export async function deleteAdminBookingAction(formData: FormData) {
   await requireAdminSession();
   const bookingReference = String(formData.get("bookingReference"));
   const result = await deleteBookingForAdmin(bookingReference);
+  if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/admin/bookings");
+  redirect("/admin/bookings?saved=1");
+}
+
+export async function updateAdminBookingAction(formData: FormData) {
+  await requireAdminSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const parsed = vendorBookingEditSchema.safeParse({
+    passengerName: formData.get("passengerName"),
+    passengerPhone: formData.get("passengerPhone"),
+    passengerEmail: formData.get("passengerEmail") || undefined,
+    channel: formData.get("channel"),
+  });
+  if (!parsed.success) {
+    redirect(`/admin/bookings?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
+  }
+  const result = await updateBookingDetailsForAdmin(bookingId, {
+    passengerName: parsed.data.passengerName,
+    passengerPhone: parsed.data.passengerPhone,
+    passengerEmail: parsed.data.passengerEmail ? parsed.data.passengerEmail : null,
+    channel: parsed.data.channel,
+  });
+  if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/admin/bookings");
+  redirect("/admin/bookings?saved=1");
+}
+
+export async function cancelAdminBookingAction(formData: FormData) {
+  await requireAdminSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const result = await cancelBookingForAdminPanel(bookingId);
+  if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/admin/bookings");
+  redirect("/admin/bookings?saved=1");
+}
+
+export async function markAdminBookingPaidAction(formData: FormData) {
+  await requireAdminSession();
+  const bookingId = Number(formData.get("bookingId"));
+  const result = await markBookingPaidForAdmin(bookingId);
   if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/bookings");
   redirect("/admin/bookings?saved=1");

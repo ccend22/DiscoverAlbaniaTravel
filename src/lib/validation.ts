@@ -327,3 +327,9 @@ export const vendorBookingEditSchema = z.object({
     .optional(),
   channel: z.enum(["walk_in", "phone", "touch_screen"]),
 });
+
+export const vendorTeamUserSchema = z.object({
+  name: z.string().trim().min(2, "Enter the teammate's full name"),
+  email: z.string().trim().email("Enter a valid email address").transform((value) => value.toLowerCase()),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
