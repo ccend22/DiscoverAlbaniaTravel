@@ -13,8 +13,15 @@ function findPgErrorField(error: unknown, field: "code" | "constraint"): string 
   return undefined;
 }
 
+// Postgres raises two different SQLSTATEs for a blocked delete/update
+// depending on the referencing FK's ON DELETE mode: 23503
+// (foreign_key_violation) is the general case, but every FK in this schema
+// uses ON DELETE RESTRICT, which raises 23001 (restrict_violation) instead --
+// checking only 23503 let every one of these fall through to an uncaught
+// exception (the generic error boundary) instead of the intended message.
 export function isForeignKeyViolation(error: unknown): boolean {
-  return findPgErrorField(error, "code") === "23503";
+  const code = findPgErrorField(error, "code");
+  return code === "23503" || code === "23001";
 }
 
 export function isUniqueViolation(error: unknown): boolean {
