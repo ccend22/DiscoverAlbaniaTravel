@@ -9,6 +9,7 @@ interface DepartureOption {
   routeId: number;
   routeCode: string;
   fromStationName: string;
+  toStationName: string;
   departureTime: string;
   basePrice: string | null;
 }
@@ -119,7 +120,9 @@ export function VendorManualBookingForm({ departures, routeStopOptions, serviceF
             }}
             className={FIELD_CLASS}
           >
-            <option value="">Full route (default fare)</option>
+            <option value="">
+              Full itinerary: {selectedDeparture?.fromStationName} → {selectedDeparture?.toStationName} (default fare)
+            </option>
             {stopsForRoute.map((stop) => (
               <option key={stop.id} value={stop.id}>
                 board at {stop.stationName}

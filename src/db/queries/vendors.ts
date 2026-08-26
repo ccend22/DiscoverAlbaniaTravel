@@ -98,13 +98,17 @@ export async function listVendorDepartures(vendorUserId: number) {
   const context = await getVendorContext(vendorUserId);
   if (!context || context.vendorStatus !== "approved") return [];
 
+  const fromStation = alias(stations, "vendor_departure_from_station");
+  const toStation = alias(stations, "vendor_departure_to_station");
+
   return db
     .select({
       id: tripDepartures.id,
       routeId: tripDepartures.routeId,
       routeCode: routes.code,
       routeLongName: routes.longName,
-      fromStationName: stations.name,
+      fromStationName: fromStation.name,
+      toStationName: toStation.name,
       departureTime: tripDepartures.departureTime,
       arrivalTime: tripDepartures.arrivalTime,
       durationMin: tripDepartures.durationMin,
@@ -117,7 +121,8 @@ export async function listVendorDepartures(vendorUserId: number) {
     })
     .from(tripDepartures)
     .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
-    .innerJoin(stations, eq(tripDepartures.fromStationId, stations.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
     .where(eq(routes.operatorId, context.operatorId))
     .orderBy(asc(routes.code), asc(tripDepartures.departureTime));
 }
