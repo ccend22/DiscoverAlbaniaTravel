@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../index";
 import { stations } from "../schema";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
+import { recordAdminDelete } from "./audit-log";
 
 // Scraped stations use positive source IDs. Admin-created ones get a
 // negative, monotonically decreasing ID so they never collide, while
@@ -61,9 +62,11 @@ export async function updateStationForAdmin(id: number, input: StationInput): Pr
   }
 }
 
-export async function deleteStationForAdmin(id: number): Promise<AdminMutationResult> {
+export async function deleteStationForAdmin(adminUserId: number, id: number): Promise<AdminMutationResult> {
   try {
-    await db.delete(stations).where(eq(stations.id, id));
+    const [deleted] = await db.delete(stations).where(eq(stations.id, id)).returning();
+    if (!deleted) return { ok: false, error: "Station not found." };
+    await recordAdminDelete(adminUserId, "station", id, deleted);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {

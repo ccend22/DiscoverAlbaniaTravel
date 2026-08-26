@@ -13,8 +13,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Bookings</h1>
-      <p className="mt-1 text-sm text-muted">Most recent {bookings.length} bookings platform-wide.</p>
+      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Bus bookings</h1>
+      <p className="mt-1 text-sm text-muted">Most recent {bookings.length} bus bookings platform-wide.</p>
       {params.saved && <div className="mt-6"><Alert tone="success">Changes saved.</Alert></div>}
       {params.error && <div className="mt-6"><Alert tone="error">{params.error}</Alert></div>}
 

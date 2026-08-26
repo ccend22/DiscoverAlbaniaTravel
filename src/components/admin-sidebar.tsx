@@ -39,9 +39,10 @@ const SECTIONS: NavSection[] = [
   {
     label: "Commerce",
     links: [
-      { href: "/admin/bookings", label: "Bookings" },
-      { href: "/admin/payments", label: "Payments" },
+      { href: "/admin/bookings", label: "Bus bookings" },
+      { href: "/admin/bus-payments", label: "Bus payments" },
       { href: "/admin/taxi-requests", label: "Taxi bookings" },
+      { href: "/admin/taxi-payments", label: "Taxi payments" },
       { href: "/admin/reports", label: "Reports" },
     ],
   },

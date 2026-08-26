@@ -102,9 +102,9 @@ export async function updateVendorUserAction(formData: FormData) {
 }
 
 export async function deleteVendorUserAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const vendorUserId = Number(formData.get("vendorUserId"));
-  await deleteVendorUserForAdmin(vendorUserId);
+  await deleteVendorUserForAdmin(adminUserId, vendorUserId);
   revalidatePath("/admin/vendors/all");
   redirect("/admin/vendors/all?saved=1");
 }
@@ -127,9 +127,9 @@ export async function updateTaxiRequestStatusAction(formData: FormData) {
 }
 
 export async function deleteTaxiRequestAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const requestId = Number(formData.get("requestId"));
-  const result = await deleteTaxiRequestForAdmin(requestId);
+  const result = await deleteTaxiRequestForAdmin(adminUserId, requestId);
   if (!result.ok) redirect(`/admin/taxi-requests?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/taxi-requests");
   redirect("/admin/taxi-requests?saved=1");
@@ -166,9 +166,9 @@ export async function updateTravelerAction(formData: FormData) {
 }
 
 export async function deleteTravelerAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const userId = Number(formData.get("userId"));
-  await deleteUserForAdmin(userId);
+  await deleteUserForAdmin(adminUserId, userId);
   revalidatePath("/admin/users");
   redirect("/admin/users?saved=1");
 }
@@ -205,9 +205,9 @@ export async function createAdminOperatorAction(formData: FormData) {
 }
 
 export async function deleteAdminOperatorAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const operatorId = Number(formData.get("operatorId"));
-  const result = await deleteOperatorForAdmin(operatorId);
+  const result = await deleteOperatorForAdmin(adminUserId, operatorId);
   if (!result.ok) redirect(`/admin/operators/${operatorId}?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/operators");
   redirect("/admin/operators?saved=1");
@@ -247,10 +247,10 @@ export async function createAdminRouteAction(formData: FormData) {
 }
 
 export async function deleteAdminRouteAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const operatorId = Number(formData.get("operatorId"));
   const routeId = Number(formData.get("routeId"));
-  const result = await deleteRouteForAdmin(operatorId, routeId);
+  const result = await deleteRouteForAdmin(adminUserId, operatorId, routeId);
   if (!result.ok) redirect(`/admin/operators/${operatorId}?error=${encodeURIComponent(result.error)}`);
   revalidatePath(`/admin/operators/${operatorId}`);
   redirect(`/admin/operators/${operatorId}?saved=route`);
@@ -296,10 +296,10 @@ export async function createAdminDepartureAction(formData: FormData) {
 }
 
 export async function deleteAdminDepartureAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const operatorId = Number(formData.get("operatorId"));
   const tripDepartureId = Number(formData.get("tripDepartureId"));
-  const result = await deleteDepartureForAdmin(tripDepartureId);
+  const result = await deleteDepartureForAdmin(adminUserId, tripDepartureId);
   if (!result.ok) redirect(`/admin/operators/${operatorId}?error=${encodeURIComponent(result.error)}`);
   revalidatePath(`/admin/operators/${operatorId}`);
   redirect(`/admin/operators/${operatorId}?saved=departure`);
@@ -329,9 +329,9 @@ export async function updateAdminDepartureAction(formData: FormData) {
 }
 
 export async function deleteAdminBookingAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const bookingReference = String(formData.get("bookingReference"));
-  const result = await deleteBookingForAdmin(bookingReference);
+  const result = await deleteBookingForAdmin(adminUserId, bookingReference);
   if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/bookings");
   redirect("/admin/bookings?saved=1");
@@ -379,11 +379,12 @@ export async function markAdminBookingPaidAction(formData: FormData) {
 }
 
 export async function deleteAdminPaymentAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const paymentId = Number(formData.get("paymentId"));
-  await deletePaymentForAdmin(paymentId);
-  revalidatePath("/admin/payments");
-  redirect("/admin/payments?saved=1");
+  const redirectPath = formData.get("redirectTo") === "taxi" ? "/admin/taxi-payments" : "/admin/bus-payments";
+  await deletePaymentForAdmin(adminUserId, paymentId);
+  revalidatePath(redirectPath);
+  redirect(`${redirectPath}?saved=1`);
 }
 
 export async function resolveOperatorReportAction(formData: FormData) {

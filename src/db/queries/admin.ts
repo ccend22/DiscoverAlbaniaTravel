@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db } from "../index";
 import {
   adminUsers,
@@ -20,6 +20,7 @@ import {
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
 import { cancelBookingForAdmin, getLatestPaymentStatus } from "./bookings";
+import { recordAdminDelete } from "./audit-log";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
@@ -248,12 +249,16 @@ export async function updateUserForAdmin(
   }
 }
 
-export async function deleteUserForAdmin(userId: number): Promise<AdminMutationResult> {
-  await db.delete(users).where(eq(users.id, userId));
+export async function deleteUserForAdmin(adminUserId: number, userId: number): Promise<AdminMutationResult> {
+  const [deleted] = await db.delete(users).where(eq(users.id, userId)).returning();
+  if (!deleted) return { ok: false, error: "Traveler not found." };
+  await recordAdminDelete(adminUserId, "user", userId, deleted);
   return { ok: true };
 }
 
-export async function listPaymentsForAdmin(limit = 100) {
+export async function listPaymentsForAdmin(limit = 100, kind?: "bus" | "taxi") {
+  const kindFilter = kind === "bus" ? isNotNull(payments.bookingId) : kind === "taxi" ? isNotNull(payments.taxiRideRequestId) : undefined;
+
   const rows = await db
     .select({
       id: payments.id,
@@ -275,6 +280,7 @@ export async function listPaymentsForAdmin(limit = 100) {
     .from(payments)
     .leftJoin(bookings, eq(payments.bookingId, bookings.id))
     .leftJoin(taxiRideRequests, eq(payments.taxiRideRequestId, taxiRideRequests.id))
+    .where(kindFilter)
     .orderBy(desc(payments.createdAt))
     .limit(limit);
 
@@ -512,9 +518,11 @@ export async function createOperatorForAdmin(input: {
   }
 }
 
-export async function deleteOperatorForAdmin(operatorId: number): Promise<AdminMutationResult> {
+export async function deleteOperatorForAdmin(adminUserId: number, operatorId: number): Promise<AdminMutationResult> {
   try {
-    await db.delete(operators).where(eq(operators.id, operatorId));
+    const [deleted] = await db.delete(operators).where(eq(operators.id, operatorId)).returning();
+    if (!deleted) return { ok: false, error: "Operator not found." };
+    await recordAdminDelete(adminUserId, "operator", operatorId, deleted);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {
@@ -537,13 +545,14 @@ export async function createRouteForAdmin(
   }
 }
 
-export async function deleteRouteForAdmin(operatorId: number, routeId: number): Promise<AdminMutationResult> {
+export async function deleteRouteForAdmin(adminUserId: number, operatorId: number, routeId: number): Promise<AdminMutationResult> {
   try {
     const [deleted] = await db
       .delete(routes)
       .where(and(eq(routes.id, routeId), eq(routes.operatorId, operatorId)))
-      .returning({ id: routes.id });
+      .returning();
     if (!deleted) return { ok: false, error: "Route not found." };
+    await recordAdminDelete(adminUserId, "route", routeId, deleted);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {
@@ -580,13 +589,14 @@ export async function createDepartureForAdmin(input: {
   }
 }
 
-export async function deleteDepartureForAdmin(tripDepartureId: number): Promise<AdminMutationResult> {
+export async function deleteDepartureForAdmin(adminUserId: number, tripDepartureId: number): Promise<AdminMutationResult> {
   try {
     const [deleted] = await db
       .delete(tripDepartures)
       .where(eq(tripDepartures.id, tripDepartureId))
-      .returning({ id: tripDepartures.id });
+      .returning();
     if (!deleted) return { ok: false, error: "Departure not found." };
+    await recordAdminDelete(adminUserId, "trip_departure", tripDepartureId, deleted);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {
@@ -596,7 +606,9 @@ export async function deleteDepartureForAdmin(tripDepartureId: number): Promise<
   }
 }
 
-export async function deleteBookingForAdmin(bookingReference: string): Promise<AdminMutationResult> {
+export async function deleteBookingForAdmin(adminUserId: number, bookingReference: string): Promise<AdminMutationResult> {
+  const [existing] = await db.select().from(bookings).where(eq(bookings.bookingReference, bookingReference)).limit(1);
+  if (!existing) return { ok: false, error: "Booking not found." };
   try {
     const result = await db.execute<{ id: number }>(sql`
       with deleted as (
@@ -620,6 +632,7 @@ export async function deleteBookingForAdmin(bookingReference: string): Promise<A
       select id from deleted
     `);
     if (!result.rows[0]) return { ok: false, error: "Booking not found." };
+    await recordAdminDelete(adminUserId, "booking", bookingReference, existing);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {
@@ -629,18 +642,21 @@ export async function deleteBookingForAdmin(bookingReference: string): Promise<A
   }
 }
 
-export async function deletePaymentForAdmin(paymentId: number): Promise<AdminMutationResult> {
-  await db.delete(payments).where(eq(payments.id, paymentId));
+export async function deletePaymentForAdmin(adminUserId: number, paymentId: number): Promise<AdminMutationResult> {
+  const [deleted] = await db.delete(payments).where(eq(payments.id, paymentId)).returning();
+  if (!deleted) return { ok: false, error: "Payment not found." };
+  await recordAdminDelete(adminUserId, "payment", paymentId, deleted);
   return { ok: true };
 }
 
-export async function deleteTaxiRequestForAdmin(requestId: number): Promise<AdminMutationResult> {
+export async function deleteTaxiRequestForAdmin(adminUserId: number, requestId: number): Promise<AdminMutationResult> {
   try {
     const [deleted] = await db
       .delete(taxiRideRequests)
       .where(eq(taxiRideRequests.id, requestId))
-      .returning({ id: taxiRideRequests.id });
+      .returning();
     if (!deleted) return { ok: false, error: "Request not found." };
+    await recordAdminDelete(adminUserId, "taxi_ride_request", requestId, deleted);
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) {

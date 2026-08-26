@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
 import { cancelBookingForVendor, createBooking } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
+import { recordAdminDelete } from "./audit-log";
 import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
 
 /**
@@ -984,8 +985,10 @@ export async function updateVendorUserForAdmin(
   }
 }
 
-export async function deleteVendorUserForAdmin(vendorUserId: number): Promise<AdminMutationResult> {
-  await db.delete(vendorUsers).where(eq(vendorUsers.id, vendorUserId));
+export async function deleteVendorUserForAdmin(adminUserId: number, vendorUserId: number): Promise<AdminMutationResult> {
+  const [deleted] = await db.delete(vendorUsers).where(eq(vendorUsers.id, vendorUserId)).returning();
+  if (!deleted) return { ok: false, error: "Vendor user not found." };
+  await recordAdminDelete(adminUserId, "vendor_user", vendorUserId, deleted);
   return { ok: true };
 }
 

@@ -59,9 +59,9 @@ export async function updateStationAction(formData: FormData) {
 }
 
 export async function deleteStationAction(formData: FormData) {
-  await requireAdminSession();
+  const adminUserId = await requireAdminSession();
   const stationId = Number(formData.get("stationId"));
-  const result = await deleteStationForAdmin(stationId);
+  const result = await deleteStationForAdmin(adminUserId, stationId);
   if (!result.ok) redirect(`/admin/stations?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/stations");
   redirect("/admin/stations?saved=1");

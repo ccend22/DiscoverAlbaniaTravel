@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   index,
   check,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -409,6 +410,25 @@ export const payments = pgTable(
     ),
     check("payments_amount_nonnegative", sql`${table.amount} >= 0`),
   ]
+);
+
+// Snapshot of any row an admin permanently deletes, since none of these
+// deletes are otherwise recoverable. Written right before the delete
+// executes, from within the same query function -- see db-errors.ts's
+// isForeignKeyViolation for the incident (a raw Postgres error crashing
+// past a delete's own guard) that made the case for having this at all.
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    adminUserId: integer("admin_user_id").references(() => adminUsers.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("admin_audit_log_entity_idx").on(table.entityType, table.entityId)]
 );
 
 // A private complaint tied to a specific trip -- distinct from the public
