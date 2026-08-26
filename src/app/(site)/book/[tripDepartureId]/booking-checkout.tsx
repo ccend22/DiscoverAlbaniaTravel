@@ -59,6 +59,7 @@ export function BookingCheckout({ tripDepartureId, date, defaultSeats, error, pr
           onSeatsChange={setSeats}
           profile={profile}
           bp={bp}
+          common={common}
         />
 
         <section className="mt-10 border-t border-border pt-6">

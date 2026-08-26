@@ -6,6 +6,7 @@ import { useActionState, useEffect, useMemo, useRef, useState, type FormEvent } 
 import { createPortal, useFormStatus } from "react-dom";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { requestTaxiAction } from "@/app/(site)/taxi/actions";
+import { PhoneInput } from "./phone-input";
 import {
   AlertCircleIcon,
   ArrowRightIcon,
@@ -528,7 +529,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
     return (
       <div className="public-card flex animate-fade-up flex-col gap-2 p-3 sm:gap-3 sm:p-8">
         <p className="px-1 text-sm font-semibold text-brand-navy">{bp.completePaymentHeading}</p>
-        <div className="relative h-[1010px] overflow-hidden rounded-[1.25rem] border border-[var(--page-line)] sm:h-[840px]">
+        <div className="relative h-[900px] overflow-y-auto overscroll-contain rounded-[1.25rem] border border-[var(--page-line)] sm:h-[760px]">
           {!iframeLoaded && (
             <div className="absolute inset-0 flex flex-col gap-3 bg-surface p-4" aria-busy="true" aria-live="polite">
               <span className="sr-only">{bp.loadingPayment}</span>
@@ -822,21 +823,22 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
                   <div className="min-w-0">
                     <label htmlFor="taxi-passenger-phone" className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.phone}</label>
-                    <input
+                    <PhoneInput
                       id="taxi-passenger-phone"
                       name="passengerPhone"
-                      type="tel"
                       required={showContact}
-                      minLength={6}
-                      maxLength={24}
-                      pattern="[0-9+ \(\)\.\-]{6,24}"
-                      autoComplete="tel"
-                      aria-describedby="taxi-phone-helper"
-                      defaultValue={user?.phone ?? ""}
+                      defaultValue={user?.phone}
                       placeholder={tf.phoneNumberPlaceholder}
+                      ariaDescribedBy="taxi-phone-helper"
+                      dialogLabel={dict.common.phoneCountryDialog}
+                      searchPlaceholder={dict.common.phoneCountrySearch}
+                      noMatchesLabel={dict.common.phoneCountryNoMatches}
+                      popularLabel={dict.common.phoneCountryPopular}
+                      allCountriesLabel={dict.common.phoneCountryAll}
                       onInvalid={(event) => event.currentTarget.setCustomValidity(tq.invalidPhone)}
                       onInput={(event) => event.currentTarget.setCustomValidity("")}
-                      className="mt-1.5 min-h-11 w-full rounded-[1.1rem] border border-[#dce8e6] bg-white px-3.5 text-sm font-semibold text-brand-navy outline-none transition-[border-color,box-shadow] placeholder:text-muted hover:border-teal/40 focus:border-teal focus:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                      groupClassName="mt-1.5 min-h-11 w-full rounded-[1.1rem] border border-[#dce8e6] bg-white transition-[border-color,box-shadow] hover:border-teal/40 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]"
+                      numberInputClassName="text-sm font-semibold text-brand-navy"
                     />
                     <p id="taxi-phone-helper" className="mt-1.5 text-[11px] leading-4 text-muted">{tq.phoneHelper}</p>
                   </div>

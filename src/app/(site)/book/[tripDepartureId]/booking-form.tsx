@@ -6,6 +6,7 @@ import { createBookingAction, type CreateBookingActionState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { ChevronLeftIcon } from "@/components/icons";
+import { PhoneInput } from "@/components/phone-input";
 import type { Dictionary } from "@/lib/dictionary";
 
 interface BookingFormProps {
@@ -15,11 +16,12 @@ interface BookingFormProps {
   onSeatsChange: (seats: number) => void;
   profile: { name: string; email: string; phone: string | null } | null;
   bp: Dictionary["bookPage"];
+  common: Dictionary["common"];
 }
 
 const initialState: CreateBookingActionState = { status: "idle" };
 
-export function BookingForm({ tripDepartureId, date, seats, onSeatsChange, profile, bp }: BookingFormProps) {
+export function BookingForm({ tripDepartureId, date, seats, onSeatsChange, profile, bp, common }: BookingFormProps) {
   const [state, formAction, isPending] = useActionState(createBookingAction, initialState);
   const [dismissed, setDismissed] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -117,14 +119,16 @@ export function BookingForm({ tripDepartureId, date, seats, onSeatsChange, profi
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{bp.phone}</span>
-          <input
+          <PhoneInput
             name="passengerPhone"
             required
-            type="tel"
-            minLength={6}
-            autoComplete="tel"
-            defaultValue={profile?.phone ?? undefined}
-            className="public-input min-h-13 rounded-2xl px-4 py-3"
+            defaultValue={profile?.phone}
+            dialogLabel={common.phoneCountryDialog}
+            searchPlaceholder={common.phoneCountrySearch}
+            noMatchesLabel={common.phoneCountryNoMatches}
+            popularLabel={common.phoneCountryPopular}
+            allCountriesLabel={common.phoneCountryAll}
+            groupClassName="public-input-group min-h-13 rounded-2xl"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">

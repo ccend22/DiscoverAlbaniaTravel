@@ -694,6 +694,23 @@ table tbody tr:hover {
   outline: none;
 }
 
+/* Same look as .public-input, for a compound field where the border/background
+   lives on a wrapping div (e.g. a country-code trigger + number input sitting
+   side by side) rather than directly on the <input> -- so focus has to key off
+   the group instead of the input itself. */
+.public-input-group {
+  min-height: 3.5rem;
+  border: 1px solid var(--page-line);
+  background: #f8fbfa;
+  color: var(--page-ink);
+}
+
+.public-input-group:focus-within {
+  border-color: var(--teal);
+  background: white;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--teal) 11%, transparent);
+}
+
 /* Chrome/Safari paint a saved-value background (often a mismatched
    lavender or yellow tint, square-cornered even inside our rounded
    fields) on autofilled inputs by default, with no normal CSS property
