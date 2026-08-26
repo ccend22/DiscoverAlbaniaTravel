@@ -19,6 +19,7 @@ import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM } from "@/lib/taxi-service";
 import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { buildCityOptions, POPULAR_CITY_NAMES } from "@/lib/city-options";
+import { getAlbaniaDateInputValue, getAlbaniaTimeInputValue } from "@/lib/timezone";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -244,9 +245,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { origin, destination, date, tripType, returnDate, time, passengers } = parsed.data;
   const isRoundTrip = tripType === "roundtrip" && !!returnDate;
 
+  // Departures already gone for today shouldn't still show as bookable --
+  // once "now" has passed a departure time, floor the results to whichever
+  // is later: the rider's own time filter, or the current moment.
+  const today = getAlbaniaDateInputValue();
+  const nowTime = getAlbaniaTimeInputValue();
+  const outboundMinTime = date === today ? (time && time > nowTime ? time : nowTime) : time;
+  const returnMinTime = returnDate === today ? nowTime : undefined;
+
   const [outboundOutcome, returnOutcome] = await Promise.all([
-    searchTripDepartures(origin, destination, date, time),
-    isRoundTrip ? searchTripDepartures(destination, origin, returnDate) : Promise.resolve(null),
+    searchTripDepartures(origin, destination, date, outboundMinTime),
+    isRoundTrip ? searchTripDepartures(destination, origin, returnDate, returnMinTime) : Promise.resolve(null),
   ]);
 
   const [outboundSegments, returnSegments] = await Promise.all([

@@ -85,7 +85,11 @@ export function SearchWidget({
       : "";
   });
   const [dateValue, setDateValue] = useState(defaultDate || today);
-  const [departSelected, setDepartSelected] = useState(Boolean(defaultDate));
+  // Unlike the return date, the depart date always has a sensible default
+  // (today) -- show it as an active selection from the start instead of a
+  // placeholder, so travelers aren't left wondering what date they're
+  // searching before they've touched the field.
+  const [departSelected, setDepartSelected] = useState(true);
   const [tripType, setTripType] = useState<TripType>(defaultTripType ?? "oneway");
   const [returnDateValue, setReturnDateValue] = useState(
     defaultReturnDate || defaultDate || today
