@@ -20,7 +20,6 @@ import {
   updateDepartureForAdmin,
   updateOperatorForAdmin,
   updateRouteForAdmin,
-  updateTaxiRequestStatusForAdmin,
   createOperatorForAdmin,
   deleteOperatorForAdmin,
   createRouteForAdmin,
@@ -107,23 +106,6 @@ export async function deleteVendorUserAction(formData: FormData) {
   await deleteVendorUserForAdmin(adminUserId, vendorUserId);
   revalidatePath("/admin/vendors/all");
   redirect("/admin/vendors/all?saved=1");
-}
-
-export async function updateTaxiRequestStatusAction(formData: FormData) {
-  await requireAdminSession();
-  const value = String(formData.get("status"));
-  if (
-    value !== "requested" &&
-    value !== "accepted" &&
-    value !== "declined" &&
-    value !== "cancelled" &&
-    value !== "completed"
-  ) {
-    redirect("/admin/taxi-requests?error=Invalid%20status");
-  }
-  await updateTaxiRequestStatusForAdmin(Number(formData.get("requestId")), value);
-  revalidatePath("/admin/taxi-requests");
-  redirect("/admin/taxi-requests?saved=1");
 }
 
 export async function deleteTaxiRequestAction(formData: FormData) {

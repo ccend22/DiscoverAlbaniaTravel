@@ -172,8 +172,18 @@ export async function deleteTaxiVehicleForAdmin(vehicleId: number): Promise<Admi
   }
 }
 
+async function getLatestTaxiPaymentStatus(taxiRideRequestId: number) {
+  const [payment] = await db
+    .select({ status: payments.status, amount: payments.amount, currency: payments.currency })
+    .from(payments)
+    .where(eq(payments.taxiRideRequestId, taxiRideRequestId))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  return payment ?? null;
+}
+
 export async function listTaxiRequestsForAdmin(limit = 100) {
-  return db
+  const rows = await db
     .select({
       id: taxiRideRequests.id,
       requestReference: taxiRideRequests.requestReference,
@@ -184,6 +194,8 @@ export async function listTaxiRequestsForAdmin(limit = 100) {
       passengerName: taxiRideRequests.passengerName,
       passengerPhone: taxiRideRequests.passengerPhone,
       passengerEmail: taxiRideRequests.passengerEmail,
+      notes: taxiRideRequests.notes,
+      preferredTaxiCompany: taxiRideRequests.preferredTaxiCompany,
       quotedPrice: taxiRideRequests.quotedPrice,
       status: taxiRideRequests.status,
       providerName: taxiProviders.name,
@@ -193,27 +205,18 @@ export async function listTaxiRequestsForAdmin(limit = 100) {
     .leftJoin(taxiProviders, eq(taxiRideRequests.taxiProviderId, taxiProviders.id))
     .orderBy(desc(taxiRideRequests.createdAt))
     .limit(limit);
-}
 
-export async function updateTaxiRequestStatusForAdmin(
-  requestId: number,
-  status: "requested" | "accepted" | "declined" | "cancelled" | "completed"
-) {
-  await db
-    .update(taxiRideRequests)
-    .set({
-      status,
-      updatedAt: new Date(),
-      ...(status === "requested"
-        ? {
-            taxiProviderId: null,
-            taxiVehicleId: null,
-            acceptedByTaxiProviderUserId: null,
-            quotedPrice: null,
-          }
-        : {}),
-    })
-    .where(eq(taxiRideRequests.id, requestId));
+  const results = [];
+  for (const row of rows) {
+    const payment = await getLatestTaxiPaymentStatus(row.id);
+    results.push({
+      ...row,
+      paymentStatus: payment?.status ?? null,
+      paymentAmount: payment?.amount ?? null,
+      paymentCurrency: payment?.currency ?? null,
+    });
+  }
+  return results;
 }
 
 export async function listUsersForAdmin() {
@@ -275,6 +278,16 @@ export async function listPaymentsForAdmin(limit = 100, kind?: "bus" | "taxi") {
       taxiPassengerName: taxiRideRequests.passengerName,
       taxiPassengerPhone: taxiRideRequests.passengerPhone,
       taxiPassengerEmail: taxiRideRequests.passengerEmail,
+      bookingTravelDate: bookings.travelDate,
+      bookingSeats: bookings.seats,
+      bookingPriceAtBooking: bookings.priceAtBooking,
+      bookingChannel: bookings.channel,
+      taxiPickupLocation: taxiRideRequests.pickupLocation,
+      taxiDestination: taxiRideRequests.destination,
+      taxiPickupAt: taxiRideRequests.pickupAt,
+      taxiPassengers: taxiRideRequests.passengers,
+      taxiNotes: taxiRideRequests.notes,
+      taxiQuotedPrice: taxiRideRequests.quotedPrice,
       createdAt: payments.createdAt,
     })
     .from(payments)
