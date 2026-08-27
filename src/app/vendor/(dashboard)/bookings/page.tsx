@@ -3,7 +3,7 @@ import { requireVendorPermission } from "@/lib/vendor-access";
 import { VendorBookingsTable } from "@/components/vendor-bookings-table";
 import { LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { cancelVendorBookingAction, markVendorBookingPaidAction, updateVendorBookingAction } from "../../actions";
+import { cancelVendorBookingAction, getVendorBookingTicketAction, markVendorBookingPaidAction, updateVendorBookingAction } from "../../actions";
 
 export default async function VendorBookingsPage({
   searchParams,
@@ -44,6 +44,7 @@ export default async function VendorBookingsPage({
           updateAction={updateVendorBookingAction}
           cancelAction={cancelVendorBookingAction}
           markPaidAction={markVendorBookingPaidAction}
+          loadTicket={getVendorBookingTicketAction}
         />
       </div>
     </div>

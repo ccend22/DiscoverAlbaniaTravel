@@ -10,6 +10,7 @@ import { formatPrice, formatDateLong } from "@/lib/format";
 import { BOOKING_CHANNEL_OPTIONS } from "@/lib/manual-booking";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
+import { TicketQrPanel, type TicketQrData } from "@/components/ticket-qr-panel";
 import type { AdminBookingRow } from "@/db/queries/admin";
 
 type StatusFilter = "all" | "confirmed" | "cancelled";
@@ -20,6 +21,7 @@ interface AdminBookingsTableProps {
   cancelAction: (formData: FormData) => void;
   markPaidAction: (formData: FormData) => void;
   deleteAction?: (formData: FormData) => void;
+  loadTicket: (bookingId: number) => Promise<TicketQrData | null>;
 }
 
 const CHANNEL_LABELS: Record<AdminBookingRow["channel"], string> = {
@@ -41,11 +43,13 @@ function EditBookingModal({
   onClose,
   updateAction,
   cancelAction,
+  loadTicket,
 }: {
   booking: AdminBookingRow;
   onClose: () => void;
   updateAction: (formData: FormData) => void;
   cancelAction: (formData: FormData) => void;
+  loadTicket: (bookingId: number) => Promise<TicketQrData | null>;
 }) {
   useBodyScrollLock(true);
   const isManual = booking.channel !== "online";
@@ -69,12 +73,8 @@ function EditBookingModal({
           {booking.trip.operatorName} · {booking.trip.routeCode} · {booking.trip.fromStationName} → {booking.trip.toStationName} · {formatDateLong(booking.travelDate)}
         </p>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-border">
-          <iframe
-            src={`/ticket/${booking.bookingReference}`}
-            title={`Ticket ${booking.bookingReference}`}
-            className="h-[420px] w-full"
-          />
+        <div className="mt-4">
+          <TicketQrPanel bookingId={booking.bookingId} loadTicket={loadTicket} />
         </div>
 
         <form action={updateAction} className="mt-5 grid gap-3">
@@ -126,7 +126,7 @@ function EditBookingModal({
   );
 }
 
-export function AdminBookingsTable({ bookings, updateAction, cancelAction, markPaidAction, deleteAction }: AdminBookingsTableProps) {
+export function AdminBookingsTable({ bookings, updateAction, cancelAction, markPaidAction, deleteAction, loadTicket }: AdminBookingsTableProps) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [editingBooking, setEditingBooking] = useState<AdminBookingRow | null>(null);
 
@@ -271,6 +271,7 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
           onClose={() => setEditingBooking(null)}
           updateAction={updateAction}
           cancelAction={cancelAction}
+          loadTicket={loadTicket}
         />
       )}
     </div>

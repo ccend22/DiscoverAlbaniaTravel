@@ -11,6 +11,7 @@ import { getAlbaniaDateInputValue } from "@/lib/timezone";
 import { BOOKING_CHANNEL_OPTIONS } from "@/lib/manual-booking";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
+import { TicketQrPanel, type TicketQrData } from "@/components/ticket-qr-panel";
 import type { VendorBookingRow } from "@/db/queries/vendors";
 
 type StatusFilter = "all" | "confirmed" | "cancelled";
@@ -20,6 +21,7 @@ interface VendorBookingsTableProps {
   updateAction: (formData: FormData) => void;
   cancelAction: (formData: FormData) => void;
   markPaidAction: (formData: FormData) => void;
+  loadTicket: (bookingId: number) => Promise<TicketQrData | null>;
 }
 
 const CHANNEL_LABELS: Record<VendorBookingRow["channel"], string> = {
@@ -34,11 +36,13 @@ function EditBookingModal({
   onClose,
   updateAction,
   cancelAction,
+  loadTicket,
 }: {
   booking: VendorBookingRow;
   onClose: () => void;
   updateAction: (formData: FormData) => void;
   cancelAction: (formData: FormData) => void;
+  loadTicket: (bookingId: number) => Promise<TicketQrData | null>;
 }) {
   useBodyScrollLock(true);
   const isManual = booking.channel !== "online";
@@ -62,12 +66,8 @@ function EditBookingModal({
           {booking.routeCode} · {booking.fromStationName} → {booking.toStationName} · {formatDateLong(booking.travelDate)}
         </p>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-border">
-          <iframe
-            src={`/ticket/${booking.bookingReference}`}
-            title={`Ticket ${booking.bookingReference}`}
-            className="h-[420px] w-full"
-          />
+        <div className="mt-4">
+          <TicketQrPanel bookingId={booking.bookingId} loadTicket={loadTicket} />
         </div>
 
         <form action={updateAction} className="mt-5 grid gap-3">
@@ -119,7 +119,7 @@ function EditBookingModal({
   );
 }
 
-export function VendorBookingsTable({ bookings, updateAction, cancelAction, markPaidAction }: VendorBookingsTableProps) {
+export function VendorBookingsTable({ bookings, updateAction, cancelAction, markPaidAction, loadTicket }: VendorBookingsTableProps) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [editingBooking, setEditingBooking] = useState<VendorBookingRow | null>(null);
@@ -288,6 +288,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
           onClose={() => setEditingBooking(null)}
           updateAction={updateAction}
           cancelAction={cancelAction}
+          loadTicket={loadTicket}
         />
       )}
     </div>

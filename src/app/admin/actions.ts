@@ -27,6 +27,7 @@ import {
   createDepartureForAdmin,
   deleteDepartureForAdmin,
   deleteBookingForAdmin,
+  getBookingTicketForAdmin,
   updateBookingDetailsForAdmin,
   cancelBookingForAdminPanel,
   markBookingPaidForAdmin,
@@ -37,6 +38,7 @@ import {
 } from "@/db/queries/admin";
 import { setVendorStatus, updateVendorUserForAdmin, deleteVendorUserForAdmin } from "@/db/queries/vendors";
 import { setAdminSession, clearAdminSession, requireAdminSession } from "@/lib/admin-session";
+import { generateTicketQrSvg } from "@/lib/ticket-qr-svg";
 
 export async function loginAdminAction(formData: FormData) {
   const parsed = adminLoginSchema.safeParse({
@@ -358,6 +360,18 @@ export async function markAdminBookingPaidAction(formData: FormData) {
   if (!result.ok) redirect(`/admin/bookings?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/bookings");
   redirect("/admin/bookings?saved=1");
+}
+
+export async function getAdminBookingTicketAction(bookingId: number) {
+  await requireAdminSession();
+  const ticket = await getBookingTicketForAdmin(bookingId);
+  if (!ticket) return null;
+  return {
+    bookingReference: ticket.bookingReference,
+    isPaid: ticket.isPaid,
+    checkedInAt: ticket.checkedInAt,
+    qrSvg: ticket.isPaid ? await generateTicketQrSvg(ticket.ticketToken) : null,
+  };
 }
 
 export async function deleteAdminPaymentAction(formData: FormData) {

@@ -341,7 +341,7 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
       channel: bookings.channel,
       paymentStatus: sql<VendorBookingRow["paymentStatus"]>`(
         select ${payments.status} from ${payments}
-        where ${payments.bookingId} = ${bookings.id}
+        where ${payments.bookingId} = bookings.id
         order by ${payments.createdAt} desc
         limit 1
       )`,
@@ -940,7 +940,7 @@ export async function validateTicketForVendor(
       arrivalTime: tripDepartures.arrivalTime,
       paymentStatus: sql<VendorBookingRow["paymentStatus"]>`(
         select ${payments.status} from ${payments}
-        where ${payments.bookingId} = ${bookings.id}
+        where ${payments.bookingId} = bookings.id
         order by ${payments.createdAt} desc
         limit 1
       )`,
@@ -1025,6 +1025,43 @@ async function verifyVendorOwnsBooking(vendorUserId: number, bookingId: number):
     .where(and(eq(bookings.id, bookingId), eq(routes.operatorId, context.operatorId)))
     .limit(1);
   return Boolean(owned);
+}
+
+export interface VendorBookingTicket {
+  bookingReference: string;
+  ticketToken: string;
+  isPaid: boolean;
+  checkedInAt: string | null;
+}
+
+/** Ticket data for the QR panel shown inline in the booking edit modal -- scoped the same way every other vendor booking mutation is, so one operator's staff can never pull up another operator's ticket by guessing a booking id. */
+export async function getVendorBookingTicket(vendorUserId: number, bookingId: number): Promise<VendorBookingTicket | null> {
+  if (!(await verifyVendorOwnsBooking(vendorUserId, bookingId))) return null;
+
+  const [booking] = await db
+    .select({
+      bookingReference: bookings.bookingReference,
+      ticketToken: bookings.ticketToken,
+      bookingStatus: bookings.status,
+      checkedInAt: bookings.ticketCheckedInAt,
+      paymentStatus: sql<VendorBookingRow["paymentStatus"]>`(
+        select ${payments.status} from ${payments}
+        where ${payments.bookingId} = bookings.id
+        order by ${payments.createdAt} desc
+        limit 1
+      )`,
+    })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId))
+    .limit(1);
+  if (!booking) return null;
+
+  return {
+    bookingReference: booking.bookingReference,
+    ticketToken: booking.ticketToken,
+    isPaid: booking.bookingStatus === "confirmed" && booking.paymentStatus === "paid",
+    checkedInAt: booking.checkedInAt?.toISOString() ?? null,
+  };
 }
 
 export async function cancelVendorBooking(vendorUserId: number, bookingId: number): Promise<AdminMutationResult> {

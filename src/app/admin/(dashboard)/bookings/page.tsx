@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/alert";
 import {
   cancelAdminBookingAction,
   deleteAdminBookingAction,
+  getAdminBookingTicketAction,
   markAdminBookingPaidAction,
   updateAdminBookingAction,
 } from "@/app/admin/actions";
@@ -25,6 +26,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
           cancelAction={cancelAdminBookingAction}
           markPaidAction={markAdminBookingPaidAction}
           deleteAction={deleteAdminBookingAction}
+          loadTicket={getAdminBookingTicketAction}
         />
       </div>
     </div>

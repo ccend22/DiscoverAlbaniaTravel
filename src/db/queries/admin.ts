@@ -731,6 +731,35 @@ export async function listBookingsForAdmin(limit = 50): Promise<AdminBookingRow[
   return results;
 }
 
+export interface AdminBookingTicket {
+  bookingReference: string;
+  ticketToken: string;
+  isPaid: boolean;
+  checkedInAt: string | null;
+}
+
+export async function getBookingTicketForAdmin(bookingId: number): Promise<AdminBookingTicket | null> {
+  const [booking] = await db
+    .select({
+      bookingReference: bookings.bookingReference,
+      ticketToken: bookings.ticketToken,
+      bookingStatus: bookings.status,
+      checkedInAt: bookings.ticketCheckedInAt,
+    })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId))
+    .limit(1);
+  if (!booking) return null;
+
+  const paymentStatus = await getLatestPaymentStatus(bookingId);
+  return {
+    bookingReference: booking.bookingReference,
+    ticketToken: booking.ticketToken,
+    isPaid: booking.bookingStatus === "confirmed" && paymentStatus === "paid",
+    checkedInAt: booking.checkedInAt?.toISOString() ?? null,
+  };
+}
+
 export async function updateBookingDetailsForAdmin(
   bookingId: number,
   input: { passengerName: string; passengerPhone: string; passengerEmail: string | null; channel: "online" | "walk_in" | "phone" | "touch_screen" }

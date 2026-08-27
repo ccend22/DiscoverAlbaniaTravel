@@ -29,6 +29,7 @@ import {
   createVendorTeamUser,
   deleteVendorRouteStop,
   deleteVendorTeamUser,
+  getVendorBookingTicket,
   markVendorBookingPaid,
   updateVendorBookingDetails,
   updateVendorDeparture,
@@ -37,6 +38,7 @@ import {
   updateVendorTeamUserPermissions,
 } from "@/db/queries/vendors";
 import { isVendorPermission } from "@/lib/vendor-permissions";
+import { generateTicketQrSvg } from "@/lib/ticket-qr-svg";
 import {
   clearVendorSession,
   requireVendorSession,
@@ -388,6 +390,18 @@ export async function markVendorBookingPaidAction(formData: FormData) {
   if (!result.ok) redirect(`/vendor/bookings?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/vendor/bookings");
   redirect("/vendor/bookings?saved=1");
+}
+
+export async function getVendorBookingTicketAction(bookingId: number) {
+  const vendorUserId = await requireVendorSession();
+  const ticket = await getVendorBookingTicket(vendorUserId, bookingId);
+  if (!ticket) return null;
+  return {
+    bookingReference: ticket.bookingReference,
+    isPaid: ticket.isPaid,
+    checkedInAt: ticket.checkedInAt,
+    qrSvg: ticket.isPaid ? await generateTicketQrSvg(ticket.ticketToken) : null,
+  };
 }
 
 export async function createVendorTeamUserAction(formData: FormData) {

@@ -1,5 +1,4 @@
-import QRCode from "qrcode";
-import { createTicketQrPayload } from "@/lib/ticket-code";
+import { generateTicketQrSvg } from "@/lib/ticket-qr-svg";
 
 interface TicketQrProps {
   ticketToken: string;
@@ -8,13 +7,7 @@ interface TicketQrProps {
 }
 
 export async function TicketQr({ ticketToken, bookingReference, locale = "en" }: TicketQrProps) {
-  const svg = await QRCode.toString(createTicketQrPayload(ticketToken), {
-    type: "svg",
-    errorCorrectionLevel: "M",
-    margin: 2,
-    width: 224,
-    color: { dark: "#12333a", light: "#ffffff" },
-  });
+  const svg = await generateTicketQrSvg(ticketToken);
 
   const label = locale === "al" ? "Kodi QR i biletës" : "Ticket QR code";
   const instruction = locale === "al"
