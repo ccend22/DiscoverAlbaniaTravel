@@ -64,6 +64,8 @@ export async function getVendorContext(vendorUserId: number) {
       vendorName: vendorUsers.name,
       vendorEmail: vendorUsers.email,
       vendorStatus: vendorUsers.status,
+      isOwner: vendorUsers.isOwner,
+      permissions: vendorUsers.permissions,
       operatorId: operators.id,
       operatorName: operators.name,
       operatorPhone: operators.phone,
@@ -1077,18 +1079,23 @@ export interface VendorTeamUserRow {
   name: string;
   email: string;
   status: "pending" | "approved" | "rejected";
+  isOwner: boolean;
+  permissions: string[];
   createdAt: Date;
 }
 
+/** Only the owner manages the team -- a non-owner (or unapproved vendor) sees an empty list, mirroring the page-level redirect. */
 export async function listVendorTeamUsers(vendorUserId: number): Promise<VendorTeamUserRow[]> {
   const context = await getVendorContext(vendorUserId);
-  if (!context || context.vendorStatus !== "approved") return [];
+  if (!context || context.vendorStatus !== "approved" || !context.isOwner) return [];
   return db
     .select({
       id: vendorUsers.id,
       name: vendorUsers.name,
       email: vendorUsers.email,
       status: vendorUsers.status,
+      isOwner: vendorUsers.isOwner,
+      permissions: vendorUsers.permissions,
       createdAt: vendorUsers.createdAt,
     })
     .from(vendorUsers)
@@ -1098,10 +1105,10 @@ export async function listVendorTeamUsers(vendorUserId: number): Promise<VendorT
 
 export async function createVendorTeamUser(
   vendorUserId: number,
-  input: { name: string; email: string; password: string }
+  input: { name: string; email: string; password: string; permissions: string[] }
 ): Promise<AdminMutationResult> {
   const context = await getVendorContext(vendorUserId);
-  if (!context || context.vendorStatus !== "approved") return { ok: false, error: "Not authorized." };
+  if (!context || context.vendorStatus !== "approved" || !context.isOwner) return { ok: false, error: "Not authorized." };
 
   try {
     await db.insert(vendorUsers).values({
@@ -1110,6 +1117,8 @@ export async function createVendorTeamUser(
       email: input.email,
       passwordHash: hashPassword(input.password),
       status: "approved",
+      isOwner: false,
+      permissions: input.permissions,
     });
     return { ok: true };
   } catch (error) {
@@ -1118,14 +1127,32 @@ export async function createVendorTeamUser(
   }
 }
 
+export async function updateVendorTeamUserPermissions(
+  vendorUserId: number,
+  targetUserId: number,
+  permissions: string[]
+): Promise<AdminMutationResult> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved" || !context.isOwner) return { ok: false, error: "Not authorized." };
+
+  const [updated] = await db
+    .update(vendorUsers)
+    .set({ permissions, updatedAt: new Date() })
+    // isOwner excluded on purpose -- permissions are only ever meaningful for
+    // a non-owner teammate, so this can't be used to demote/promote ownership.
+    .where(and(eq(vendorUsers.id, targetUserId), eq(vendorUsers.operatorId, context.operatorId), eq(vendorUsers.isOwner, false)))
+    .returning({ id: vendorUsers.id });
+  return updated ? { ok: true } : { ok: false, error: "That teammate doesn't belong to your company." };
+}
+
 export async function deleteVendorTeamUser(vendorUserId: number, targetUserId: number): Promise<AdminMutationResult> {
   if (vendorUserId === targetUserId) return { ok: false, error: "You can't remove your own account." };
   const context = await getVendorContext(vendorUserId);
-  if (!context || context.vendorStatus !== "approved") return { ok: false, error: "Not authorized." };
+  if (!context || context.vendorStatus !== "approved" || !context.isOwner) return { ok: false, error: "Not authorized." };
 
   const [deleted] = await db
     .delete(vendorUsers)
-    .where(and(eq(vendorUsers.id, targetUserId), eq(vendorUsers.operatorId, context.operatorId)))
+    .where(and(eq(vendorUsers.id, targetUserId), eq(vendorUsers.operatorId, context.operatorId), eq(vendorUsers.isOwner, false)))
     .returning({ id: vendorUsers.id });
   return deleted ? { ok: true } : { ok: false, error: "That teammate doesn't belong to your company." };
 }
@@ -1308,7 +1335,7 @@ export async function applyForExistingOperator(
     if (existingRow) {
       await db
         .update(vendorUsers)
-        .set({ email: input.email, passwordHash, name: input.name, status: "pending", updatedAt: new Date() })
+        .set({ email: input.email, passwordHash, name: input.name, status: "pending", isOwner: true, updatedAt: new Date() })
         .where(eq(vendorUsers.id, existingRow.id));
     } else {
       await db.insert(vendorUsers).values({
@@ -1317,6 +1344,7 @@ export async function applyForExistingOperator(
         passwordHash,
         name: input.name,
         status: "pending",
+        isOwner: true,
       });
     }
     return { ok: true };
@@ -1357,9 +1385,10 @@ export async function applyAsNewOperator(input: {
         ${sql.identifier(vendorUsers.email.name)},
         ${sql.identifier(vendorUsers.passwordHash.name)},
         ${sql.identifier(vendorUsers.name.name)},
-        ${sql.identifier(vendorUsers.status.name)}
+        ${sql.identifier(vendorUsers.status.name)},
+        ${sql.identifier(vendorUsers.isOwner.name)}
       )
-      select created_operator.id, ${input.email}, ${passwordHash}, ${input.contactName}, 'pending'
+      select created_operator.id, ${input.email}, ${passwordHash}, ${input.contactName}, 'pending', true
       from created_operator
     `);
     return { ok: true };

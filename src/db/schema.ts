@@ -67,6 +67,12 @@ export const vendorUsers = pgTable("vendor_users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   status: vendorStatusEnum("status").notNull().default("pending"),
+  // The account that first claimed/created the operator -- always has full
+  // access regardless of `permissions`, and is the only one who can manage
+  // the team (add/remove teammates, change what they can access). Every
+  // teammate added afterward is scoped to whatever's in `permissions`.
+  isOwner: boolean("is_owner").notNull().default(false),
+  permissions: text("permissions").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
 });

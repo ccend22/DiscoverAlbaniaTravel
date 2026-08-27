@@ -1,12 +1,8 @@
-import { redirect } from "next/navigation";
 import { TicketScanner } from "@/components/ticket-scanner";
-import { getVendorContext } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { requireVendorPermission } from "@/lib/vendor-access";
 
 export default async function VendorTicketScannerPage() {
-  const vendorUserId = await requireVendorSession();
-  const context = await getVendorContext(vendorUserId);
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
+  await requireVendorPermission("scanner");
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">

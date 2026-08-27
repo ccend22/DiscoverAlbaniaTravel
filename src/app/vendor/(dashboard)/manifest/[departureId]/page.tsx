@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVendorManifest } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { PrintButton } from "@/components/print-button";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
@@ -22,7 +22,7 @@ export default async function VendorManifestPage({
   params: Promise<{ departureId: string }>;
   searchParams: Promise<{ date?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
+  const { vendorUserId } = await requireVendorPermission("bookings");
   const [{ departureId }, { date: dateParam }] = await Promise.all([params, searchParams]);
   const tripDepartureId = Number(departureId);
   if (!Number.isInteger(tripDepartureId)) notFound();

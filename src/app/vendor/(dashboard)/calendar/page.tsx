@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getVendorContext, getVendorDepartureCalendar } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { getVendorDepartureCalendar } from "@/db/queries/vendors";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { formatTime } from "@/lib/format";
 
 const DAY_LABEL = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
@@ -15,13 +14,8 @@ function cellTone(running: boolean, bookedSeats: number, plannedSeats: number) {
 }
 
 export default async function VendorCalendarPage() {
-  const vendorUserId = await requireVendorSession();
-  const [context, rows] = await Promise.all([
-    getVendorContext(vendorUserId),
-    getVendorDepartureCalendar(vendorUserId, 14),
-  ]);
-
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
+  const { vendorUserId } = await requireVendorPermission("calendar");
+  const rows = await getVendorDepartureCalendar(vendorUserId, 14);
 
   const dates = rows[0]?.days.map((d) => d.date) ?? [];
 

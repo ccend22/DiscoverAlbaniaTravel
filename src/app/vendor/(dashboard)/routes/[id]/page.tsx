@@ -5,7 +5,7 @@ import {
   listStationOptions,
   listVendorRouteStops,
 } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { Alert } from "@/components/ui/alert";
 import { VendorAddRouteStopForm } from "@/components/vendor-add-route-stop-form";
 import {
@@ -22,7 +22,7 @@ export default async function VendorRouteDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
+  const { vendorUserId } = await requireVendorPermission("routes");
   const [{ id }, { saved, error }] = await Promise.all([params, searchParams]);
   const routeId = Number(id);
   if (!Number.isInteger(routeId)) notFound();

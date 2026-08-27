@@ -199,7 +199,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
               >
                 <td className="px-4 py-3 font-mono text-xs">
                   <Link
-                    href={`/booking/${booking.bookingReference}`}
+                    href={`/ticket/${booking.bookingReference}`}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(event) => event.stopPropagation()}

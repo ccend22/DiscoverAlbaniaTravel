@@ -7,6 +7,7 @@ import {
   listVendorRoutes,
 } from "@/db/queries/vendors";
 import { requireVendorSession } from "@/lib/vendor-session";
+import { vendorHasPermission } from "@/lib/vendor-permissions";
 import { BusIcon, MapPinIcon, TicketIcon, UsersIcon } from "@/components/icons";
 
 // Complete literal classes per accent — Tailwind can't resolve `bg-${color}`
@@ -80,23 +81,31 @@ export default async function VendorOverviewPage() {
         </div>
       </section>
 
-      <section className="border-t border-border py-8">
-        <h2 className="text-lg font-semibold text-foreground">Quick links</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Link href="/vendor/routes" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
-            <p className="font-medium text-foreground">Manage routes & stops</p>
-            <p className="mt-1 text-sm text-muted">Add intermediate stops with timing and fares.</p>
-          </Link>
-          <Link href="/vendor/departures" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
-            <p className="font-medium text-foreground">Manage departures</p>
-            <p className="mt-1 text-sm text-muted">Adjust schedule, price, seats, and boarding.</p>
-          </Link>
-          <Link href="/vendor/bookings/new" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
-            <p className="font-medium text-foreground">Add a manual booking</p>
-            <p className="mt-1 text-sm text-muted">Record a phone-in or walk-in reservation.</p>
-          </Link>
-        </div>
-      </section>
+      {(vendorHasPermission(context, "routes") || vendorHasPermission(context, "departures") || vendorHasPermission(context, "bookings")) && (
+        <section className="border-t border-border py-8">
+          <h2 className="text-lg font-semibold text-foreground">Quick links</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            {vendorHasPermission(context, "routes") && (
+              <Link href="/vendor/routes" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
+                <p className="font-medium text-foreground">Manage routes & stops</p>
+                <p className="mt-1 text-sm text-muted">Add intermediate stops with timing and fares.</p>
+              </Link>
+            )}
+            {vendorHasPermission(context, "departures") && (
+              <Link href="/vendor/departures" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
+                <p className="font-medium text-foreground">Manage departures</p>
+                <p className="mt-1 text-sm text-muted">Adjust schedule, price, seats, and boarding.</p>
+              </Link>
+            )}
+            {vendorHasPermission(context, "bookings") && (
+              <Link href="/vendor/bookings/new" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
+                <p className="font-medium text-foreground">Add a manual booking</p>
+                <p className="mt-1 text-sm text-muted">Record a phone-in or walk-in reservation.</p>
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

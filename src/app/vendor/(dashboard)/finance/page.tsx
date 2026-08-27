@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { AlertCircleIcon, InfoIcon } from "@/components/icons";
-import { getVendorContext, listVendorFinanceTransactions } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { listVendorFinanceTransactions } from "@/db/queries/vendors";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
 import {
@@ -297,7 +296,7 @@ function VendorFinanceDashboard({
                   <tr key={transaction.bookingId} className="border-b border-border last:border-0 hover:bg-surface-sunken/60">
                     <td className="px-4 py-3 text-muted">{formatDateShort(transaction.financialDate)}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/booking/${transaction.bookingReference}`} target="_blank" className="font-mono text-xs font-semibold text-teal underline decoration-teal/30 underline-offset-4 hover:decoration-teal">
+                      <Link href={`/ticket/${transaction.bookingReference}`} target="_blank" rel="noreferrer" title="Open and print QR ticket" className="font-mono text-xs font-semibold text-teal underline decoration-teal/30 underline-offset-4 hover:decoration-teal">
                         {transaction.bookingReference}
                       </Link>
                       <p className="mt-1 text-xs text-muted">Travel {formatDateShort(transaction.travelDate)}</p>
@@ -348,14 +347,11 @@ export default async function VendorFinancePage({
 }: {
   searchParams: Promise<VendorFinanceDashboardProps["params"]>;
 }) {
-  const vendorUserId = await requireVendorSession();
-  const [context, rows, params] = await Promise.all([
-    getVendorContext(vendorUserId),
+  const { vendorUserId, context } = await requireVendorPermission("finance");
+  const [rows, params] = await Promise.all([
     listVendorFinanceTransactions(vendorUserId),
     searchParams,
   ]);
-
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
 
   return <VendorFinanceDashboard operatorName={context.operatorName} rows={rows} params={params} />;
 }

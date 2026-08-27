@@ -6,26 +6,39 @@ import { usePathname } from "next/navigation";
 import { BrandMark } from "./brand-mark";
 import { ChevronDownIcon, LogOutIcon, SettingsIcon } from "./icons";
 import { logoutVendorAction } from "@/app/vendor/actions";
+import { vendorHasPermission, type VendorPermission } from "@/lib/vendor-permissions";
 
 interface NavLink {
   href: string;
   label: string;
+  /** Omitted means every approved teammate sees it, regardless of permissions. */
+  permission?: VendorPermission;
+  /** Only the owner sees it -- team/permission management can't be delegated. */
+  ownerOnly?: boolean;
 }
 
 const MAIN_LINKS: NavLink[] = [
   { href: "/vendor", label: "Overview" },
-  { href: "/vendor/calendar", label: "Calendar" },
-  { href: "/vendor/bookings", label: "Bookings" },
-  { href: "/vendor/scanner", label: "Scan tickets" },
-  { href: "/vendor/finance", label: "Finance" },
+  { href: "/vendor/calendar", label: "Calendar", permission: "calendar" },
+  { href: "/vendor/bookings", label: "Bookings", permission: "bookings" },
+  { href: "/vendor/scanner", label: "Scan tickets", permission: "scanner" },
+  { href: "/vendor/finance", label: "Finance", permission: "finance" },
 ];
 
 const SETTINGS_LINKS: NavLink[] = [
   { href: "/vendor/profile", label: "Profile" },
-  { href: "/vendor/routes", label: "Routes & stops" },
-  { href: "/vendor/departures", label: "Departures" },
-  { href: "/vendor/users", label: "Users" },
+  { href: "/vendor/routes", label: "Routes & stops", permission: "routes" },
+  { href: "/vendor/departures", label: "Departures", permission: "departures" },
+  { href: "/vendor/users", label: "Users", ownerOnly: true },
 ];
+
+function visibleLinks(links: NavLink[], vendor: { isOwner: boolean; permissions: string[] }): NavLink[] {
+  return links.filter((link) => {
+    if (link.ownerOnly) return vendor.isOwner;
+    if (link.permission) return vendorHasPermission(vendor, link.permission);
+    return true;
+  });
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/vendor") return pathname === "/vendor";
@@ -46,9 +59,11 @@ function NavLinkItem({ pathname, link }: { pathname: string; link: NavLink }) {
   );
 }
 
-export function VendorSidebar() {
+export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; permissions: string[] }) {
   const pathname = usePathname();
-  const onSettingsPage = SETTINGS_LINKS.some((link) => isActive(pathname, link.href));
+  const mainLinks = visibleLinks(MAIN_LINKS, { isOwner, permissions });
+  const settingsLinks = visibleLinks(SETTINGS_LINKS, { isOwner, permissions });
+  const onSettingsPage = settingsLinks.some((link) => isActive(pathname, link.href));
   const [settingsOpen, setSettingsOpen] = useState(onSettingsPage);
   // Auto-expand on navigation into a Settings page, without fighting a
   // manual collapse elsewhere -- adjusting state during render (React's
@@ -74,7 +89,7 @@ export function VendorSidebar() {
           </form>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-2" aria-label="Vendor sections">
-          {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => {
+          {[...mainLinks, ...settingsLinks].map((link) => {
             const active = isActive(pathname, link.href);
             return (
               <Link
@@ -99,7 +114,7 @@ export function VendorSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Vendor sections">
         <div className="flex flex-col gap-0.5">
-          {MAIN_LINKS.map((link) => (
+          {mainLinks.map((link) => (
             <NavLinkItem key={link.href} pathname={pathname} link={link} />
           ))}
         </div>
@@ -123,7 +138,7 @@ export function VendorSidebar() {
           </button>
           {settingsOpen && (
             <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
-              {SETTINGS_LINKS.map((link) => (
+              {settingsLinks.map((link) => (
                 <NavLinkItem key={link.href} pathname={pathname} link={link} />
               ))}
             </div>

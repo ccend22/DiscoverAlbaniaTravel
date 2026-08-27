@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
-  getVendorContext,
   listStationOptions,
   listVendorDepartures,
   listVendorRoutes,
 } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { VendorDeparturesTable } from "@/components/vendor-departures-table";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -17,16 +15,13 @@ export default async function VendorDeparturesPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
-  const [context, departures, vendorRoutes, stationOptions, params] = await Promise.all([
-    getVendorContext(vendorUserId),
+  const { vendorUserId } = await requireVendorPermission("departures");
+  const [departures, vendorRoutes, stationOptions, params] = await Promise.all([
     listVendorDepartures(vendorUserId),
     listVendorRoutes(vendorUserId),
     listStationOptions(),
     searchParams,
   ]);
-
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">

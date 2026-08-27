@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getVendorContext, listVendorRoutesWithStopCounts } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { listVendorRoutesWithStopCounts } from "@/db/queries/vendors";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { createVendorRouteAction } from "../../actions";
@@ -11,14 +10,11 @@ export default async function VendorRoutesPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
-  const [context, routesList, params] = await Promise.all([
-    getVendorContext(vendorUserId),
+  const { vendorUserId } = await requireVendorPermission("routes");
+  const [routesList, params] = await Promise.all([
     listVendorRoutesWithStopCounts(vendorUserId),
     searchParams,
   ]);
-
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">

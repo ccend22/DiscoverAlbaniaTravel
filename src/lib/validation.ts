@@ -2,6 +2,7 @@ import { z } from "zod";
 import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
 import { MIN_TAXI_LEAD_TIME_HOURS } from "@/lib/taxi-service";
 import { TAXI_COMPANIES } from "@/lib/taxi-companies";
+import { isVendorPermission } from "@/lib/vendor-permissions";
 
 const dateString = z
   .string()
@@ -333,4 +334,5 @@ export const vendorTeamUserSchema = z.object({
   name: z.string().trim().min(2, "Enter the teammate's full name"),
   email: z.string().trim().email("Enter a valid email address").transform((value) => value.toLowerCase()),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  permissions: z.array(z.string()).transform((values) => values.filter(isVendorPermission)),
 });

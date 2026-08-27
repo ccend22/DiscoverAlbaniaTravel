@@ -179,9 +179,12 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
               >
                 <td className="px-4 py-3">
                   <Link
-                    href={`/booking/${booking.bookingReference}`}
+                    href={`/ticket/${booking.bookingReference}`}
+                    target="_blank"
+                    rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="font-mono text-xs text-teal hover:underline"
+                    title="Open and print QR ticket"
                   >
                     {booking.bookingReference}
                   </Link>

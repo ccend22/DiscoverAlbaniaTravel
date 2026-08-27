@@ -34,7 +34,9 @@ import {
   updateVendorDeparture,
   updateVendorOperator,
   updateVendorRouteStop,
+  updateVendorTeamUserPermissions,
 } from "@/db/queries/vendors";
+import { isVendorPermission } from "@/lib/vendor-permissions";
 import {
   clearVendorSession,
   requireVendorSession,
@@ -394,11 +396,22 @@ export async function createVendorTeamUserAction(formData: FormData) {
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    permissions: formData.getAll("permissions"),
   });
   if (!parsed.success) {
     redirect(`/vendor/users?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
   }
   const result = await createVendorTeamUser(vendorUserId, parsed.data);
+  if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
+  revalidatePath("/vendor/users");
+  redirect("/vendor/users?saved=1");
+}
+
+export async function updateVendorTeamUserPermissionsAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const targetUserId = Number(formData.get("targetUserId"));
+  const permissions = formData.getAll("permissions").map(String).filter(isVendorPermission);
+  const result = await updateVendorTeamUserPermissions(vendorUserId, targetUserId, permissions);
   if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/vendor/users");
   redirect("/vendor/users?saved=1");

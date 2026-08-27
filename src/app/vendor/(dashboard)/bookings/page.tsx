@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { getVendorContext, listVendorBookings } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { listVendorBookings } from "@/db/queries/vendors";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { VendorBookingsTable } from "@/components/vendor-bookings-table";
 import { LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -11,14 +10,11 @@ export default async function VendorBookingsPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
-  const [context, vendorBookings, params] = await Promise.all([
-    getVendorContext(vendorUserId),
+  const { vendorUserId } = await requireVendorPermission("bookings");
+  const [vendorBookings, params] = await Promise.all([
     listVendorBookings(vendorUserId),
     searchParams,
   ]);
-
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">

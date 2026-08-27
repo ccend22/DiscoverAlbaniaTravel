@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
-  getVendorContext,
   listVendorDepartures,
   listVendorRouteStopOptions,
 } from "@/db/queries/vendors";
-import { requireVendorSession } from "@/lib/vendor-session";
+import { requireVendorPermission } from "@/lib/vendor-access";
 import { Alert } from "@/components/ui/alert";
 import { VendorManualBookingForm } from "@/components/vendor-manual-booking-form";
 import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
@@ -17,15 +15,13 @@ export default async function NewManualBookingPage({
 }: {
   searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
-  const vendorUserId = await requireVendorSession();
-  const [context, departures, routeStopOptions, { error, mode }] = await Promise.all([
-    getVendorContext(vendorUserId),
+  const { vendorUserId } = await requireVendorPermission("bookings");
+  const [departures, routeStopOptions, { error, mode }] = await Promise.all([
     listVendorDepartures(vendorUserId),
     listVendorRouteStopOptions(vendorUserId),
     searchParams,
   ]);
 
-  if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
   const touchScreenMode = mode === "touch_screen";
 
   const today = getAlbaniaDateInputValue();
