@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CloseIcon } from "@/components/icons";
-import { formatCurrency, formatDateLong } from "@/lib/format";
+import { formatCurrency, formatDateLong, formatPaymentAmountInEur } from "@/lib/format";
 import { formatAlbaniaDateTime } from "@/lib/timezone";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
@@ -93,7 +93,7 @@ function PaymentDetailModal({ payment, kind, onClose }: { payment: PaymentRow; k
 
         <div className="mt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Payment</p>
-          <DetailRow label="Amount" value={formatCurrency(payment.amount, payment.currency === "ALL" ? "ALL" : "EUR")} />
+          <DetailRow label="Amount" value={formatPaymentAmountInEur(payment.amount, payment.currency)} />
           <DetailRow label="Gateway" value={payment.provider} />
           <DetailRow label="Gateway ref" value={payment.providerPaymentId ?? "Pending"} />
           <DetailRow label="Created" value={formatAlbaniaDateTime(payment.createdAt)} />
@@ -149,7 +149,7 @@ export function AdminPaymentsTable({ payments, kind }: { payments: PaymentRow[];
                     <p>{payment.provider}</p>
                     <p className="font-mono text-xs text-muted">{payment.providerPaymentId ?? "Pending"}</p>
                   </td>
-                  <td className="px-4 py-3 align-top font-medium">{formatCurrency(payment.amount, payment.currency === "ALL" ? "ALL" : "EUR")}</td>
+                  <td className="px-4 py-3 align-top font-medium">{formatPaymentAmountInEur(payment.amount, payment.currency)}</td>
                   <td className="px-4 py-3 align-top"><Badge tone={status.tone}>{status.label}</Badge></td>
                   <td className="px-4 py-3 align-top text-muted">{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(payment.createdAt)}</td>
                   <td className="px-4 py-3 align-top text-right" onClick={(e) => e.stopPropagation()}>

@@ -43,6 +43,20 @@ export function formatCurrency(price: string | number, currency: "EUR" | "ALL" =
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(price));
 }
 
+// Bus payments taken before the Aug 26 2026 switch to EUR checkout ("Switch
+// bus ticket pricing from Lek to EUR") were genuinely charged in ALL -- the
+// stored amount/currency is an accurate settlement record and stays
+// untouched. This is purely a reporting-currency conversion so the admin
+// payments list can read consistently in EUR, at the same rate that
+// migration used to derive EUR fares from their ALL equivalents.
+const LEGACY_ALL_TO_EUR_RATE = 100;
+
+/** Formats a payment amount for admin display, always in EUR -- converting a legacy ALL-denominated payment at the fixed historical rate rather than relabeling its digits. */
+export function formatPaymentAmountInEur(amount: string | number, currency: string): string {
+  const eurAmount = currency === "ALL" ? Number(amount) / LEGACY_ALL_TO_EUR_RATE : Number(amount);
+  return formatCurrency(eurAmount, "EUR");
+}
+
 // Built manually from the dictionary rather than via `Intl.DateTimeFormat(locale, ...)`:
 // some browsers ship without full ICU locale data for "sq" (Albanian), which would
 // silently fall back to English client-side and cause SSR/hydration text mismatches
