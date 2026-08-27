@@ -9,13 +9,14 @@ import { AlertCircleIcon, CameraIcon, CheckCircleIcon, QrCodeIcon } from "@/comp
 
 type CameraState = "idle" | "starting" | "active" | "error";
 
-const STATUS_COPY: Record<TicketValidationResult["status"], { title: string; body: string; tone: "success" | "warning" | "danger" }> = {
+const STATUS_COPY: Record<TicketValidationResult["status"], { title: string; body: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   valid: { title: "Ticket valid", body: "Passenger checked in successfully.", tone: "success" },
   already_used: { title: "Already validated", body: "This ticket has already been used.", tone: "warning" },
   too_early: { title: "Too early", body: "This ticket is valid closer to its scheduled boarding time.", tone: "warning" },
   expired: { title: "Ticket expired", body: "The travel date and validation window have passed.", tone: "danger" },
   cancelled: { title: "Booking cancelled", body: "Do not board this passenger with this ticket.", tone: "danger" },
   unpaid: { title: "Payment not confirmed", body: "Collect or confirm payment before validating this ticket.", tone: "warning" },
+  wrong_route: { title: "Wrong line", body: "This ticket is booked for a different line. Do not board it here.", tone: "neutral" },
   invalid_code: { title: "QR not recognized", body: "Use a Discover Albania Transport ticket QR or enter a valid booking reference.", tone: "danger" },
   not_found: { title: "Ticket not found", body: "This ticket does not belong to your operator or no longer exists.", tone: "danger" },
 };
@@ -28,7 +29,13 @@ function formatAlbaniaDateTime(value: string) {
   }).format(new Date(value));
 }
 
-export function TicketScanner() {
+export function TicketScanner({
+  expectedRouteId,
+  expectedRouteLabel,
+}: {
+  expectedRouteId?: number;
+  expectedRouteLabel?: string;
+} = {}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const scanLockedRef = useRef(false);
@@ -52,7 +59,7 @@ export function TicketScanner() {
     setResult(null);
     startTransition(async () => {
       try {
-        const nextResult = await validateTicketAction(value);
+        const nextResult = await validateTicketAction(value, expectedRouteId);
         setResult(nextResult);
         if (navigator.vibrate) navigator.vibrate(nextResult.status === "valid" ? 90 : [70, 60, 70]);
       } catch {
@@ -60,7 +67,7 @@ export function TicketScanner() {
         setCameraError("Validation could not reach the server. Check the connection and try again.");
       }
     });
-  }, [stopCamera]);
+  }, [stopCamera, expectedRouteId]);
 
   const startCamera = useCallback(async () => {
     if (!videoRef.current) return;
@@ -123,6 +130,11 @@ export function TicketScanner() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,.75fr)]">
       <section className="overflow-hidden rounded-2xl bg-brand-deep text-white shadow-[var(--shadow-lg)]">
+        {expectedRouteLabel && (
+          <div className="border-b border-white/10 bg-white/5 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-cyan">
+            Scanning for {expectedRouteLabel}
+          </div>
+        )}
         <div className="relative aspect-[4/3] min-h-72 bg-black">
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
           {cameraState !== "active" && (
@@ -175,7 +187,9 @@ export function TicketScanner() {
               ? "border-success/30 bg-success-soft text-success"
               : copy.tone === "warning"
                 ? "border-warning/30 bg-warning-soft text-warning"
-                : "border-red/30 bg-red-soft text-red"
+                : copy.tone === "neutral"
+                  ? "border-border bg-surface-sunken text-muted"
+                  : "border-red/30 bg-red-soft text-red"
           }`}>
             <ResultIcon width={38} height={38} />
             <h2 className="mt-4 font-display text-2xl font-bold text-current">{copy.title}</h2>
@@ -189,7 +203,7 @@ export function TicketScanner() {
                 </div>
                 <div>
                   <dt className="text-current/70">Route</dt>
-                  <dd className="font-semibold">{detail.fromStationName} → {detail.toStationName}</dd>
+                  <dd className="font-semibold">{detail.routeCode} · {detail.fromStationName} → {detail.toStationName}</dd>
                 </div>
                 <div>
                   <dt className="text-current/70">Boarding</dt>

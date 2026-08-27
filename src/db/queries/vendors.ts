@@ -230,6 +230,7 @@ export interface VendorManifestPassenger {
 
 export interface VendorManifest {
   tripDepartureId: number;
+  routeId: number;
   date: string;
   routeCode: string;
   routeLongName: string;
@@ -253,6 +254,7 @@ export async function getVendorManifest(vendorUserId: number, tripDepartureId: n
   const [departure] = await db
     .select({
       id: tripDepartures.id,
+      routeId: routes.id,
       routeCode: routes.code,
       routeLongName: routes.longName,
       departureTime: tripDepartures.departureTime,
@@ -284,6 +286,7 @@ export async function getVendorManifest(vendorUserId: number, tripDepartureId: n
 
   return {
     tripDepartureId: departure.id,
+    routeId: departure.routeId,
     date,
     routeCode: departure.routeCode,
     routeLongName: departure.routeLongName,
@@ -887,17 +890,23 @@ export interface TicketValidationDetails {
 }
 
 export type TicketValidationResult =
-  | ({ status: "valid" | "already_used" | "too_early" | "expired" | "cancelled" | "unpaid" } & TicketValidationDetails)
+  | ({ status: "valid" | "already_used" | "too_early" | "expired" | "cancelled" | "unpaid" | "wrong_route" } & TicketValidationDetails)
   | { status: "invalid_code" | "not_found" };
 
 /**
  * Validates and consumes one ticket for the signed-in vendor. A ticket is
- * accepted from two hours before its boarding time until two hours after the
- * scheduled arrival, which covers station boarding and onboard inspections.
+ * accepted any time during its travel date (Albania calendar day) rather
+ * than a narrow window around the scheduled time, since real departures
+ * routinely run early or late. When `expectedRouteId` is set (the scanner
+ * was opened from a specific route's manifest), a ticket for a different
+ * route is flagged "wrong_route" before any other check -- staff need to
+ * know "wrong bus" immediately, whether or not that other ticket happens
+ * to also be unpaid, expired, etc.
  */
 export async function validateTicketForVendor(
   vendorUserId: number,
   scannedValue: string,
+  expectedRouteId?: number,
   now = new Date()
 ): Promise<TicketValidationResult> {
   const context = await getVendorContext(vendorUserId);
@@ -921,6 +930,7 @@ export async function validateTicketForVendor(
       travelDate: bookings.travelDate,
       bookingStatus: bookings.status,
       checkedInAt: bookings.ticketCheckedInAt,
+      routeId: routes.id,
       routeCode: routes.code,
       fromStationName: fromStation.name,
       toStationName: toStation.name,
@@ -956,8 +966,6 @@ export async function validateTicketForVendor(
 
   const departureAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.departureTime);
   const boardingAt = new Date(departureAt.getTime() + Number(ticket.minutesFromDeparture) * 60_000);
-  let arrivalAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.arrivalTime);
-  if (arrivalAt <= departureAt) arrivalAt = new Date(arrivalAt.getTime() + 24 * 60 * 60_000);
 
   const details: TicketValidationDetails = {
     bookingReference: ticket.bookingReference,
@@ -972,12 +980,15 @@ export async function validateTicketForVendor(
     checkedInAt: ticket.checkedInAt?.toISOString() ?? null,
   };
 
+  if (expectedRouteId !== undefined && ticket.routeId !== expectedRouteId) {
+    return { status: "wrong_route", ...details };
+  }
   if (ticket.bookingStatus !== "confirmed") return { status: "cancelled", ...details };
   if (ticket.paymentStatus !== "paid") return { status: "unpaid", ...details };
   if (ticket.checkedInAt) return { status: "already_used", ...details };
 
-  const validFrom = boardingAt.getTime() - 2 * 60 * 60_000;
-  const validUntil = arrivalAt.getTime() + 2 * 60 * 60_000;
+  const validFrom = albaniaLocalDateTimeToDate(ticket.travelDate, "00:00").getTime();
+  const validUntil = albaniaLocalDateTimeToDate(ticket.travelDate, "23:59").getTime() + 60_000;
   if (now.getTime() < validFrom) return { status: "too_early", ...details };
   if (now.getTime() > validUntil) return { status: "expired", ...details };
 

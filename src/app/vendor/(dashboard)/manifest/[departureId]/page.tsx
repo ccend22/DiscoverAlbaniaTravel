@@ -46,7 +46,7 @@ export default async function VendorManifestPage({
           </p>
         </div>
         <div className="flex gap-2 print:hidden">
-          <LinkButton href="/vendor/scanner" variant="outline" size="sm">Scan tickets</LinkButton>
+          <LinkButton href={`/vendor/scanner?routeId=${manifest.routeId}`} variant="outline" size="sm">Scan tickets</LinkButton>
           <PrintButton />
         </div>
       </div>

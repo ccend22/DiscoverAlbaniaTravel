@@ -69,6 +69,14 @@ function EditBookingModal({
           {booking.trip.operatorName} · {booking.trip.routeCode} · {booking.trip.fromStationName} → {booking.trip.toStationName} · {formatDateLong(booking.travelDate)}
         </p>
 
+        <div className="mt-4 overflow-hidden rounded-xl border border-border">
+          <iframe
+            src={`/ticket/${booking.bookingReference}`}
+            title={`Ticket ${booking.bookingReference}`}
+            className="h-[420px] w-full"
+          />
+        </div>
+
         <form action={updateAction} className="mt-5 grid gap-3">
           <input type="hidden" name="bookingId" value={booking.bookingId} />
           <label className="flex flex-col gap-1 text-sm">
