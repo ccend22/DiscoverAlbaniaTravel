@@ -51,10 +51,15 @@ export function formatCurrency(price: string | number, currency: "EUR" | "ALL" =
 // migration used to derive EUR fares from their ALL equivalents.
 const LEGACY_ALL_TO_EUR_RATE = 100;
 
+/** Converts stored payment amounts into the finance reporting currency. */
+export function paymentAmountInEur(amount: string | number, currency: string): number {
+  const numericAmount = Number(amount);
+  return currency === "ALL" ? numericAmount / LEGACY_ALL_TO_EUR_RATE : numericAmount;
+}
+
 /** Formats a payment amount for admin display, always in EUR -- converting a legacy ALL-denominated payment at the fixed historical rate rather than relabeling its digits. */
 export function formatPaymentAmountInEur(amount: string | number, currency: string): string {
-  const eurAmount = currency === "ALL" ? Number(amount) / LEGACY_ALL_TO_EUR_RATE : Number(amount);
-  return formatCurrency(eurAmount, "EUR");
+  return formatCurrency(paymentAmountInEur(amount, currency), "EUR");
 }
 
 // Built manually from the dictionary rather than via `Intl.DateTimeFormat(locale, ...)`:

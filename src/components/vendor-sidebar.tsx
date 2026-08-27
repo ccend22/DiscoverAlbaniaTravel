@@ -17,7 +17,7 @@ const MAIN_LINKS: NavLink[] = [
   { href: "/vendor/calendar", label: "Calendar" },
   { href: "/vendor/bookings", label: "Bookings" },
   { href: "/vendor/scanner", label: "Scan tickets" },
-  { href: "/vendor/reports", label: "Reports" },
+  { href: "/vendor/finance", label: "Finance" },
 ];
 
 const SETTINGS_LINKS: NavLink[] = [

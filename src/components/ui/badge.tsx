@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-type Tone = "neutral" | "success" | "warning" | "danger" | "info";
+export type BadgeTone = "neutral" | "success" | "warning" | "danger" | "info";
 
-const tones: Record<Tone, string> = {
+const tones: Record<BadgeTone, string> = {
   neutral: "bg-surface-sunken text-muted ring-1 ring-inset ring-border/60",
   success: "bg-success-soft text-success ring-1 ring-inset ring-success/15",
   warning: "bg-warning-soft text-warning ring-1 ring-inset ring-warning/15",
@@ -11,7 +11,7 @@ const tones: Record<Tone, string> = {
 };
 
 interface BadgeProps {
-  tone?: Tone;
+  tone?: BadgeTone;
   children: ReactNode;
   className?: string;
 }

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
 import { bookings, operators, payments, routeStops, routes, stations, tripDepartures, tripInventories, vendorUsers } from "../schema";
@@ -354,6 +354,88 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
     .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
     .where(eq(routes.operatorId, context.operatorId))
     .orderBy(desc(bookings.travelDate), asc(tripDepartures.departureTime));
+}
+
+export interface VendorFinanceTransactionRow {
+  bookingId: number;
+  bookingReference: string;
+  bookingStatus: "confirmed" | "cancelled";
+  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  seats: number;
+  travelDate: string;
+  createdAt: Date;
+  routeCode: string;
+  fromStationName: string;
+  toStationName: string;
+  paymentAmount: string | null;
+  paymentCurrency: string | null;
+  paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
+  paymentProvider: string | null;
+  paymentEffectiveAt: Date | null;
+}
+
+/**
+ * Minimal finance ledger for one operator. Each booking is paired with only
+ * its latest payment attempt; older attempts must not inflate the operator's
+ * totals. Authorization is repeated here so this DTO can never expose another
+ * operator's money when called from a future surface.
+ */
+export async function listVendorFinanceTransactions(vendorUserId: number): Promise<VendorFinanceTransactionRow[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+
+  const fromStation = alias(stations, "vendor_finance_from_station");
+  const toStation = alias(stations, "vendor_finance_to_station");
+  const latestPayments = db
+    .select({
+      bookingId: payments.bookingId,
+      amount: payments.amount,
+      currency: payments.currency,
+      status: payments.status,
+      provider: payments.provider,
+      effectiveAt: sql<Date>`coalesce(${payments.updatedAt}, ${payments.createdAt})`.as("effective_at"),
+      rowNumber: sql<number>`row_number() over (partition by ${payments.bookingId} order by ${payments.createdAt} desc)`.as("row_number"),
+    })
+    .from(payments)
+    .where(isNotNull(payments.bookingId))
+    .as("vendor_finance_latest_payments");
+
+  const rows = await db
+    .select({
+      bookingId: bookings.id,
+      bookingReference: bookings.bookingReference,
+      bookingStatus: bookings.status,
+      channel: bookings.channel,
+      seats: bookings.seats,
+      travelDate: bookings.travelDate,
+      createdAt: bookings.createdAt,
+      routeCode: routes.code,
+      fromStationName: fromStation.name,
+      toStationName: toStation.name,
+      paymentAmount: latestPayments.amount,
+      paymentCurrency: latestPayments.currency,
+      paymentStatus: latestPayments.status,
+      paymentProvider: latestPayments.provider,
+      paymentEffectiveAt: latestPayments.effectiveAt,
+    })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
+    .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
+    .leftJoin(latestPayments, and(eq(latestPayments.bookingId, bookings.id), eq(latestPayments.rowNumber, 1)))
+    .where(eq(routes.operatorId, context.operatorId))
+    .orderBy(desc(bookings.createdAt));
+
+  // The raw `sql<Date>` coalesce above only asserts a TS type -- the neon-http
+  // driver actually hands back a plain timestamp string for it (unlike a
+  // plain typed column select, which drizzle converts for us), so it needs
+  // an explicit Date conversion here or every consumer would crash trying to
+  // format it as one.
+  return rows.map((row) => ({
+    ...row,
+    paymentEffectiveAt: row.paymentEffectiveAt ? new Date(row.paymentEffectiveAt) : null,
+  }));
 }
 
 export async function listVendorRoutes(vendorUserId: number) {
