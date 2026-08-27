@@ -355,6 +355,11 @@ export const taxiRideRequests = pgTable(
       { onDelete: "set null" }
     ),
     pickupLocation: text("pickup_location").notNull(),
+    // A precise meeting point within the broader pickup area above (e.g. "Terminal
+    // 2, arrivals exit") for the driver, distinct from pickupLocation which is
+    // what pricing/distance were calculated from. Optional -- most journeys are
+    // fine with just the general pickup area.
+    exactPickupPoint: text("exact_pickup_point"),
     destination: text("destination").notNull(),
     pickupAt: timestamp("pickup_at", { withTimezone: true }).notNull(),
     passengers: integer("passengers").notNull(),

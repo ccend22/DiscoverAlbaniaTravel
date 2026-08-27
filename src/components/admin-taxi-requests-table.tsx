@@ -63,6 +63,7 @@ function TaxiRequestDetailModal({ request, onClose }: { request: TaxiRequestRow;
         <div className="mt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Journey</p>
           <DetailRow label="Pickup" value={request.pickupLocation} />
+          {request.exactPickupPoint && <DetailRow label="Exact pickup point" value={request.exactPickupPoint} />}
           <DetailRow label="Destination" value={request.destination} />
           <DetailRow label="Pickup time" value={formatAlbaniaDateTime(request.pickupAt)} />
           <DetailRow label="Passengers" value={request.passengers} />

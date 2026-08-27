@@ -14,6 +14,7 @@ import type { TaxiReservationEmailDetail } from "@/lib/email";
 
 export async function createTaxiRideRequest(input: {
   pickupLocation: string;
+  exactPickupPoint: string | null;
   destination: string;
   pickupAt: Date;
   passengers: number;
@@ -37,6 +38,7 @@ export async function getTaxiRideRequestByReference(reference: string) {
     .select({
       requestReference: taxiRideRequests.requestReference,
       pickupLocation: taxiRideRequests.pickupLocation,
+      exactPickupPoint: taxiRideRequests.exactPickupPoint,
       destination: taxiRideRequests.destination,
       pickupAt: taxiRideRequests.pickupAt,
       passengers: taxiRideRequests.passengers,
@@ -81,6 +83,7 @@ export async function getTaxiRequestForUser(userId: number, reference: string) {
       id: taxiRideRequests.id,
       requestReference: taxiRideRequests.requestReference,
       pickupLocation: taxiRideRequests.pickupLocation,
+      exactPickupPoint: taxiRideRequests.exactPickupPoint,
       destination: taxiRideRequests.destination,
       pickupAt: taxiRideRequests.pickupAt,
       passengers: taxiRideRequests.passengers,
@@ -131,6 +134,7 @@ export async function getTaxiReservationEmailDetail(taxiRideRequestId: number): 
     .select({
       requestReference: taxiRideRequests.requestReference,
       pickupLocation: taxiRideRequests.pickupLocation,
+      exactPickupPoint: taxiRideRequests.exactPickupPoint,
       destination: taxiRideRequests.destination,
       pickupAt: taxiRideRequests.pickupAt,
       passengers: taxiRideRequests.passengers,

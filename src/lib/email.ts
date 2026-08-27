@@ -171,6 +171,7 @@ export async function sendBookingConfirmationEmail(detail: BookingEmailDetail): 
 export interface TaxiReservationEmailDetail {
   requestReference: string;
   pickupLocation: string;
+  exactPickupPoint: string | null;
   destination: string;
   pickupAt: Date;
   passengers: number;
@@ -202,6 +203,7 @@ export async function sendTaxiReservationNotification(
   const rows = [
     ["Journey", `${detail.pickupLocation} → ${detail.destination}`],
     ["Pickup", pickupAt],
+    ...(detail.exactPickupPoint ? [["Exact pickup point", detail.exactPickupPoint]] : []),
     ["Passengers", String(detail.passengers)],
     ["Phone", detail.passengerPhone],
     ["Passenger", detail.passengerName || "Guest"],

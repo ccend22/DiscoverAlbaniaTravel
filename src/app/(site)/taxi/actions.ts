@@ -24,6 +24,7 @@ export async function requestTaxiAction(
 ): Promise<TaxiRequestActionState> {
   const parsed = taxiRideRequestSchema.safeParse({
     pickupLocation: formData.get("pickupLocation"),
+    exactPickupPoint: formData.get("exactPickupPoint") || undefined,
     destination: formData.get("destination"),
     pickupLatitude: formData.get("pickupLatitude"),
     pickupLongitude: formData.get("pickupLongitude"),
@@ -76,6 +77,7 @@ export async function requestTaxiAction(
 
   const result = await createTaxiRideRequest({
     pickupLocation: parsed.data.pickupLocation,
+    exactPickupPoint: parsed.data.exactPickupPoint || null,
     destination: parsed.data.destination,
     pickupAt,
     passengers: parsed.data.passengers,

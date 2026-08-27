@@ -66,6 +66,9 @@ export default async function TaxiRequestConfirmation({ params }: { params: Prom
       <dl className="public-card mt-6 grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
         <div><dt className="text-xs uppercase text-muted">{tc.journey}</dt><dd className="mt-1 font-medium text-foreground">{request.pickupLocation} to {request.destination}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.pickup}</dt><dd className="mt-1 font-medium text-foreground">{formatAlbaniaDateTime(request.pickupAt, locale)}</dd></div>
+        {request.exactPickupPoint && (
+          <div><dt className="text-xs uppercase text-muted">{tc.exactPickupPoint}</dt><dd className="mt-1 font-medium text-foreground">{request.exactPickupPoint}</dd></div>
+        )}
         <div><dt className="text-xs uppercase text-muted">{tc.passengers}</dt><dd className="mt-1 font-medium text-foreground">{request.passengers}</dd></div>
         <div><dt className="text-xs uppercase text-muted">{tc.status}</dt><dd className="mt-1 font-medium text-foreground">{statusLabels[request.status] ?? request.status}</dd></div>
         {request.paymentAmount && request.paymentCurrency && (

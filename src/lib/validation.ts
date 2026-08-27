@@ -69,6 +69,7 @@ const taxiCoordinate = z
 
 export const taxiRideRequestSchema = z.object({
   pickupLocation: z.string().trim().min(3, "Enter a pickup location"),
+  exactPickupPoint: z.string().trim().max(200, "Keep the pickup point under 200 characters").optional(),
   destination: z.string().trim().min(3, "Enter a destination"),
   pickupLatitude: taxiCoordinate.pipe(z.number().min(-90).max(90)),
   pickupLongitude: taxiCoordinate.pipe(z.number().min(-180).max(180)),

@@ -79,7 +79,7 @@ interface TaxiQuickFormProps {
   } | null;
 }
 
-type ActivePicker = "pickup" | "destination" | null;
+type ActivePicker = "pickup" | "destination" | "exactPickup" | null;
 type LocationSource = "search" | "map" | "current" | "typed" | null;
 
 interface EligibilityModalProps {
@@ -333,6 +333,9 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
   const [locating, setLocating] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationFailure, setLocationFailure] = useState<GeolocationFailureReason | null>(null);
+  const [exactPickupPoint, setExactPickupPoint] = useState("");
+  const [exactPickupLocating, setExactPickupLocating] = useState(false);
+  const [exactPickupLocationFailure, setExactPickupLocationFailure] = useState<GeolocationFailureReason | null>(null);
   const [eligibilityModal, setEligibilityModal] = useState<"too-short" | "unverified" | null>(null);
   const [defaultPickupDateTime] = useState(getDefaultPickup);
   const [pickupDate, setPickupDate] = useState(defaultPickupDateTime.date);
@@ -389,6 +392,8 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
       setDestination(location.address);
       setDestinationCoordinates({ lat: location.lat, lng: location.lng });
       setDestinationSource("map");
+    } else if (activePicker === "exactPickup") {
+      setExactPickupPoint(location.address);
     }
     setActivePicker(null);
   }
@@ -412,6 +417,21 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
     setSwapRotation((rotation) => rotation + 180);
   }
 
+  async function resolveCurrentLocationAddress(latitude: number, longitude: number, fallback: string): Promise<string> {
+    if (!hasGoogleMapsApiKey) return fallback;
+    try {
+      ensureGoogleMapsOptions();
+      await importLibrary("geocoding");
+      return await new Promise<string>((resolve) => {
+        new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+          resolve(status === "OK" && results?.[0] ? results[0].formatted_address : fallback);
+        });
+      });
+    } catch {
+      return fallback;
+    }
+  }
+
   async function handleUseCurrentLocation() {
     setLocationFailure(null);
     setLocating(true);
@@ -423,21 +443,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
       setPickupLocation(coordinateLabel);
       setPickupSource("current");
       setLocationEnabled(true);
-
-      if (hasGoogleMapsApiKey) {
-        try {
-          ensureGoogleMapsOptions();
-          await importLibrary("geocoding");
-          const address = await new Promise<string>((resolve) => {
-            new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-              resolve(status === "OK" && results?.[0] ? results[0].formatted_address : coordinateLabel);
-            });
-          });
-          setPickupLocation(address);
-        } catch {
-          // Coordinates are already a valid, usable fallback.
-        }
-      }
+      setPickupLocation(await resolveCurrentLocationAddress(latitude, longitude, coordinateLabel));
     } catch (error) {
       setLocationEnabled(false);
       setLocationFailure(error instanceof GeolocationFailure ? error.reason : "unavailable");
@@ -446,10 +452,36 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
     }
   }
 
+  /** Same "use my location" experience as the main pickup field, but for the
+   * exact-pickup-point detail near the contact fields -- its own loading/error
+   * state so it never cross-wires with the route's pickup field above. */
+  async function handleUseCurrentLocationForExactPickup() {
+    setExactPickupLocationFailure(null);
+    setExactPickupLocating(true);
+    try {
+      const position = await getReliableCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      const coordinateLabel = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      setExactPickupPoint(coordinateLabel);
+      setExactPickupPoint(await resolveCurrentLocationAddress(latitude, longitude, coordinateLabel));
+    } catch (error) {
+      setExactPickupLocationFailure(error instanceof GeolocationFailure ? error.reason : "unavailable");
+    } finally {
+      setExactPickupLocating(false);
+    }
+  }
+
   const currentLocationError =
     locationFailure === "denied"
       ? tq.currentLocationDenied
       : locationFailure === "insecure"
+        ? tq.currentLocationInsecure
+        : tq.currentLocationError;
+
+  const exactPickupLocationError =
+    exactPickupLocationFailure === "denied"
+      ? tq.currentLocationDenied
+      : exactPickupLocationFailure === "insecure"
         ? tq.currentLocationInsecure
         : tq.currentLocationError;
 
@@ -815,6 +847,34 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
 
           {showContact && (
             <div className="animate-fade-up mt-2 rounded-[1.1rem] bg-white p-4">
+                <div className="mb-3">
+                  <label htmlFor="taxi-exact-pickup-point" className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{tq.exactPickupLabel}</label>
+                  <div className="relative mt-1.5 flex min-h-11 w-full items-center rounded-[1.1rem] border border-[#dce8e6] bg-white pr-1 transition-[border-color,box-shadow] hover:border-teal/40 focus-within:border-teal focus-within:shadow-[0_0_0_3px_rgba(0,128,128,0.12)]">
+                    <PlacesAutocompleteInput
+                      id="taxi-exact-pickup-point"
+                      name="exactPickupPoint"
+                      value={exactPickupPoint}
+                      onChange={setExactPickupPoint}
+                      placeholder={tq.exactPickupPlaceholder}
+                      countryRestriction="al"
+                      className="min-h-11 min-w-0 flex-1 border-0 bg-transparent px-3.5 text-sm font-semibold text-brand-navy outline-none placeholder:text-muted"
+                    />
+                    <LocationFieldTools
+                      label={tq.exactPickupOptionsAria}
+                      canClear={!!exactPickupPoint}
+                      currentLocationLabel={tq.useCurrentLocationAria}
+                      mapLabel={tq.mapPickerAria}
+                      clearLabel={tq.clearAria}
+                      locating={exactPickupLocating}
+                      allowCurrentLocation
+                      onCurrentLocation={handleUseCurrentLocationForExactPickup}
+                      onMap={() => setActivePicker("exactPickup")}
+                      onClear={() => setExactPickupPoint("")}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-[11px] leading-4 text-muted">{tq.exactPickupHelper}</p>
+                  {exactPickupLocationFailure && <p role="alert" className="mt-1.5 text-xs font-semibold text-coral">{exactPickupLocationError}</p>}
+                </div>
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
                   <div className="min-w-0">
                     <label htmlFor="taxi-passenger-phone" className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">{ui.phone}</label>
@@ -892,7 +952,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
 
       {activePicker && (
         <LocationPickerModal
-          title={activePicker === "pickup" ? lp.pickupTitle : lp.destinationTitle}
+          title={activePicker === "pickup" ? lp.pickupTitle : activePicker === "exactPickup" ? lp.exactPickupTitle : lp.destinationTitle}
           closeLabel={lp.close}
           searchPlaceholder={lp.searchPlaceholder}
           hintLabel={lp.hint}

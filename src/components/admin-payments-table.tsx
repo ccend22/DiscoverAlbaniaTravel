@@ -83,6 +83,7 @@ function PaymentDetailModal({ payment, kind, onClose }: { payment: PaymentRow; k
           <div className="mt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">Journey</p>
             {payment.taxiPickupLocation && <DetailRow label="Pickup" value={payment.taxiPickupLocation} />}
+            {payment.taxiExactPickupPoint && <DetailRow label="Exact pickup point" value={payment.taxiExactPickupPoint} />}
             {payment.taxiDestination && <DetailRow label="Destination" value={payment.taxiDestination} />}
             {payment.taxiPickupAt && <DetailRow label="Pickup time" value={formatAlbaniaDateTime(payment.taxiPickupAt)} />}
             {payment.taxiPassengers != null && <DetailRow label="Passengers" value={payment.taxiPassengers} />}

@@ -1,0 +1,1 @@
+ALTER TABLE "taxi_ride_requests" ADD COLUMN "exact_pickup_point" text;
