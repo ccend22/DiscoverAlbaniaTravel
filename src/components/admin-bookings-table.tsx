@@ -66,7 +66,7 @@ function EditBookingModal({
           </button>
         </div>
         <p className="mt-1 text-sm text-muted">
-          {booking.trip.routeCode} · {booking.trip.fromStationName} → {booking.trip.toStationName} · {formatDateLong(booking.travelDate)}
+          {booking.trip.operatorName} · {booking.trip.routeCode} · {booking.trip.fromStationName} → {booking.trip.toStationName} · {formatDateLong(booking.travelDate)}
         </p>
 
         <form action={updateAction} className="mt-5 grid gap-3">
@@ -148,11 +148,12 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
 
       <p className="mb-2 text-xs text-muted sm:hidden">Tap a row to edit or cancel it.</p>
       <div className="overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
-        <table className="w-full min-w-[980px] border-collapse text-sm">
+        <table className="w-full min-w-[1080px] border-collapse text-sm">
           <thead className="border-b border-border text-left text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Reference</th>
               <th className="px-4 py-3 font-medium">Route</th>
+              <th className="px-4 py-3 font-medium">Operator</th>
               <th className="px-4 py-3 font-medium">Passenger</th>
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 font-medium">Total</th>
@@ -188,6 +189,7 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
                 <td className="px-4 py-3 text-foreground">
                   {booking.trip.fromStationName} → {booking.trip.toStationName}
                 </td>
+                <td className="px-4 py-3 text-foreground">{booking.trip.operatorName}</td>
                 <td className="px-4 py-3 text-foreground">
                   <p>{booking.passengerName}</p>
                   <p className="text-xs text-muted">{booking.passengerPhone}</p>
@@ -243,7 +245,7 @@ export function AdminBookingsTable({ bookings, updateAction, cancelAction, markP
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={deleteAction ? 9 : 8} className="px-4 py-8 text-center text-muted">
+                <td colSpan={deleteAction ? 10 : 9} className="px-4 py-8 text-center text-muted">
                   No bookings match this filter.
                 </td>
               </tr>

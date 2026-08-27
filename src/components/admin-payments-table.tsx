@@ -73,6 +73,7 @@ function PaymentDetailModal({ payment, kind, onClose }: { payment: PaymentRow; k
         {kind === "bus" ? (
           <div className="mt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">Booking</p>
+            {payment.bookingOperatorName && <DetailRow label="Operator" value={payment.bookingOperatorName} />}
             {payment.bookingTravelDate && <DetailRow label="Travel date" value={formatDateLong(payment.bookingTravelDate)} />}
             {payment.bookingSeats != null && <DetailRow label="Seats" value={payment.bookingSeats} />}
             {payment.bookingPriceAtBooking != null && <DetailRow label="Price" value={formatCurrency(payment.bookingPriceAtBooking)} />}
@@ -110,11 +111,12 @@ export function AdminPaymentsTable({ payments, kind }: { payments: PaymentRow[];
     <div className="mt-6">
       <p className="mb-2 text-xs text-muted sm:hidden">Tap a row to see full payment details.</p>
       <div className="overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
-        <table className="w-full min-w-[980px] text-sm">
+        <table className="w-full min-w-[1080px] text-sm">
           <thead className="border-b border-border text-left text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Reference</th>
               <th className="px-4 py-3 font-medium">Passenger</th>
+              {kind === "bus" && <th className="px-4 py-3 font-medium">Operator</th>}
               <th className="px-4 py-3 font-medium">Gateway</th>
               <th className="px-4 py-3 font-medium">Amount</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -140,6 +142,9 @@ export function AdminPaymentsTable({ payments, kind }: { payments: PaymentRow[];
                     <p className="text-xs text-muted">{payment.passengerPhone}</p>
                     {payment.passengerEmail && <p className="text-xs text-muted">{payment.passengerEmail}</p>}
                   </td>
+                  {kind === "bus" && (
+                    <td className="px-4 py-3 align-top text-foreground">{payment.bookingOperatorName ?? "—"}</td>
+                  )}
                   <td className="px-4 py-3 align-top">
                     <p>{payment.provider}</p>
                     <p className="font-mono text-xs text-muted">{payment.providerPaymentId ?? "Pending"}</p>

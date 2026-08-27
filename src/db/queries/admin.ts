@@ -282,6 +282,7 @@ export async function listPaymentsForAdmin(limit = 100, kind?: "bus" | "taxi") {
       bookingSeats: bookings.seats,
       bookingPriceAtBooking: bookings.priceAtBooking,
       bookingChannel: bookings.channel,
+      bookingOperatorName: operators.name,
       taxiPickupLocation: taxiRideRequests.pickupLocation,
       taxiDestination: taxiRideRequests.destination,
       taxiPickupAt: taxiRideRequests.pickupAt,
@@ -292,6 +293,9 @@ export async function listPaymentsForAdmin(limit = 100, kind?: "bus" | "taxi") {
     })
     .from(payments)
     .leftJoin(bookings, eq(payments.bookingId, bookings.id))
+    .leftJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .leftJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .leftJoin(operators, eq(routes.operatorId, operators.id))
     .leftJoin(taxiRideRequests, eq(payments.taxiRideRequestId, taxiRideRequests.id))
     .where(kindFilter)
     .orderBy(desc(payments.createdAt))
