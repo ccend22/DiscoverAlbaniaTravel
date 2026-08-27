@@ -42,6 +42,7 @@ export function HeroBookingWidget({
 }: HeroBookingWidgetProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [panelHeight, setPanelHeight] = useState<number | "auto">("auto");
   const { registerRef, style: indicatorStyle } = useSlidingIndicator(mode);
 
@@ -68,6 +69,23 @@ export function HeroBookingWidget({
     if (!nextHeight) return;
     const frame = requestAnimationFrame(() => setPanelHeight(nextHeight));
     return () => cancelAnimationFrame(frame);
+  }, [mode]);
+
+  // The effect above only re-measures on a bus/taxi mode switch. Content can
+  // also grow well after that with no mode change to hang it off of -- the
+  // taxi form revealing contact fields, then swelling into its ~900px
+  // payment iframe at checkout. Without this, a height left locked to an
+  // earlier, shorter measurement combined with the overflow-hidden below
+  // would permanently clip that later content instead of just animating
+  // past it, hiding form fields the visitor can't get back.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(() => {
+      setPanelHeight(content.scrollHeight);
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
   }, [mode]);
 
   return (
@@ -144,7 +162,7 @@ export function HeroBookingWidget({
           }}
           className={`transition-[height] duration-500 ease-[var(--ease-out-expo)] ${panelHeight === "auto" ? "overflow-visible" : "overflow-hidden"}`}
         >
-          <div key={mode} className="animate-fade-up">
+          <div key={mode} ref={contentRef} className="animate-fade-up">
             {mode === "bus" ? (
               <SearchWidget
                 bare

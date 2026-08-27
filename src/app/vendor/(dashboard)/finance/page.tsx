@@ -5,6 +5,7 @@ import { AlertCircleIcon, InfoIcon } from "@/components/icons";
 import { getVendorContext, listVendorFinanceTransactions } from "@/db/queries/vendors";
 import { requireVendorSession } from "@/lib/vendor-session";
 import { formatCurrency, formatDateShort } from "@/lib/format";
+import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
 import {
   buildVendorFinanceView,
   resolveVendorFinancePeriod,
@@ -145,7 +146,7 @@ function VendorFinanceDashboard({
               {formatCurrency(summary.operatorEarningsEur)}
             </p>
             <p className="mt-3 max-w-lg text-sm leading-6 text-white/70">
-              Money collected from paid, confirmed tickets after the €2 platform service fee. Fuel, salaries, taxes, and other operating costs are not tracked yet.
+              Money collected from paid, confirmed tickets after the {formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)} platform service fee. Fuel, salaries, taxes, and other operating costs are not tracked yet.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/15 pt-5 text-sm">
@@ -163,7 +164,7 @@ function VendorFinanceDashboard({
           <div className="border-t border-white/15 p-5 sm:border-l sm:border-t-0 sm:p-6 lg:border-l-0 lg:border-t">
             <dt className="text-sm text-white/65">Platform fees</dt>
             <dd className="mt-1 text-2xl font-bold tabular-nums">−{formatCurrency(summary.platformFeesEur)}</dd>
-            <p className="mt-1 text-xs text-white/55">€2 per paid booking</p>
+            <p className="mt-1 text-xs text-white/55">{formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)} per paid booking</p>
           </div>
           <div className="border-t border-white/15 p-5 sm:border-l sm:border-t-0 sm:p-6 lg:border-l-0 lg:border-t">
             <dt className="text-sm text-white/65">Awaiting payment</dt>

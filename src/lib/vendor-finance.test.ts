@@ -36,8 +36,8 @@ test("finance recognizes only paid confirmed bookings as operator earnings", () 
   );
 
   assert.equal(view.summary.grossCollectedEur, 32);
-  assert.equal(view.summary.platformFeesEur, 2);
-  assert.equal(view.summary.operatorEarningsEur, 30);
+  assert.equal(view.summary.platformFeesEur, 1);
+  assert.equal(view.summary.operatorEarningsEur, 31);
   assert.equal(view.summary.pendingAmountEur, 22);
   assert.equal(view.summary.reviewCount, 1);
   assert.equal(view.summary.paidBookings, 1);
@@ -52,7 +52,7 @@ test("finance converts legacy ALL payments to EUR before subtracting the fee", (
   );
 
   assert.equal(view.summary.grossCollectedEur, 22);
-  assert.equal(view.summary.operatorEarningsEur, 20);
+  assert.equal(view.summary.operatorEarningsEur, 21);
 });
 
 test("custom periods filter by the payment effective date", () => {

@@ -28,7 +28,7 @@ import { ensureGoogleMapsOptions, hasGoogleMapsApiKey } from "@/lib/google-maps-
 import { formatMessage, type Dictionary } from "@/lib/dictionary";
 import { calculateDistanceKm, MIN_INTERCITY_TAXI_DISTANCE_KM, MIN_TAXI_LEAD_TIME_HOURS, type Coordinates } from "@/lib/taxi-service";
 import { estimateTaxiPriceEur, TAXI_PRICE_PER_KM_EUR } from "@/lib/taxi-pricing";
-import { TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR } from "@/lib/service-fees";
+import { calculateTaxiServiceFeeEur, TAXI_BOOKING_SERVICE_FEE_RATE_PER_PASSENGER } from "@/lib/service-fees";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { GeolocationFailure, getReliableCurrentPosition, type GeolocationFailureReason } from "@/lib/mobile-geolocation";
@@ -491,7 +491,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
         ? `${Math.round(distanceKm ?? 0)} km · ${formatMessage(tq.minimumBadge, { min: MIN_INTERCITY_TAXI_DISTANCE_KM })}`
         : tq.priceWaitingHint;
   const fareAmount = taxiPriceEstimate?.priceEur ?? null;
-  const taxiServiceFee = TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR * passengers;
+  const taxiServiceFee = fareAmount !== null ? calculateTaxiServiceFeeEur(fareAmount, passengers) : 0;
   const taxiEstimateTotal = fareAmount !== null ? fareAmount + taxiServiceFee : null;
   const ui = locale === "al"
     ? {
@@ -802,7 +802,7 @@ export function TaxiQuickForm({ dict, locale, user, error, variant = "solid", ba
 
           {fareAmount !== null && routeIsEligible && (
             <div className="flex items-start gap-1.5 border-t border-[#eef4f2] px-4 py-2.5 text-xs text-muted">
-              <span>{formatMessage(dict.common.taxiPriceIncludesFee, { fee: TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR })}</span>
+              <span>{formatMessage(dict.common.taxiPriceIncludesFee, { rate: TAXI_BOOKING_SERVICE_FEE_RATE_PER_PASSENGER * 100 })}</span>
               <InfoTooltip label={dict.common.serviceFee}>{dict.common.taxiServiceFeeInfo}</InfoTooltip>
             </div>
           )}

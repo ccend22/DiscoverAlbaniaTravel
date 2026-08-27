@@ -11,7 +11,7 @@ import { albaniaLocalDateTimeToDate } from "@/lib/timezone";
 import { findDirectTaxiRoute } from "@/lib/taxi-fares";
 import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { getSiteOrigin } from "@/lib/google-oauth";
-import { TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR } from "@/lib/service-fees";
+import { calculateTaxiServiceFeeEur } from "@/lib/service-fees";
 
 export type TaxiRequestActionState =
   | { status: "idle" }
@@ -61,7 +61,9 @@ export async function requestTaxiAction(
   // displayed estimate is informational; the client never controls the
   // amount or currency sent to POK.
   const estimate = estimateTaxiPriceEur(distanceKm);
-  const amount = estimate ? estimate.priceEur + TAXI_BOOKING_SERVICE_FEE_PER_PASSENGER_EUR * parsed.data.passengers : null;
+  const amount = estimate
+    ? estimate.priceEur + calculateTaxiServiceFeeEur(estimate.priceEur, parsed.data.passengers)
+    : null;
   const currency = estimate ? "EUR" : null;
 
   if (amount === null || currency === null) {
