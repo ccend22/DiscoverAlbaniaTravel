@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CloseIcon, SearchIcon } from "@/components/icons";
 import { formatDateLong, formatPrice } from "@/lib/format";
+import { getAlbaniaDateInputValue } from "@/lib/timezone";
 import { BOOKING_CHANNEL_OPTIONS } from "@/lib/manual-booking";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
@@ -114,6 +115,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [editingBooking, setEditingBooking] = useState<VendorBookingRow | null>(null);
+  const todayAlbania = getAlbaniaDateInputValue();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -184,7 +186,9 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
             </tr>
           </thead>
           <tbody>
-            {filtered.map((booking) => (
+            {filtered.map((booking) => {
+              const isExpired = booking.status === "confirmed" && !booking.checkedInAt && booking.travelDate < todayAlbania;
+              return (
               <tr
                 key={booking.bookingReference}
                 onDoubleClick={() => setEditingBooking(booking)}
@@ -243,15 +247,22 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                   )}
                 </td>
                 <td className="px-4 py-3 align-top">
-                  {booking.checkedInAt ? <Badge tone="success">Boarded</Badge> : <Badge tone="neutral">Not scanned</Badge>}
+                  {booking.checkedInAt ? (
+                    <Badge tone="success">Boarded</Badge>
+                  ) : isExpired ? (
+                    <Badge tone="warning">Expired</Badge>
+                  ) : (
+                    <Badge tone="neutral">Not scanned</Badge>
+                  )}
                 </td>
                 <td className="px-4 py-3 align-top">
-                  <Badge tone={booking.status === "confirmed" ? "success" : "danger"}>
-                    {booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
+                  <Badge tone={isExpired ? "warning" : booking.status === "confirmed" ? "success" : "danger"}>
+                    {isExpired ? "Expired" : booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
                   </Badge>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-4 py-8 text-center text-muted">

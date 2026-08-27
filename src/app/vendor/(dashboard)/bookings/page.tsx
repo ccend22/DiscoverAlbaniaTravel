@@ -25,6 +25,7 @@ export default async function VendorBookingsPage({
       <div className="flex animate-fade-up items-center justify-between gap-4">
         <h1 className="font-display text-2xl font-bold text-foreground">Bookings</h1>
         <div className="flex flex-wrap justify-end gap-2">
+          <LinkButton href="/vendor/scanner" variant="outline" size="sm">Scan tickets</LinkButton>
           <LinkButton href="/vendor/bookings/new?mode=touch_screen" variant="outline" size="sm">Touch-screen booking</LinkButton>
           <LinkButton href="/vendor/bookings/new" size="sm">New manual booking</LinkButton>
         </div>
