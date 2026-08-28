@@ -21,7 +21,9 @@ import {
 } from "../schema";
 import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
-import { cancelBookingForAdmin, getLatestPaymentStatus } from "./bookings";
+import { cancelBookingForAdmin, getBookingWhatsAppDetail, getLatestPaymentStatus } from "./bookings";
+import { sendNewTicketWhatsAppNotification } from "@/lib/whatsapp";
+import { formatDateLong, formatTime } from "@/lib/format";
 import { recordAdminDelete } from "./audit-log";
 import { isForeignKeyViolation, isUniqueViolation } from "./db-errors";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
@@ -828,12 +830,25 @@ export async function markBookingPaidForAdmin(bookingId: number): Promise<AdminM
     return { ok: false, error: "Online bookings are paid automatically -- this can't be marked paid manually." };
   }
   const [latestPayment] = await db
-    .select({ id: payments.id })
+    .select({ id: payments.id, amount: payments.amount })
     .from(payments)
     .where(eq(payments.bookingId, bookingId))
     .orderBy(desc(payments.createdAt))
     .limit(1);
   if (!latestPayment) return { ok: false, error: "This booking has no payment record to update." };
   await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, latestPayment.id));
+
+  const waDetail = await getBookingWhatsAppDetail(bookingId);
+  if (waDetail) {
+    sendNewTicketWhatsAppNotification({
+      passengerName: waDetail.passengerName,
+      passengerPhone: waDetail.passengerPhone,
+      routeLabel: `${waDetail.trip.routeCode} · ${waDetail.trip.fromStationName} → ${waDetail.trip.toStationName}`,
+      departureAt: `${formatDateLong(waDetail.travelDate)} ${formatTime(waDetail.trip.departureTime)}`,
+      price: `€${Number(latestPayment.amount).toFixed(2)}`,
+      paid: true,
+    }).catch((error) => console.error("[whatsapp] new_ticket notification failed", { bookingId, error }));
+  }
+
   return { ok: true };
 }

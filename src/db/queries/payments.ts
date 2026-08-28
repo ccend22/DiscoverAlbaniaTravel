@@ -2,9 +2,11 @@ import { and, eq, inArray, isNull, lt } from "drizzle-orm";
 import { db } from "../index";
 import { bookings, payments, taxiRideRequests } from "../schema";
 import { getSdkOrder, type PokSdkOrder } from "@/lib/pok-payments";
-import { cancelBookingForUnpaidPayment, getBookingEmailDetail } from "./bookings";
+import { cancelBookingForUnpaidPayment, getBookingEmailDetail, getBookingWhatsAppDetail } from "./bookings";
 import { cancelTaxiRequestForUnpaidPayment, getTaxiReservationEmailDetail } from "./taxi";
 import { sendBookingConfirmationEmail, sendTaxiReservationNotification } from "@/lib/email";
+import { sendNewTicketWhatsAppNotification } from "@/lib/whatsapp";
+import { formatDateLong, formatTime } from "@/lib/format";
 
 /** Exactly one of bookingId/taxiRideRequestId must be set -- matches the `payments_single_target` check constraint. */
 export interface CreatePendingPaymentInput {
@@ -85,7 +87,7 @@ async function markPaymentPaidAndNotify(
     .update(payments)
     .set({ status: "paid", updatedAt: new Date() })
     .where(and(eq(payments.id, paymentId), inArray(payments.status, ["pending", "authorized"])))
-    .returning({ id: payments.id });
+    .returning({ id: payments.id, amount: payments.amount });
   if (!updated) return false;
 
   // Best-effort: a broken SMTP config or a transient send failure must
@@ -106,6 +108,18 @@ async function markPaymentPaidAndNotify(
       }
       const detail = await getBookingEmailDetail(target.bookingId);
       if (detail) await sendBookingConfirmationEmail(detail);
+
+      const waDetail = await getBookingWhatsAppDetail(target.bookingId);
+      if (waDetail) {
+        await sendNewTicketWhatsAppNotification({
+          passengerName: waDetail.passengerName,
+          passengerPhone: waDetail.passengerPhone,
+          routeLabel: `${waDetail.trip.routeCode} · ${waDetail.trip.fromStationName} → ${waDetail.trip.toStationName}`,
+          departureAt: `${formatDateLong(waDetail.travelDate)} ${formatTime(waDetail.trip.departureTime)}`,
+          price: `€${Number(updated.amount).toFixed(2)}`,
+          paid: true,
+        }).catch((error) => console.error("[whatsapp] new_ticket notification failed", { paymentId, bookingId: target.bookingId, error }));
+      }
     } else if (target.taxiRideRequestId) {
       const [taxiRequest] = await db
         .select({ status: taxiRideRequests.status })

@@ -31,7 +31,16 @@ function generateManageToken(): string {
 }
 
 export type CreateBookingResult =
-  | { ok: true; reference: string; bookingId: number; priceAtBooking: string }
+  | {
+      ok: true;
+      reference: string;
+      bookingId: number;
+      priceAtBooking: string;
+      routeCode: string;
+      fromStationName: string;
+      toStationName: string;
+      departureTime: string;
+    }
   | { ok: false; error: "invalid_date" | "trip_not_found" | "sold_out" | "price_unavailable" };
 
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
@@ -118,7 +127,16 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   const row = result.rows[0];
   return row
-    ? { ok: true, reference, bookingId: row.id, priceAtBooking: input.priceOverride ?? trip.basePrice }
+    ? {
+        ok: true,
+        reference,
+        bookingId: row.id,
+        priceAtBooking: input.priceOverride ?? trip.basePrice,
+        routeCode: trip.routeCode,
+        fromStationName: trip.fromStationName,
+        toStationName: trip.toStationName,
+        departureTime: trip.departureTime,
+      }
     : { ok: false, error: "sold_out" };
 }
 
@@ -318,6 +336,31 @@ export interface BookingEmailDetail {
   manageToken: string | null;
   locale: string;
   trip: TripDepartureDetail;
+}
+
+export interface BookingWhatsAppDetail {
+  bookingReference: string;
+  passengerName: string;
+  passengerPhone: string;
+  travelDate: string;
+  trip: TripDepartureDetail;
+}
+
+/** For the "new_ticket" WhatsApp alert, fired once a booking's payment settles as paid -- separate from getBookingEmailDetail since it needs the phone (always present) rather than the email (often absent on manual bookings). */
+export async function getBookingWhatsAppDetail(bookingId: number): Promise<BookingWhatsAppDetail | null> {
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  if (!booking) return null;
+
+  const trip = await getTripDepartureById(booking.tripDepartureId);
+  if (!trip) return null;
+
+  return {
+    bookingReference: booking.bookingReference,
+    passengerName: booking.passengerName,
+    passengerPhone: booking.passengerPhone,
+    travelDate: booking.travelDate,
+    trip,
+  };
 }
 
 /**

@@ -5,11 +5,13 @@ import { bookings, operators, payments, routeStops, routes, stations, ticketScan
 import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
 import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
-import { cancelBookingForVendor, createBooking } from "./bookings";
+import { cancelBookingForVendor, createBooking, getBookingWhatsAppDetail } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
 import { recordAdminDelete } from "./audit-log";
 import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
 import { parseTicketQrPayload } from "@/lib/ticket-code";
+import { sendNewTicketWhatsAppNotification } from "@/lib/whatsapp";
+import { formatDateLong, formatTime } from "@/lib/format";
 
 /**
  * Operators created by the original data import (and by admin's "new
@@ -927,6 +929,20 @@ export async function createManualBookingForVendor(
     status: input.paid ? "paid" : "pending",
   });
 
+  // Only fires here when payment is confirmed at creation time (the
+  // "Payment received" checkbox) -- an unpaid manual booking gets its alert
+  // later, from markVendorBookingPaid, at the moment it's actually marked paid.
+  if (input.paid) {
+    sendNewTicketWhatsAppNotification({
+      passengerName: input.passengerName,
+      passengerPhone: input.passengerPhone,
+      routeLabel: `${result.routeCode} · ${result.fromStationName} → ${result.toStationName}`,
+      departureAt: `${formatDateLong(input.travelDate)} ${formatTime(result.departureTime)}`,
+      price: `€${Number(input.amountOverride ?? defaultAmount).toFixed(2)}`,
+      paid: true,
+    }).catch((error) => console.error("[whatsapp] new_ticket notification failed", { reference: result.reference, error }));
+  }
+
   return { ok: true, reference: result.reference };
 }
 
@@ -1251,13 +1267,26 @@ export async function markVendorBookingPaid(vendorUserId: number, bookingId: num
     return { ok: false, error: "Online bookings are paid automatically -- this can't be marked paid manually." };
   }
   const [latestPayment] = await db
-    .select({ id: payments.id })
+    .select({ id: payments.id, amount: payments.amount })
     .from(payments)
     .where(eq(payments.bookingId, bookingId))
     .orderBy(desc(payments.createdAt))
     .limit(1);
   if (!latestPayment) return { ok: false, error: "This booking has no payment record to update." };
   await db.update(payments).set({ status: "paid", updatedAt: new Date() }).where(eq(payments.id, latestPayment.id));
+
+  const waDetail = await getBookingWhatsAppDetail(bookingId);
+  if (waDetail) {
+    sendNewTicketWhatsAppNotification({
+      passengerName: waDetail.passengerName,
+      passengerPhone: waDetail.passengerPhone,
+      routeLabel: `${waDetail.trip.routeCode} · ${waDetail.trip.fromStationName} → ${waDetail.trip.toStationName}`,
+      departureAt: `${formatDateLong(waDetail.travelDate)} ${formatTime(waDetail.trip.departureTime)}`,
+      price: `€${Number(latestPayment.amount).toFixed(2)}`,
+      paid: true,
+    }).catch((error) => console.error("[whatsapp] new_ticket notification failed", { bookingId, error }));
+  }
+
   return { ok: true };
 }
 
