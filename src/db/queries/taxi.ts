@@ -9,7 +9,7 @@ import {
   taxiVehicles,
 } from "../schema";
 import { generateBookingReference } from "@/lib/reference-code";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 import type { TaxiReservationEmailDetail } from "@/lib/email";
 
 export async function createTaxiRideRequest(input: {
@@ -224,7 +224,8 @@ export async function authenticateTaxiProvider(email: string, password: string):
     .innerJoin(taxiProviders, eq(taxiProviderUsers.taxiProviderId, taxiProviders.id))
     .where(eq(taxiProviderUsers.email, email))
     .limit(1);
-  if (!row || !verifyPassword(password, row.passwordHash)) return { ok: false, error: "invalid_credentials" };
+  const passwordValid = verifyPasswordAgainstAccount(password, row?.passwordHash);
+  if (!row || !passwordValid) return { ok: false, error: "invalid_credentials" };
   if (row.status === "pending") return { ok: false, error: "pending_approval" };
   if (row.status === "rejected") return { ok: false, error: "rejected" };
   return { ok: true, id: row.id };

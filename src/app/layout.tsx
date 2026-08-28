@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Merriweather } from "next/font/google";
+import { jsonLdScript } from "@/lib/json-ld";
 import "./globals.css";
 
 const inter = Inter({
@@ -100,8 +101,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 -->`,
           }}
         />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteJsonLd) }} />
         {children}
       </body>
     </html>

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../index";
 import { users } from "../schema";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 
 export type CreateUserResult = { ok: true; userId: number } | { ok: false; error: "email_taken" };
 
@@ -42,7 +42,8 @@ export async function authenticateUser(
     .where(eq(users.email, email.toLowerCase()))
     .limit(1);
 
-  if (!user || user.status !== "active" || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+  const passwordValid = verifyPasswordAgainstAccount(password, user?.passwordHash);
+  if (!user || user.status !== "active" || !user.passwordHash || !passwordValid) {
     return null;
   }
   return { id: user.id };

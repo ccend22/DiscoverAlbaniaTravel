@@ -118,9 +118,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <span className="block">Discover</span>
               <span className="block">Albania Transport</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-sm font-medium leading-6 text-white/80 sm:text-base sm:leading-7">
-              {dict.home.searchSubtitle}
-            </p>
           </ScrollReveal>
           <ScrollReveal className="relative z-30 mt-10 w-full max-w-7xl [animation-delay:220ms]">
             <HeroBookingWidget

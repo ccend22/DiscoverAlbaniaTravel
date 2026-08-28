@@ -19,7 +19,7 @@ import {
   users,
   vendorUsers,
 } from "../schema";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 import { getTripDepartureById, type TripDepartureDetail } from "./trips";
 import { cancelBookingForAdmin, getLatestPaymentStatus } from "./bookings";
 import { recordAdminDelete } from "./audit-log";
@@ -38,7 +38,8 @@ export async function authenticateAdmin(
     .where(eq(adminUsers.email, email.toLowerCase()))
     .limit(1);
 
-  if (!admin || !verifyPassword(password, admin.passwordHash)) return null;
+  const passwordValid = verifyPasswordAgainstAccount(password, admin?.passwordHash);
+  if (!admin || !passwordValid) return null;
   return { id: admin.id };
 }
 
@@ -100,7 +101,7 @@ export async function listTaxiProvidersForAdmin() {
       createdAt: taxiProviders.createdAt,
       contactName: taxiProviderUsers.name,
       loginEmail: taxiProviderUsers.email,
-      vehicleCount: sql<number>`(select count(*) from ${taxiVehicles} where ${taxiVehicles.taxiProviderId} = ${taxiProviders.id})`,
+      vehicleCount: sql<number>`(select count(*) from ${taxiVehicles} where ${taxiVehicles.taxiProviderId} = taxi_providers.id)`,
     })
     .from(taxiProviders)
     .leftJoin(taxiProviderUsers, eq(taxiProviderUsers.taxiProviderId, taxiProviders.id))
@@ -231,8 +232,8 @@ export async function listUsersForAdmin() {
       phone: users.phone,
       status: users.status,
       createdAt: users.createdAt,
-      bookingCount: sql<number>`(select count(*) from ${bookings} where ${bookings.userId} = ${users.id})`,
-      taxiRequestCount: sql<number>`(select count(*) from ${taxiRideRequests} where ${taxiRideRequests.userId} = ${users.id})`,
+      bookingCount: sql<number>`(select count(*) from ${bookings} where ${bookings.userId} = users.id)`,
+      taxiRequestCount: sql<number>`(select count(*) from ${taxiRideRequests} where ${taxiRideRequests.userId} = users.id)`,
     })
     .from(users)
     .orderBy(desc(users.createdAt));

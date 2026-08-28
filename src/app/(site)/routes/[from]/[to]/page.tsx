@@ -8,6 +8,7 @@ import { getLocaleAndDictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/dictionary";
 import { slugify } from "@/lib/slug";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import { jsonLdScript } from "@/lib/json-ld";
 import { getDestinationImage } from "@/lib/destination-images";
 import type { Metadata } from "next";
 
@@ -104,7 +105,7 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
 
   return (
     <div className="public-page">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd) }} />
 
       <section className="relative isolate -mt-20 overflow-hidden pt-20 md:-mt-24 md:pt-24">
         <Image

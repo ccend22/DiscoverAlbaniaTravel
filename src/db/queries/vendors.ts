@@ -3,7 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
 import { bookings, operators, payments, routeStops, routes, stations, ticketScans, tripDepartures, tripInventories, vendorUsers } from "../schema";
 import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPasswordAgainstAccount } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
 import { cancelBookingForVendor, createBooking } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
@@ -40,7 +40,8 @@ export async function authenticateVendor(
     .where(eq(vendorUsers.email, email.toLowerCase()))
     .limit(1);
 
-  if (!vendor || !verifyPassword(password, vendor.passwordHash)) {
+  const passwordValid = verifyPasswordAgainstAccount(password, vendor?.passwordHash);
+  if (!vendor || !passwordValid) {
     return { ok: false, error: "invalid_credentials" };
   }
   if (vendor.status === "pending") return { ok: false, error: "pending_approval" };

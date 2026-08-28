@@ -21,3 +21,15 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   const actual = pbkdf2Sync(password, salt, iterations, expected.length, DIGEST);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+
+// A fixed, well-formed hash with no real password behind it. Login lookups
+// that short-circuit on "no such account" and skip verifyPassword entirely
+// respond measurably faster than a "wrong password" attempt (~210k PBKDF2
+// iterations vs a single indexed lookup) -- an attacker can use that timing
+// gap to enumerate which emails have accounts. Verifying against this dummy
+// hash whenever the real one is missing keeps both paths the same cost.
+const DUMMY_HASH = hashPassword(randomBytes(32).toString("hex"));
+
+export function verifyPasswordAgainstAccount(password: string, storedHash: string | null | undefined): boolean {
+  return verifyPassword(password, storedHash ?? DUMMY_HASH);
+}
