@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { TicketScanner } from "@/components/ticket-scanner";
 import { requireVendorPermission } from "@/lib/vendor-access";
 import { getVendorRoute } from "@/db/queries/vendors";
@@ -16,10 +15,7 @@ export default async function VendorTicketScannerPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="font-display text-3xl font-bold tracking-[-0.025em] text-foreground">Scan tickets</h1>
-        <Link href="/vendor/scanner/log" className="text-sm text-teal hover:underline">Scan activity →</Link>
-      </div>
+      <h1 className="font-display text-3xl font-bold tracking-[-0.025em] text-foreground">Scan tickets</h1>
       {route ? (
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Scanning for <span className="font-semibold text-foreground">{route.code} · {route.longName}</span>. A ticket booked for a different line will be flagged so it isn&apos;t boarded here by mistake.

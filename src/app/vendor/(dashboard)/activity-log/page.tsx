@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { listVendorScanLog } from "@/db/queries/vendors";
 import { requireVendorPermission } from "@/lib/vendor-access";
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +17,13 @@ const RESULT_LABELS: Record<string, { label: string; tone: "success" | "warning"
   not_found: { label: "Not found", tone: "danger" },
 };
 
-export default async function VendorScanLogPage() {
+export default async function VendorActivityLogPage() {
   const { vendorUserId } = await requireVendorPermission("scanner");
   const scans = await listVendorScanLog(vendorUserId);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/vendor/scanner" className="text-sm text-teal hover:underline">← Back to scanner</Link>
-      <h1 className="mt-4 font-display text-2xl font-bold text-foreground">Scan activity</h1>
+      <h1 className="font-display text-2xl font-bold text-foreground">Activity Logs</h1>
       <p className="mt-1 text-sm text-muted">Every ticket scan by your team, most recent first -- who scanned it, when, and the outcome.</p>
 
       <div className="mt-6 overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">

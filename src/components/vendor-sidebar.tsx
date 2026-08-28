@@ -30,6 +30,7 @@ const SETTINGS_LINKS: NavLink[] = [
   { href: "/vendor/routes", label: "Routes & stops", permission: "routes" },
   { href: "/vendor/departures", label: "Departures", permission: "departures" },
   { href: "/vendor/users", label: "Users", ownerOnly: true },
+  { href: "/vendor/activity-log", label: "Activity Logs", permission: "scanner" },
 ];
 
 function visibleLinks(links: NavLink[], vendor: { isOwner: boolean; permissions: string[] }): NavLink[] {
