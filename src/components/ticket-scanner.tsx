@@ -11,14 +11,16 @@ type CameraState = "idle" | "starting" | "active" | "error";
 
 const STATUS_COPY: Record<TicketValidationResult["status"], { title: string; body: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   valid: { title: "Ticket valid", body: "Passenger checked in successfully.", tone: "success" },
+  valid_off_hours: { title: "Ticket valid — outside scheduled time", body: "Passenger checked in, but this scan is well outside the scheduled boarding time. Worth a second look.", tone: "warning" },
   already_used: { title: "Already validated", body: "This ticket has already been used.", tone: "warning" },
-  too_early: { title: "Too early", body: "This ticket is valid closer to its scheduled boarding time.", tone: "warning" },
-  expired: { title: "Ticket expired", body: "The travel date and validation window have passed.", tone: "danger" },
+  too_early: { title: "Too early", body: "This ticket becomes valid on its travel date.", tone: "warning" },
+  expired: { title: "Ticket expired", body: "The travel date has passed.", tone: "danger" },
   cancelled: { title: "Booking cancelled", body: "Do not board this passenger with this ticket.", tone: "danger" },
   unpaid: { title: "Payment not confirmed", body: "Collect or confirm payment before validating this ticket.", tone: "warning" },
   wrong_route: { title: "Wrong line", body: "This ticket is booked for a different line. Do not board it here.", tone: "neutral" },
+  wrong_operator: { title: "Different line", body: "This ticket belongs to a different operator's line. Do not board it here.", tone: "neutral" },
   invalid_code: { title: "QR not recognized", body: "Use a Discover Albania Transport ticket QR or enter a valid booking reference.", tone: "danger" },
-  not_found: { title: "Ticket not found", body: "This ticket does not belong to your operator or no longer exists.", tone: "danger" },
+  not_found: { title: "Ticket not found", body: "This code doesn't match any ticket.", tone: "danger" },
 };
 
 function formatAlbaniaDateTime(value: string) {
@@ -194,6 +196,15 @@ export function TicketScanner({
             <ResultIcon width={38} height={38} />
             <h2 className="mt-4 font-display text-2xl font-bold text-current">{copy.title}</h2>
             <p className="mt-1 text-sm text-current/85">{copy.body}</p>
+
+            {result.status === "wrong_operator" && (
+              <dl className="mt-5 grid gap-3 border-t border-current/20 pt-5 text-sm">
+                <div>
+                  <dt className="text-current/70">Actual line</dt>
+                  <dd className="font-semibold">{result.operatorName} · {result.routeCode}</dd>
+                </div>
+              </dl>
+            )}
 
             {detail && (
               <dl className="mt-5 grid gap-3 border-t border-current/20 pt-5 text-sm">

@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
-import { bookings, operators, payments, routeStops, routes, stations, tripDepartures, tripInventories, vendorUsers } from "../schema";
+import { bookings, operators, payments, routeStops, routes, stations, ticketScans, tripDepartures, tripInventories, vendorUsers } from "../schema";
 import { albaniaLocalDateTimeToDate, getAlbaniaDateInputValue } from "@/lib/timezone";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { isUniqueViolation, violatedConstraint } from "./db-errors";
@@ -890,18 +890,44 @@ export interface TicketValidationDetails {
 }
 
 export type TicketValidationResult =
-  | ({ status: "valid" | "already_used" | "too_early" | "expired" | "cancelled" | "unpaid" | "wrong_route" } & TicketValidationDetails)
+  | ({ status: "valid" | "valid_off_hours" | "already_used" | "too_early" | "expired" | "cancelled" | "unpaid" | "wrong_route" } & TicketValidationDetails)
+  // A ticket that belongs to a different operator entirely -- deliberately a
+  // minimal shape (no passenger name/phone/etc) since the scanning
+  // operator's staff has no business seeing another company's customer.
+  | { status: "wrong_operator"; routeCode: string; operatorName: string }
   | { status: "invalid_code" | "not_found" };
 
+async function recordTicketScan(input: {
+  vendorUserId: number;
+  operatorId: number;
+  bookingId: number | null;
+  expectedRouteId: number | null;
+  scannedValue: string;
+  result: TicketValidationResult["status"];
+}): Promise<void> {
+  await db.insert(ticketScans).values({
+    vendorUserId: input.vendorUserId,
+    operatorId: input.operatorId,
+    bookingId: input.bookingId,
+    expectedRouteId: input.expectedRouteId,
+    scannedValue: input.scannedValue,
+    result: input.result,
+  });
+}
+
 /**
- * Validates and consumes one ticket for the signed-in vendor. A ticket is
- * accepted any time during its travel date (Albania calendar day) rather
- * than a narrow window around the scheduled time, since real departures
- * routinely run early or late. When `expectedRouteId` is set (the scanner
- * was opened from a specific route's manifest), a ticket for a different
- * route is flagged "wrong_route" before any other check -- staff need to
- * know "wrong bus" immediately, whether or not that other ticket happens
- * to also be unpaid, expired, etc.
+ * Validates and consumes one ticket for the signed-in vendor. Expiry is
+ * governed purely by the travel date (Albania calendar day) -- a scan
+ * outside the scheduled boarding/arrival hour but still on the right date
+ * still checks the passenger in ("valid_off_hours"), it's just flagged so
+ * staff can double check, since real departures routinely run early or
+ * late. When `expectedRouteId` is set (the scanner was opened from a
+ * specific route's manifest), a ticket for a different route on the SAME
+ * operator is flagged "wrong_route" before any other check. A ticket that
+ * doesn't belong to this operator at all is flagged "wrong_operator"
+ * instead of a plain "not found", so staff know it's a different company's
+ * line rather than a bad/garbage code. Every attempt (including invalid
+ * codes and mismatches) is logged to ticket_scans for the audit trail.
  */
 export async function validateTicketForVendor(
   vendorUserId: number,
@@ -912,14 +938,27 @@ export async function validateTicketForVendor(
   const context = await getVendorContext(vendorUserId);
   if (!context || context.vendorStatus !== "approved") return { status: "not_found" };
 
+  const log = (result: TicketValidationResult, bookingId: number | null = null) =>
+    recordTicketScan({
+      vendorUserId,
+      operatorId: context.operatorId,
+      bookingId,
+      expectedRouteId: expectedRouteId ?? null,
+      scannedValue,
+      result: result.status,
+    }).then(() => result);
+
   const ticketToken = parseTicketQrPayload(scannedValue);
   const bookingReference = scannedValue.trim().toUpperCase();
   const referenceIsValid = /^DA-[A-Z0-9]{4,32}$/.test(bookingReference);
-  if (!ticketToken && !referenceIsValid) return { status: "invalid_code" };
+  if (!ticketToken && !referenceIsValid) return log({ status: "invalid_code" });
 
   const fromStation = alias(stations, "ticket_validation_from_station");
   const toStation = alias(stations, "ticket_validation_to_station");
   const boardingStation = alias(stations, "ticket_validation_boarding_station");
+  const matchesScannedTicket = ticketToken
+    ? eq(bookings.ticketToken, ticketToken)
+    : eq(bookings.bookingReference, bookingReference);
 
   const [ticket] = await db
     .select({
@@ -952,20 +991,29 @@ export async function validateTicketForVendor(
     .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
     .leftJoin(routeStops, eq(bookings.routeStopId, routeStops.id))
     .leftJoin(boardingStation, eq(routeStops.stationId, boardingStation.id))
-    .where(
-      and(
-        eq(routes.operatorId, context.operatorId),
-        ticketToken
-          ? eq(bookings.ticketToken, ticketToken)
-          : eq(bookings.bookingReference, bookingReference)
-      )
-    )
+    .where(and(eq(routes.operatorId, context.operatorId), matchesScannedTicket))
     .limit(1);
 
-  if (!ticket) return { status: "not_found" };
+  if (!ticket) {
+    const [otherOperatorTicket] = await db
+      .select({ routeCode: routes.code, operatorName: operators.name })
+      .from(bookings)
+      .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+      .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+      .innerJoin(operators, eq(routes.operatorId, operators.id))
+      .where(matchesScannedTicket)
+      .limit(1);
+    return log(
+      otherOperatorTicket
+        ? { status: "wrong_operator", routeCode: otherOperatorTicket.routeCode, operatorName: otherOperatorTicket.operatorName }
+        : { status: "not_found" }
+    );
+  }
 
   const departureAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.departureTime);
   const boardingAt = new Date(departureAt.getTime() + Number(ticket.minutesFromDeparture) * 60_000);
+  let arrivalAt = albaniaLocalDateTimeToDate(ticket.travelDate, ticket.arrivalTime);
+  if (arrivalAt <= departureAt) arrivalAt = new Date(arrivalAt.getTime() + 24 * 60 * 60_000);
 
   const details: TicketValidationDetails = {
     bookingReference: ticket.bookingReference,
@@ -981,16 +1029,20 @@ export async function validateTicketForVendor(
   };
 
   if (expectedRouteId !== undefined && ticket.routeId !== expectedRouteId) {
-    return { status: "wrong_route", ...details };
+    return log({ status: "wrong_route", ...details }, ticket.bookingId);
   }
-  if (ticket.bookingStatus !== "confirmed") return { status: "cancelled", ...details };
-  if (ticket.paymentStatus !== "paid") return { status: "unpaid", ...details };
-  if (ticket.checkedInAt) return { status: "already_used", ...details };
+  if (ticket.bookingStatus !== "confirmed") return log({ status: "cancelled", ...details }, ticket.bookingId);
+  if (ticket.paymentStatus !== "paid") return log({ status: "unpaid", ...details }, ticket.bookingId);
+  if (ticket.checkedInAt) return log({ status: "already_used", ...details }, ticket.bookingId);
 
   const validFrom = albaniaLocalDateTimeToDate(ticket.travelDate, "00:00").getTime();
   const validUntil = albaniaLocalDateTimeToDate(ticket.travelDate, "23:59").getTime() + 60_000;
-  if (now.getTime() < validFrom) return { status: "too_early", ...details };
-  if (now.getTime() > validUntil) return { status: "expired", ...details };
+  if (now.getTime() < validFrom) return log({ status: "too_early", ...details }, ticket.bookingId);
+  if (now.getTime() > validUntil) return log({ status: "expired", ...details }, ticket.bookingId);
+
+  const onScheduleFrom = boardingAt.getTime() - 2 * 60 * 60_000;
+  const onScheduleUntil = arrivalAt.getTime() + 2 * 60 * 60_000;
+  const offHours = now.getTime() < onScheduleFrom || now.getTime() > onScheduleUntil;
 
   const [checkedIn] = await db
     .update(bookings)
@@ -1004,14 +1056,54 @@ export async function validateTicketForVendor(
       .from(bookings)
       .where(eq(bookings.id, ticket.bookingId))
       .limit(1);
-    return {
-      status: "already_used",
-      ...details,
-      checkedInAt: alreadyUsed?.checkedInAt?.toISOString() ?? details.checkedInAt,
-    };
+    return log(
+      {
+        status: "already_used",
+        ...details,
+        checkedInAt: alreadyUsed?.checkedInAt?.toISOString() ?? details.checkedInAt,
+      },
+      ticket.bookingId
+    );
   }
 
-  return { status: "valid", ...details, checkedInAt: checkedIn.checkedInAt.toISOString() };
+  return log(
+    { status: offHours ? "valid_off_hours" : "valid", ...details, checkedInAt: checkedIn.checkedInAt.toISOString() },
+    ticket.bookingId
+  );
+}
+
+export interface VendorScanLogRow {
+  id: number;
+  scannedAt: Date;
+  vendorUserName: string;
+  result: string;
+  bookingReference: string | null;
+  routeCode: string | null;
+}
+
+/** Recent ticket-scan activity for this operator, newest first -- who scanned what, when, and with what outcome. */
+export async function listVendorScanLog(vendorUserId: number, limit = 100): Promise<VendorScanLogRow[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+
+  const scannerUser = alias(vendorUsers, "scan_log_vendor_user");
+  return db
+    .select({
+      id: ticketScans.id,
+      scannedAt: ticketScans.scannedAt,
+      vendorUserName: scannerUser.name,
+      result: ticketScans.result,
+      bookingReference: bookings.bookingReference,
+      routeCode: routes.code,
+    })
+    .from(ticketScans)
+    .innerJoin(scannerUser, eq(ticketScans.vendorUserId, scannerUser.id))
+    .leftJoin(bookings, eq(ticketScans.bookingId, bookings.id))
+    .leftJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .leftJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(eq(ticketScans.operatorId, context.operatorId))
+    .orderBy(desc(ticketScans.scannedAt))
+    .limit(limit);
 }
 
 async function verifyVendorOwnsBooking(vendorUserId: number, bookingId: number): Promise<boolean> {

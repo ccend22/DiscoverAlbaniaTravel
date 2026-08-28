@@ -43,6 +43,7 @@ const SECTIONS: NavSection[] = [
       { href: "/admin/bus-payments", label: "Bus payments" },
       { href: "/admin/taxi-requests", label: "Taxi bookings" },
       { href: "/admin/taxi-payments", label: "Taxi payments" },
+      { href: "/admin/scan-log", label: "Scan log" },
       { href: "/admin/reports", label: "Reports" },
     ],
   },

@@ -469,6 +469,35 @@ export const operatorReports = pgTable("operator_reports", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// One row per ticket-scanner attempt (not just successful check-ins) --
+// staff accountability ("who scanned what, when") and a trail to catch
+// repeated wrong-line/wrong-operator scans, not just a check-in record.
+export const ticketScans = pgTable(
+  "ticket_scans",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    vendorUserId: integer("vendor_user_id")
+      .notNull()
+      .references(() => vendorUsers.id, { onDelete: "cascade" }),
+    operatorId: integer("operator_id")
+      .notNull()
+      .references(() => operators.id, { onDelete: "cascade" }),
+    // Null whenever the scan didn't resolve to one of this operator's own
+    // bookings (invalid code, not found, or a different operator's ticket).
+    bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    // The route the scanner was opened for (e.g. from a manifest's "Scan
+    // tickets" link) -- null for the generic scanner with no line context.
+    expectedRouteId: integer("expected_route_id").references(() => routes.id, { onDelete: "set null" }),
+    scannedValue: text("scanned_value").notNull(),
+    result: text("result").notNull(),
+    scannedAt: timestamp("scanned_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("ticket_scans_operator_idx").on(table.operatorId, table.scannedAt),
+    index("ticket_scans_booking_idx").on(table.bookingId),
+  ]
+);
+
 export const operatorsRelations = relations(operators, ({ many }) => ({
   routes: many(routes),
   reports: many(operatorReports),

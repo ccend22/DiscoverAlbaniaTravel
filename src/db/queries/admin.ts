@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
 import {
   adminUsers,
@@ -12,6 +13,7 @@ import {
   taxiProviders,
   taxiRideRequests,
   taxiVehicles,
+  ticketScans,
   tripDepartures,
   tripInventories,
   users,
@@ -758,6 +760,39 @@ export async function getBookingTicketForAdmin(bookingId: number): Promise<Admin
     isPaid: booking.bookingStatus === "confirmed" && paymentStatus === "paid",
     checkedInAt: booking.checkedInAt?.toISOString() ?? null,
   };
+}
+
+export interface AdminScanLogRow {
+  id: number;
+  scannedAt: Date;
+  operatorName: string;
+  vendorUserName: string;
+  result: string;
+  bookingReference: string | null;
+  routeCode: string | null;
+}
+
+/** Platform-wide ticket-scan activity, newest first -- which operator's staff scanned what, when, and with what outcome. */
+export async function listScanLogForAdmin(limit = 200): Promise<AdminScanLogRow[]> {
+  const scannerUser = alias(vendorUsers, "admin_scan_log_vendor_user");
+  return db
+    .select({
+      id: ticketScans.id,
+      scannedAt: ticketScans.scannedAt,
+      operatorName: operators.name,
+      vendorUserName: scannerUser.name,
+      result: ticketScans.result,
+      bookingReference: bookings.bookingReference,
+      routeCode: routes.code,
+    })
+    .from(ticketScans)
+    .innerJoin(scannerUser, eq(ticketScans.vendorUserId, scannerUser.id))
+    .innerJoin(operators, eq(ticketScans.operatorId, operators.id))
+    .leftJoin(bookings, eq(ticketScans.bookingId, bookings.id))
+    .leftJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .leftJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .orderBy(desc(ticketScans.scannedAt))
+    .limit(limit);
 }
 
 export async function updateBookingDetailsForAdmin(
