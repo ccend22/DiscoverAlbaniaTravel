@@ -3,16 +3,23 @@ import Link from "next/link";
 import {
   getVendorContext,
   getVendorDailyOverview,
-  getVendorMonthOverview,
+  listVendorBookings,
   listVendorRoutes,
 } from "@/db/queries/vendors";
 import { requireVendorSession } from "@/lib/vendor-session";
 import { vendorHasPermission } from "@/lib/vendor-permissions";
 import { BusIcon, MapPinIcon, PlusIcon, QrCodeIcon, TicketIcon, UsersIcon } from "@/components/icons";
 import { LinkButton } from "@/components/ui/button";
-import { OverviewMonthCalendar } from "@/components/overview-month-calendar";
+import { DateNavInput } from "@/components/date-nav-input";
+import { VendorBookingsTable } from "@/components/vendor-bookings-table";
 import { formatDateLong } from "@/lib/format";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
+import {
+  cancelVendorBookingAction,
+  getVendorBookingTicketAction,
+  markVendorBookingPaidAction,
+  updateVendorBookingAction,
+} from "../actions";
 
 // Complete literal classes per accent — Tailwind can't resolve `bg-${color}`
 // template interpolation, so each full string must appear as-is in source.
@@ -26,20 +33,18 @@ const STAT_ACCENTS = {
 export default async function VendorOverviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; month?: string }>;
+  searchParams: Promise<{ date?: string }>;
 }) {
   const vendorUserId = await requireVendorSession();
   const today = getAlbaniaDateInputValue();
-  const { date: dateParam, month: monthParam } = await searchParams;
+  const { date: dateParam } = await searchParams;
   const date = dateParam || today;
-  const month = monthParam || date.slice(0, 7);
-  const [year, monthNum] = month.split("-").map(Number);
 
-  const [context, vendorRoutes, daily, monthDays] = await Promise.all([
+  const [context, vendorRoutes, daily, dateBookings] = await Promise.all([
     getVendorContext(vendorUserId),
     listVendorRoutes(vendorUserId),
     getVendorDailyOverview(vendorUserId, date),
-    getVendorMonthOverview(vendorUserId, year, monthNum),
+    listVendorBookings(vendorUserId, date),
   ]);
 
   if (!context || context.vendorStatus !== "approved") redirect("/vendor/login");
@@ -98,33 +103,51 @@ export default async function VendorOverviewPage({
       </div>
 
       <section className="pt-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <OverviewMonthCalendar selectedDate={date} month={month} today={today} days={monthDays} />
+        <div className="flex flex-wrap items-center gap-3">
+          <DateNavInput date={date} />
+          {date !== today && (
+            <Link href="/vendor" className="text-sm font-medium text-teal hover:underline">
+              Today
+            </Link>
+          )}
+          <p className="text-sm text-muted">Showing {formatDateLong(date)}</p>
+        </div>
 
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted">Showing {formatDateLong(date)}</p>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              {statItems.map(({ label, value, sublabel, icon: Icon, tone }) => {
-                const accent = STAT_ACCENTS[tone];
-                return (
-                  <div
-                    key={label}
-                    className={`card-lift relative overflow-hidden rounded-lg border border-border/70 bg-surface px-5 py-5 shadow-[var(--shadow-sm)] ${accent.glow}`}
-                  >
-                    <span className={`absolute inset-x-0 top-0 h-1 ${accent.bar}`} aria-hidden="true" />
-                    <span className={`flex h-10 w-10 items-center justify-center rounded-full ${accent.badge}`}>
-                      <Icon width={18} height={18} />
-                    </span>
-                    <p className="mt-3 font-display text-2xl font-bold text-brand-strong">{value}</p>
-                    <p className="mt-1 text-sm text-muted">{label}</p>
-                    {sublabel && <p className="mt-0.5 text-xs text-muted/80">{sublabel}</p>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statItems.map(({ label, value, sublabel, icon: Icon, tone }) => {
+            const accent = STAT_ACCENTS[tone];
+            return (
+              <div
+                key={label}
+                className={`card-lift relative overflow-hidden rounded-lg border border-border/70 bg-surface px-5 py-5 shadow-[var(--shadow-sm)] ${accent.glow}`}
+              >
+                <span className={`absolute inset-x-0 top-0 h-1 ${accent.bar}`} aria-hidden="true" />
+                <span className={`flex h-10 w-10 items-center justify-center rounded-full ${accent.badge}`}>
+                  <Icon width={18} height={18} />
+                </span>
+                <p className="mt-3 font-display text-2xl font-bold text-brand-strong">{value}</p>
+                <p className="mt-1 text-sm text-muted">{label}</p>
+                {sublabel && <p className="mt-0.5 text-xs text-muted/80">{sublabel}</p>}
+              </div>
+            );
+          })}
         </div>
       </section>
+
+      {vendorHasPermission(context, "bookings") && (
+        <section className="border-t border-border py-8">
+          <h2 className="text-lg font-semibold text-foreground">Bookings on {formatDateLong(date)}</h2>
+          <div className="mt-4">
+            <VendorBookingsTable
+              bookings={dateBookings}
+              updateAction={updateVendorBookingAction}
+              cancelAction={cancelVendorBookingAction}
+              markPaidAction={markVendorBookingPaidAction}
+              loadTicket={getVendorBookingTicketAction}
+            />
+          </div>
+        </section>
+      )}
 
       {(vendorHasPermission(context, "routes") || vendorHasPermission(context, "departures")) && (
         <section className="border-t border-border py-8">

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
 import { bookings, operators, payments, routeStops, routes, stations, ticketScans, tripDepartures, tripInventories, vendorUsers } from "../schema";
@@ -267,64 +267,6 @@ export async function getVendorDailyOverview(vendorUserId: number, date: string)
   };
 }
 
-export interface VendorMonthDaySummary {
-  date: string;
-  departuresRunning: number;
-  bookingsCount: number;
-  seatsBooked: number;
-}
-
-/** One row per calendar day in the given month -- powers the Overview page's month-grid picker, so each cell can show a quick per-day badge without a round trip per click. */
-export async function getVendorMonthOverview(vendorUserId: number, year: number, month: number): Promise<VendorMonthDaySummary[]> {
-  const context = await getVendorContext(vendorUserId);
-  if (!context || context.vendorStatus !== "approved") return [];
-
-  const departures = await db
-    .select({ plannedSeats: tripDepartures.plannedSeats, weekdays: tripDepartures.weekdays })
-    .from(tripDepartures)
-    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
-    .where(eq(routes.operatorId, context.operatorId));
-
-  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const dateList = Array.from({ length: daysInMonth }, (_, i) => {
-    const day = i + 1;
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  });
-
-  const bookingRows = await db
-    .select({
-      travelDate: bookings.travelDate,
-      bookingsCount: sql<number>`count(*)`,
-      seatsBooked: sql<number>`coalesce(sum(${bookings.seats}), 0)`,
-    })
-    .from(bookings)
-    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
-    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
-    .where(
-      and(
-        eq(routes.operatorId, context.operatorId),
-        eq(bookings.status, "confirmed"),
-        gte(bookings.travelDate, dateList[0]),
-        lte(bookings.travelDate, dateList[dateList.length - 1])
-      )
-    )
-    .groupBy(bookings.travelDate);
-
-  const bookingsByDate = new Map(bookingRows.map((row) => [row.travelDate, row]));
-
-  return dateList.map((date) => {
-    const isoDow = ((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
-    const departuresRunning = departures.filter((d) => d.weekdays.includes(isoDow)).length;
-    const row = bookingsByDate.get(date);
-    return {
-      date,
-      departuresRunning,
-      bookingsCount: Number(row?.bookingsCount ?? 0),
-      seatsBooked: Number(row?.seatsBooked ?? 0),
-    };
-  });
-}
-
 export interface VendorManifestPassenger {
   bookingReference: string;
   passengerName: string;
@@ -427,7 +369,7 @@ export interface VendorBookingRow {
   departureTime: string;
 }
 
-export async function listVendorBookings(vendorUserId: number): Promise<VendorBookingRow[]> {
+export async function listVendorBookings(vendorUserId: number, travelDate?: string): Promise<VendorBookingRow[]> {
   const context = await getVendorContext(vendorUserId);
   if (!context || context.vendorStatus !== "approved") return [];
 
@@ -464,7 +406,11 @@ export async function listVendorBookings(vendorUserId: number): Promise<VendorBo
     .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
     .innerJoin(fromStation, eq(tripDepartures.fromStationId, fromStation.id))
     .innerJoin(toStation, eq(tripDepartures.toStationId, toStation.id))
-    .where(eq(routes.operatorId, context.operatorId))
+    .where(
+      travelDate
+        ? and(eq(routes.operatorId, context.operatorId), eq(bookings.travelDate, travelDate))
+        : eq(routes.operatorId, context.operatorId)
+    )
     .orderBy(desc(bookings.travelDate), asc(tripDepartures.departureTime));
 }
 
