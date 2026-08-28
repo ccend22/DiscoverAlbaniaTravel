@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "./ui/button";
-import { BOOKING_CHANNEL_OPTIONS } from "@/lib/manual-booking";
+import { ToggleChip } from "./toggle-chip";
 
 interface DepartureOption {
   id: number;
@@ -57,6 +57,11 @@ export function VendorManualBookingForm({
     [departures, departureId]
   );
 
+  // Below a handful of lines, tapping a chip beats hunting through a dropdown --
+  // past that, a select scales better than a wall of buttons.
+  const routeCount = useMemo(() => new Set(departures.map((d) => d.routeId)).size, [departures]);
+  const useDepartureChips = routeCount > 0 && routeCount < 5;
+
   const stopsForRoute = useMemo(
     () => (selectedDeparture ? routeStopOptions.filter((s) => s.routeId === selectedDeparture.routeId) : []),
     [routeStopOptions, selectedDeparture]
@@ -81,23 +86,40 @@ export function VendorManualBookingForm({
 
   return (
     <form action={action} className="mt-6 grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2">
-      <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+      <div className="flex flex-col gap-1 text-sm sm:col-span-2">
         <span className="font-medium">Departure</span>
-        <select
-          name="tripDepartureId"
-          required
-          value={departureId}
-          onChange={(e) => handleDepartureChange(e.target.value)}
-          className={FIELD_CLASS}
-        >
-          <option value="">Choose departure</option>
-          {departures.map((departure) => (
-            <option key={departure.id} value={departure.id}>
-              {departure.routeCode} · {departure.fromStationName} · {departure.departureTime}
-            </option>
-          ))}
-        </select>
-      </label>
+        {useDepartureChips ? (
+          <div className="mt-1 flex flex-wrap gap-2">
+            {departures.map((departure) => (
+              <ToggleChip
+                key={departure.id}
+                type="radio"
+                name="tripDepartureId"
+                value={String(departure.id)}
+                required
+                checked={departureId === String(departure.id)}
+                onChange={() => handleDepartureChange(String(departure.id))}
+                label={`${departure.routeCode} · ${departure.fromStationName} · ${departure.departureTime}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <select
+            name="tripDepartureId"
+            required
+            value={departureId}
+            onChange={(e) => handleDepartureChange(e.target.value)}
+            className={FIELD_CLASS}
+          >
+            <option value="">Choose departure</option>
+            {departures.map((departure) => (
+              <option key={departure.id} value={departure.id}>
+                {departure.routeCode} · {departure.fromStationName} · {departure.departureTime}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Travel date</span>
@@ -143,18 +165,7 @@ export function VendorManualBookingForm({
         </label>
       )}
 
-      {touchScreenMode ? (
-        <input type="hidden" name="channel" value="touch_screen" />
-      ) : (
-        <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span className="font-medium">Channel</span>
-          <select name="channel" defaultValue={initialChannel} className={FIELD_CLASS}>
-            {BOOKING_CHANNEL_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
-      )}
+      <input type="hidden" name="channel" value={touchScreenMode ? "touch_screen" : initialChannel} />
 
       <label className="flex flex-col gap-1 text-sm sm:col-span-2">
         <span className="font-medium">Passenger name</span>
