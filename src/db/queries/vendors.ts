@@ -218,6 +218,55 @@ export async function getVendorDepartureCalendar(vendorUserId: number, days = 14
   }));
 }
 
+export interface VendorDailyOverview {
+  date: string;
+  departuresRunning: number;
+  bookingsCount: number;
+  seatsBooked: number;
+  checkedIn: number;
+  totalCapacity: number;
+  occupancyPercent: number;
+}
+
+/** Single-day snapshot for the overview page's date picker -- what's scheduled, booked, and boarded on that one date. */
+export async function getVendorDailyOverview(vendorUserId: number, date: string): Promise<VendorDailyOverview | null> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return null;
+
+  const departures = await db
+    .select({ plannedSeats: tripDepartures.plannedSeats, weekdays: tripDepartures.weekdays })
+    .from(tripDepartures)
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(eq(routes.operatorId, context.operatorId));
+
+  const isoDow = ((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
+  const runningToday = departures.filter((d) => d.weekdays.includes(isoDow));
+  const totalCapacity = runningToday.reduce((sum, d) => sum + d.plannedSeats, 0);
+
+  const [bookingStats] = await db
+    .select({
+      bookingsCount: sql<number>`count(*)`,
+      seatsBooked: sql<number>`coalesce(sum(${bookings.seats}), 0)`,
+      checkedIn: sql<number>`count(*) filter (where ${bookings.ticketCheckedInAt} is not null)`,
+    })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(and(eq(routes.operatorId, context.operatorId), eq(bookings.travelDate, date), eq(bookings.status, "confirmed")));
+
+  const seatsBooked = Number(bookingStats?.seatsBooked ?? 0);
+
+  return {
+    date,
+    departuresRunning: runningToday.length,
+    bookingsCount: Number(bookingStats?.bookingsCount ?? 0),
+    seatsBooked,
+    checkedIn: Number(bookingStats?.checkedIn ?? 0),
+    totalCapacity,
+    occupancyPercent: totalCapacity > 0 ? Math.round((seatsBooked / totalCapacity) * 100) : 0,
+  };
+}
+
 export interface VendorManifestPassenger {
   bookingReference: string;
   passengerName: string;
