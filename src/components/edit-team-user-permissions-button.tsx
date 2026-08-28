@@ -7,6 +7,7 @@ import { CloseIcon } from "./icons";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { tapToDismiss } from "@/lib/tap-to-dismiss";
 import { VENDOR_PERMISSIONS } from "@/lib/vendor-permissions";
+import { PermissionToggle } from "./permission-toggle";
 
 export function EditTeamUserPermissionsButton({
   targetUserId,
@@ -51,18 +52,17 @@ export function EditTeamUserPermissionsButton({
                 className="mt-5 flex flex-col gap-3"
               >
                 <input type="hidden" name="targetUserId" value={targetUserId} />
-                {VENDOR_PERMISSIONS.map((permission) => (
-                  <label key={permission.key} className="flex items-center gap-2.5 text-sm">
-                    <input
-                      type="checkbox"
+                <div className="flex flex-wrap gap-2">
+                  {VENDOR_PERMISSIONS.map((permission) => (
+                    <PermissionToggle
+                      key={permission.key}
                       name="permissions"
                       value={permission.key}
+                      label={permission.label}
                       defaultChecked={permissions.includes(permission.key)}
-                      className="h-4 w-4 rounded border-border text-teal focus:ring-teal"
                     />
-                    {permission.label}
-                  </label>
-                ))}
+                  ))}
+                </div>
                 <Button type="submit" className="mt-2">Save access</Button>
               </form>
             </div>

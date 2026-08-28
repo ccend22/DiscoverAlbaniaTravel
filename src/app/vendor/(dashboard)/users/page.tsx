@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/alert";
 import { listVendorTeamUsers } from "@/db/queries/vendors";
 import { requireVendorOwner } from "@/lib/vendor-access";
 import { VENDOR_PERMISSIONS, vendorPermissionLabel } from "@/lib/vendor-permissions";
+import { PermissionToggle } from "@/components/permission-toggle";
 import { RemoveTeamUserButton } from "@/components/remove-team-user-button";
 import { EditTeamUserPermissionsButton } from "@/components/edit-team-user-permissions-button";
 import { createVendorTeamUserAction, deleteVendorTeamUserAction, updateVendorTeamUserPermissionsAction } from "../../actions";
@@ -41,12 +42,9 @@ export default async function VendorUsersPage({
           <div className="sm:col-span-2">
             <span className="text-sm font-medium">Access</span>
             <p className="mt-0.5 text-xs text-muted">Choose which pages this teammate can see and use. They&apos;ll only get their own view of the vendor panel based on this.</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {VENDOR_PERMISSIONS.map((permission) => (
-                <label key={permission.key} className="flex items-center gap-2.5 text-sm">
-                  <input type="checkbox" name="permissions" value={permission.key} className="h-4 w-4 rounded border-border text-teal focus:ring-teal" />
-                  {permission.label}
-                </label>
+                <PermissionToggle key={permission.key} name="permissions" value={permission.key} label={permission.label} />
               ))}
             </div>
           </div>
