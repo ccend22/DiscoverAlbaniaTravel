@@ -8,6 +8,7 @@ import { getActiveUserSessionId } from "@/lib/user-session";
 import { getSiteOrigin } from "@/lib/google-oauth";
 import { getLocale } from "@/lib/i18n";
 import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
+import { bookingsArePaused, BOOKINGS_PAUSED_MESSAGE } from "@/lib/booking-availability";
 
 export type CreateBookingActionState =
   | { status: "idle" }
@@ -18,6 +19,10 @@ export async function createBookingAction(
   _prevState: CreateBookingActionState,
   formData: FormData
 ): Promise<CreateBookingActionState> {
+  if (bookingsArePaused()) {
+    return { status: "error", message: BOOKINGS_PAUSED_MESSAGE };
+  }
+
   const tripDepartureId = formData.get("tripDepartureId");
   const travelDate = formData.get("travelDate");
 

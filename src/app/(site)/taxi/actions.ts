@@ -12,6 +12,7 @@ import { findDirectTaxiRoute } from "@/lib/taxi-fares";
 import { estimateTaxiPriceEur } from "@/lib/taxi-pricing";
 import { getSiteOrigin } from "@/lib/google-oauth";
 import { calculateTaxiServiceFeeEur } from "@/lib/service-fees";
+import { bookingsArePaused, BOOKINGS_PAUSED_MESSAGE } from "@/lib/booking-availability";
 
 export type TaxiRequestActionState =
   | { status: "idle" }
@@ -22,6 +23,10 @@ export async function requestTaxiAction(
   _previousState: TaxiRequestActionState,
   formData: FormData
 ): Promise<TaxiRequestActionState> {
+  if (bookingsArePaused()) {
+    return { status: "error", message: BOOKINGS_PAUSED_MESSAGE };
+  }
+
   const parsed = taxiRideRequestSchema.safeParse({
     pickupLocation: formData.get("pickupLocation"),
     exactPickupPoint: formData.get("exactPickupPoint") || undefined,
