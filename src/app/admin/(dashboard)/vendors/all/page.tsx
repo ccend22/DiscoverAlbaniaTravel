@@ -4,6 +4,7 @@ import { updateVendorUserAction, deleteVendorUserAction } from "@/app/admin/acti
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
+import { PasswordInput } from "@/components/password-input";
 
 export default async function AllVendorsPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const [vendorUsers, params] = await Promise.all([listAllVendorUsersForAdmin(), searchParams]);
@@ -25,7 +26,7 @@ export default async function AllVendorsPage({ searchParams }: { searchParams: P
               <input type="hidden" name="vendorUserId" value={vendor.id} />
               <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Contact name</span><input name="name" required defaultValue={vendor.name} className="rounded-md border border-border bg-background px-3 py-2" /></label>
               <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Email</span><input name="email" type="email" required defaultValue={vendor.email} className="rounded-md border border-border bg-background px-3 py-2" /></label>
-              <label className="flex flex-col gap-1 text-sm"><span className="font-medium">New password</span><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="Leave unchanged" className="rounded-md border border-border bg-background px-3 py-2" /></label>
+              <label className="flex flex-col gap-1 text-sm"><span className="font-medium">New password</span><PasswordInput name="password" minLength={8} autoComplete="new-password" placeholder="Leave unchanged" className="rounded-md border border-border bg-background px-3 py-2" /></label>
               <Button type="submit" size="sm">Save</Button>
             </form>
             <form action={deleteVendorUserAction} className="mt-3 border-t border-border pt-3">

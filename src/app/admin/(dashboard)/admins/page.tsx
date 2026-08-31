@@ -3,6 +3,7 @@ import { Alert } from "@/components/ui/alert";
 import { requireAdminSession } from "@/lib/admin-session";
 import { updateAdminUserAction, deleteAdminUserAction } from "./actions";
 import { LinkButton, Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/password-input";
 
 export default async function AdminAdminsPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const [admins, currentAdminId, params] = await Promise.all([
@@ -28,7 +29,7 @@ export default async function AdminAdminsPage({ searchParams }: { searchParams: 
               <input type="hidden" name="adminUserId" value={admin.id} />
               <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Name</span><input name="name" required defaultValue={admin.name} className="rounded-md border border-border bg-background px-3 py-2" /></label>
               <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Email</span><input name="email" type="email" required defaultValue={admin.email} className="rounded-md border border-border bg-background px-3 py-2" /></label>
-              <label className="flex flex-col gap-1 text-sm"><span className="font-medium">New password <span className="font-normal text-muted">(optional)</span></span><input name="password" type="password" placeholder="Leave blank to keep current" className="rounded-md border border-border bg-background px-3 py-2" /></label>
+              <label className="flex flex-col gap-1 text-sm"><span className="font-medium">New password <span className="font-normal text-muted">(optional)</span></span><PasswordInput name="password" placeholder="Leave blank to keep current" className="rounded-md border border-border bg-background px-3 py-2" /></label>
               <Button type="submit" size="sm">Save</Button>
             </form>
             {admin.id !== currentAdminId && (

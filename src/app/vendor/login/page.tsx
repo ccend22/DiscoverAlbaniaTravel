@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loginVendorAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { PasswordInput } from "@/components/password-input";
 
 interface VendorLoginPageProps {
   searchParams: Promise<{ error?: string; pending?: string }>;
@@ -48,9 +49,8 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Password</span>
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             required
             minLength={8}
             autoComplete="current-password"

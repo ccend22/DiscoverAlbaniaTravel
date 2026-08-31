@@ -5,6 +5,7 @@ import { listVendorTeamUsers } from "@/db/queries/vendors";
 import { requireVendorOwner } from "@/lib/vendor-access";
 import { VENDOR_PERMISSIONS, vendorPermissionLabel } from "@/lib/vendor-permissions";
 import { PermissionToggle } from "@/components/permission-toggle";
+import { PasswordInput } from "@/components/password-input";
 import { RemoveTeamUserButton } from "@/components/remove-team-user-button";
 import { EditTeamUserPermissionsButton } from "@/components/edit-team-user-permissions-button";
 import { createVendorTeamUserAction, deleteVendorTeamUserAction, updateVendorTeamUserPermissionsAction } from "../../actions";
@@ -37,7 +38,7 @@ export default async function VendorUsersPage({
           </label>
           <label className="flex flex-col gap-1 text-sm sm:col-span-2">
             <span className="font-medium">Password</span>
-            <input name="password" type="password" minLength={8} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+            <PasswordInput name="password" minLength={8} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <div className="sm:col-span-2">
             <span className="text-sm font-medium">Access</span>

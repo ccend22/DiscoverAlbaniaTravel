@@ -1,6 +1,7 @@
 import { loginAdminAction } from "@/app/admin/actions";
 import { AlertCircleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/password-input";
 
 interface AdminLoginPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -39,9 +40,8 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Password</span>
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             required
             autoComplete="current-password"
             suppressHydrationWarning

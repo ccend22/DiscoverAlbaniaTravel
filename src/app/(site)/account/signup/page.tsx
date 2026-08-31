@@ -4,6 +4,7 @@ import { Button, LinkButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { GoogleIcon } from "@/components/icons";
 import { getLocaleAndDictionary } from "@/lib/i18n";
+import { PasswordInput } from "@/components/password-input";
 
 interface SignupPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -63,9 +64,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{sp.password}</span>
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             required
             minLength={8}
             autoComplete="new-password"
