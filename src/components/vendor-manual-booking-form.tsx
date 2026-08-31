@@ -1,8 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Button } from "./ui/button";
 import { ToggleChip } from "./toggle-chip";
+import { formatTime } from "@/lib/format";
+
+// Same visual language as ToggleChip, but a plain button rather than a
+// real form input -- this is a client-side filter (which route's times
+// to show next), not booking data, so it has nothing to submit.
+function PickerChip({ label, active, onClick }: { label: ReactNode; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-full border px-4 py-2 text-center text-sm font-medium transition-colors duration-[var(--dur-fast)] ${
+        active ? "border-teal bg-teal text-white" : "border-border bg-surface text-foreground hover:bg-surface-sunken"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 interface DepartureOption {
   id: number;
@@ -46,7 +64,36 @@ export function VendorManualBookingForm({
   touchScreenMode = false,
   action,
 }: VendorManualBookingFormProps) {
-  const [departureId, setDepartureId] = useState("");
+  // Departures are picked in two fast taps instead of one long list: first
+  // the route, then just that route's times -- a native <select> full of
+  // "CODE · From · Time" rows doesn't scale and is slow to scan/tap on a
+  // touch-screen kiosk.
+  const routes = useMemo(() => {
+    const byId = new Map<number, { routeId: number; routeCode: string; fromStationName: string; toStationName: string }>();
+    for (const departure of departures) {
+      if (!byId.has(departure.routeId)) {
+        byId.set(departure.routeId, {
+          routeId: departure.routeId,
+          routeCode: departure.routeCode,
+          fromStationName: departure.fromStationName,
+          toStationName: departure.toStationName,
+        });
+      }
+    }
+    return Array.from(byId.values());
+  }, [departures]);
+
+  function departuresForRoute(routeId: string) {
+    return departures.filter((d) => String(d.routeId) === routeId);
+  }
+
+  // Skip the tap entirely when there's only one possible answer.
+  const [routeId, setRouteId] = useState(() => (routes.length === 1 ? String(routes[0].routeId) : ""));
+  const [departureId, setDepartureId] = useState(() => {
+    if (routes.length !== 1) return "";
+    const only = departuresForRoute(String(routes[0].routeId));
+    return only.length === 1 ? String(only[0].id) : "";
+  });
   const [routeStopId, setRouteStopId] = useState("");
   const [seats, setSeats] = useState(1);
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
@@ -56,9 +103,18 @@ export function VendorManualBookingForm({
     [departures, departureId]
   );
 
-  // Up to 5 departure options, tapping a chip beats hunting through a
-  // dropdown -- past that, a select scales better than a wall of buttons.
-  const useDepartureChips = departures.length > 0 && departures.length <= 5;
+  const timesForSelectedRoute = useMemo(
+    () => departures.filter((d) => String(d.routeId) === routeId),
+    [departures, routeId]
+  );
+
+  function handleRouteChange(nextRouteId: string) {
+    setRouteId(nextRouteId);
+    const only = departuresForRoute(nextRouteId);
+    setDepartureId(only.length === 1 ? String(only[0].id) : "");
+    setRouteStopId("");
+    setAmountOverride(null);
+  }
 
   const stopsForRoute = useMemo(
     () => (selectedDeparture ? routeStopOptions.filter((s) => s.routeId === selectedDeparture.routeId) : []),
@@ -84,39 +140,44 @@ export function VendorManualBookingForm({
 
   return (
     <form action={action} className="mt-6 grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2">
-      <div className="flex flex-col gap-1 text-sm sm:col-span-2">
-        <span className="font-medium">Departure</span>
-        {useDepartureChips ? (
-          <div className="mt-1 flex flex-wrap gap-2">
-            {departures.map((departure) => (
-              <ToggleChip
-                key={departure.id}
-                type="radio"
-                name="tripDepartureId"
-                value={String(departure.id)}
-                required
-                checked={departureId === String(departure.id)}
-                onChange={() => handleDepartureChange(String(departure.id))}
-                label={`${departure.routeCode} · ${departure.fromStationName} · ${departure.departureTime}`}
-              />
-            ))}
+      <div className="flex flex-col gap-3 text-sm sm:col-span-2">
+        {routes.length > 1 && (
+          <div className="flex flex-col gap-1">
+            <span className="font-medium">Route</span>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {routes.map((route) => (
+                <PickerChip
+                  key={route.routeId}
+                  active={routeId === String(route.routeId)}
+                  onClick={() => handleRouteChange(String(route.routeId))}
+                  label={`${route.routeCode} · ${route.fromStationName} → ${route.toStationName}`}
+                />
+              ))}
+            </div>
           </div>
-        ) : (
-          <select
-            name="tripDepartureId"
-            required
-            value={departureId}
-            onChange={(e) => handleDepartureChange(e.target.value)}
-            className={FIELD_CLASS}
-          >
-            <option value="">Choose departure</option>
-            {departures.map((departure) => (
-              <option key={departure.id} value={departure.id}>
-                {departure.routeCode} · {departure.fromStationName} · {departure.departureTime}
-              </option>
-            ))}
-          </select>
         )}
+
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">Departure time</span>
+          {routeId === "" ? (
+            <p className="mt-1 text-sm text-muted">Choose a route first.</p>
+          ) : (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {timesForSelectedRoute.map((departure) => (
+                <ToggleChip
+                  key={departure.id}
+                  type="radio"
+                  name="tripDepartureId"
+                  value={String(departure.id)}
+                  required
+                  checked={departureId === String(departure.id)}
+                  onChange={() => handleDepartureChange(String(departure.id))}
+                  label={formatTime(departure.departureTime)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <label className="flex flex-col gap-1 text-sm">

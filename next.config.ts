@@ -92,6 +92,21 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Same root cause again: the blanket Permissions-Policy above disables
+      // the camera everywhere with `camera=()`, which silently blocks
+      // getUserMedia on the vendor ticket scanner -- some browsers (notably
+      // mobile Safari) enforce this strictly even for same-origin requests,
+      // while others are more lenient, which is why the scan camera failed
+      // on phones but appeared to work in some desktop testing.
+      {
+        source: "/vendor/scanner",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(), geolocation=(self), payment=(), usb=()",
+          },
+        ],
+      },
     ];
   },
 };
