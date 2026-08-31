@@ -49,7 +49,6 @@ export function VendorManualBookingForm({
   const [departureId, setDepartureId] = useState("");
   const [routeStopId, setRouteStopId] = useState("");
   const [seats, setSeats] = useState(1);
-  const [paid, setPaid] = useState(true);
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
 
   const selectedDeparture = useMemo(
@@ -57,10 +56,9 @@ export function VendorManualBookingForm({
     [departures, departureId]
   );
 
-  // Below a handful of lines, tapping a chip beats hunting through a dropdown --
-  // past that, a select scales better than a wall of buttons.
-  const routeCount = useMemo(() => new Set(departures.map((d) => d.routeId)).size, [departures]);
-  const useDepartureChips = routeCount > 0 && routeCount < 5;
+  // Up to 5 departure options, tapping a chip beats hunting through a
+  // dropdown -- past that, a select scales better than a wall of buttons.
+  const useDepartureChips = departures.length > 0 && departures.length <= 5;
 
   const stopsForRoute = useMemo(
     () => (selectedDeparture ? routeStopOptions.filter((s) => s.routeId === selectedDeparture.routeId) : []),
@@ -172,24 +170,20 @@ export function VendorManualBookingForm({
         <input name="passengerName" required className={FIELD_CLASS} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Phone</span>
-        <input name="passengerPhone" required className={FIELD_CLASS} />
+        <span className="font-medium">Phone <span className="font-normal text-muted">(optional)</span></span>
+        <input name="passengerPhone" className={FIELD_CLASS} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Email <span className="font-normal text-muted">(optional)</span></span>
         <input name="passengerEmail" type="email" className={FIELD_CLASS} />
       </label>
 
-      <div className="sm:col-span-2 rounded-xl border border-border bg-surface-sunken p-4 text-sm">
+      <div className="sm:col-span-2 rounded-lg border border-border bg-surface-sunken p-3 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-muted">Fare{seats > 1 ? ` (${seats} seats)` : ""}</span>
           <span className="font-medium text-foreground">{fareTotal !== null ? `€${fareTotal.toFixed(2)}` : "—"}</span>
         </div>
-        <div className="mt-1 flex items-center justify-between">
-          <span className="text-muted">Service fee</span>
-          <span className="font-medium text-foreground">€{feeAmount.toFixed(2)}</span>
-        </div>
-        <label className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm">
+        <label className="mt-2 flex flex-col gap-1 border-t border-border pt-2 text-sm">
           <span className="font-medium">Amount to collect (EUR)</span>
           <input
             name="amountOverride"
@@ -198,29 +192,28 @@ export function VendorManualBookingForm({
             step="0.01"
             value={displayedTotal}
             onChange={(e) => setAmountOverride(e.target.value)}
-            className={FIELD_CLASS}
+            className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-base outline-none focus:border-teal"
           />
         </label>
-        <label className="mt-3 flex items-center gap-2 text-sm">
-          <input
-            name="paid"
-            type="checkbox"
-            checked={paid}
-            onChange={(e) => setPaid(e.target.checked)}
-            className="h-5 w-5 accent-teal"
-          />
-          <span className="font-medium">Payment received</span>
-        </label>
-        {!paid && (
-          <p className="mt-1.5 text-xs text-muted">Uncheck stays on the booking as unpaid -- mark it paid later from the bookings list once collected.</p>
-        )}
       </div>
 
-      <div className="sm:col-span-2">
-        <Button type="submit" className={`min-h-14 w-full text-base ${touchScreenMode ? "sm:min-h-16 sm:text-lg" : "sm:w-auto"}`}>
-          {touchScreenMode ? "Create and show QR ticket" : "Create booking"}
-        </Button>
-      </div>
+      {touchScreenMode ? (
+        <div className="sm:col-span-2">
+          <input type="hidden" name="paid" value="true" />
+          <Button type="submit" className="min-h-14 w-full text-base sm:min-h-16 sm:text-lg">
+            Create and show QR ticket
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row">
+          <Button type="submit" variant="outline" className="min-h-14 flex-1 text-base">
+            Create booking
+          </Button>
+          <Button type="submit" name="paid" value="true" className="min-h-14 flex-1 text-base">
+            Book is Paid
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

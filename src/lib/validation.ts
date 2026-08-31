@@ -298,7 +298,7 @@ export const vendorManualBookingSchema = z
     tripDepartureId: z.coerce.number().int().positive(),
     travelDate: dateString,
     passengerName: z.string().trim().min(2, "Enter the passenger's full name"),
-    passengerPhone: z.string().trim().min(6, "Enter a valid phone number"),
+    passengerPhone: z.string().trim().min(6, "Enter a valid phone number").or(z.literal("")),
     passengerEmail: z
       .string()
       .trim()
@@ -309,7 +309,10 @@ export const vendorManualBookingSchema = z
     seats: z.coerce.number().int().min(1, "At least 1 seat is required").max(9, "Max 9 seats per booking"),
     routeStopId: z.coerce.number().int().positive().optional(),
     channel: z.enum(["walk_in", "phone", "touch_screen"]).default("walk_in"),
-    paid: z.coerce.boolean().default(true),
+    // z.coerce.boolean() would turn the literal string "false" into `true`
+    // (any non-empty string is truthy) -- the caller always sends "true" or
+    // "false" as text, so map those explicitly instead of coercing.
+    paid: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
     amountOverride: z.coerce.number().min(0).transform((value) => value.toFixed(2)).optional(),
   })
   .refine((data) => data.travelDate >= todayInAlbania(), {
