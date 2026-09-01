@@ -81,17 +81,30 @@ export function TicketScanner({
 
     try {
       const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 180 });
-      controlsRef.current = await reader.decodeFromConstraints(
-        { video: { facingMode: { ideal: "environment" } }, audio: false },
-        videoRef.current,
-        (scanResult) => {
-          if (scanResult) validate(scanResult.getText());
-        }
-      );
+      // iOS Safari doesn't always reject getUserMedia when camera access is
+      // blocked at the OS level (Settings > Safari > Camera, or a stale
+      // per-site "Don't Allow") -- the promise can hang forever instead,
+      // leaving the button stuck on "Starting camera..." with no visible
+      // error. Race it against a timeout so the user always gets feedback.
+      controlsRef.current = await Promise.race([
+        reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: "environment" } }, audio: false },
+          videoRef.current,
+          (scanResult) => {
+            if (scanResult) validate(scanResult.getText());
+          }
+        ),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("camera-timeout")), 10000)),
+      ]);
       setCameraState("active");
-    } catch {
+    } catch (err) {
+      stopCamera();
       setCameraState("error");
-      setCameraError("Camera access failed. Allow camera permission, or take/upload a photo instead.");
+      setCameraError(
+        err instanceof Error && err.message === "camera-timeout"
+          ? "Camera didn't respond. On iPhone, check Settings → Safari → Camera is set to Allow (or Ask), then try again."
+          : "Camera access failed. Allow camera permission, or take/upload a photo instead."
+      );
     }
   }, [stopCamera, validate]);
 

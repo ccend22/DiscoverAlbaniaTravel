@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../index";
@@ -276,7 +277,7 @@ export interface VendorManifestPassenger {
   passengerPhone: string;
   passengerEmail: string | null;
   seats: number;
-  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  channel: "online" | "walk_in" | "phone" | "touch_screen" | "mobile";
   checkedInAt: Date | null;
 }
 
@@ -352,6 +353,66 @@ export async function getVendorManifest(vendorUserId: number, tripDepartureId: n
   };
 }
 
+export interface VendorSyncManifestTicket {
+  bookingId: number;
+  bookingReference: string;
+  ticketTokenHash: string;
+  passengerName: string;
+  seats: number;
+  travelDate: string;
+  routeId: number;
+  checkedInAt: string | null;
+}
+
+// For the mobile app's offline ticket cache (see sync/manifest in the
+// implementation plan) -- deliberately scoped to confirmed AND paid
+// bookings only, so a device that's gone offline never has to replicate
+// validateTicketForVendor's full status taxonomy (too_early/expired/
+// wrong_route/unpaid/etc) locally. A scanned code that isn't in this list
+// simply can't be resolved offline; the app should surface "needs
+// connection to verify" rather than guessing. Only a hash of ticketToken is
+// ever returned -- never the raw bearer credential -- so the cached list
+// itself can't be extracted and replayed as valid tickets.
+export async function getVendorOfflineSyncManifest(vendorUserId: number, date: string): Promise<VendorSyncManifestTicket[]> {
+  const context = await getVendorContext(vendorUserId);
+  if (!context || context.vendorStatus !== "approved") return [];
+
+  const rows = await db
+    .select({
+      bookingId: bookings.id,
+      bookingReference: bookings.bookingReference,
+      ticketToken: bookings.ticketToken,
+      passengerName: bookings.passengerName,
+      seats: bookings.seats,
+      travelDate: bookings.travelDate,
+      routeId: routes.id,
+      checkedInAt: bookings.ticketCheckedInAt,
+      paymentStatus: sql<string | null>`(
+        select ${payments.status} from ${payments}
+        where ${payments.bookingId} = bookings.id
+        order by ${payments.createdAt} desc
+        limit 1
+      )`,
+    })
+    .from(bookings)
+    .innerJoin(tripDepartures, eq(bookings.tripDepartureId, tripDepartures.id))
+    .innerJoin(routes, eq(tripDepartures.routeId, routes.id))
+    .where(and(eq(routes.operatorId, context.operatorId), eq(bookings.travelDate, date), eq(bookings.status, "confirmed")));
+
+  return rows
+    .filter((row) => row.paymentStatus === "paid")
+    .map((row) => ({
+      bookingId: row.bookingId,
+      bookingReference: row.bookingReference,
+      ticketTokenHash: createHash("sha256").update(row.ticketToken).digest("hex"),
+      passengerName: row.passengerName,
+      seats: row.seats,
+      travelDate: row.travelDate,
+      routeId: row.routeId,
+      checkedInAt: row.checkedInAt?.toISOString() ?? null,
+    }));
+}
+
 export interface VendorBookingRow {
   bookingId: number;
   bookingReference: string;
@@ -362,7 +423,7 @@ export interface VendorBookingRow {
   seats: number;
   priceAtBooking: string;
   status: "confirmed" | "cancelled";
-  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  channel: "online" | "walk_in" | "phone" | "touch_screen" | "mobile";
   paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
   checkedInAt: Date | null;
   createdAt: Date;
@@ -421,7 +482,7 @@ export interface VendorFinanceTransactionRow {
   bookingId: number;
   bookingReference: string;
   bookingStatus: "confirmed" | "cancelled";
-  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  channel: "online" | "walk_in" | "phone" | "touch_screen" | "mobile";
   seats: number;
   travelDate: string;
   createdAt: Date;
@@ -854,7 +915,9 @@ export async function deleteVendorRouteStop(vendorUserId: number, routeStopId: n
 // online payment ever happens for these.
 // ---------------------------------------------------------------------------
 
-export type CreateManualBookingResult = { ok: true; reference: string } | { ok: false; error: string };
+export type CreateManualBookingResult =
+  | { ok: true; reference: string; bookingId: number }
+  | { ok: false; error: string };
 
 const MANUAL_BOOKING_ERROR_MESSAGES: Record<string, string> = {
   invalid_date: "This departure doesn't run on that date.",
@@ -873,7 +936,7 @@ export async function createManualBookingForVendor(
     passengerEmail: string | null;
     seats: number;
     routeStopId?: number;
-    channel: "walk_in" | "phone" | "touch_screen";
+    channel: "walk_in" | "phone" | "touch_screen" | "mobile";
     paid: boolean;
     /** Overrides the computed fare+fee total -- lets a vendor adjust for a discount, etc. */
     amountOverride?: string;
@@ -943,7 +1006,7 @@ export async function createManualBookingForVendor(
     }).catch((error) => console.error("[whatsapp] new_ticket notification failed", { reference: result.reference, error }));
   }
 
-  return { ok: true, reference: result.reference };
+  return { ok: true, reference: result.reference, bookingId: result.bookingId };
 }
 
 export interface TicketValidationDetails {

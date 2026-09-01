@@ -38,11 +38,30 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 ]);
 export const stationCategoryEnum = pgEnum("station_category", ["terminus", "intermediate"]);
 // How a booking was taken: "online" is a customer self-service booking on the
-// site; the other three are all vendor-entered (see createdByVendorUserId) --
+// site; the rest are all vendor-entered (see createdByVendorUserId) --
 // "walk_in"/"phone" for a counter or telephone sale, "touch_screen" for a
-// vendor-run self-service kiosk.
-export const bookingChannelEnum = pgEnum("booking_channel", ["online", "walk_in", "phone", "touch_screen"]);
+// vendor-run self-service kiosk, "mobile" for the native Android ticket-agent
+// app (distinct from touch_screen since it's a different device/capability
+// set -- offline-aware, prints its own receipts).
+export const bookingChannelEnum = pgEnum("booking_channel", [
+  "online",
+  "walk_in",
+  "phone",
+  "touch_screen",
+  "mobile",
+]);
 export const operatorReportStatusEnum = pgEnum("operator_report_status", ["open", "resolved"]);
+// "pending" = activation code issued, not yet claimed by a device.
+// "active" = claimed and usable. "revoked" = permanently killed (lost/stolen
+// device, decommissioned) -- revocation is terminal, a revoked device needs a
+// brand new activation code, not a way back to "active".
+export const deviceStatusEnum = pgEnum("device_status", ["pending", "active", "revoked"]);
+export const printJobTypeEnum = pgEnum("print_job_type", ["ticket", "receipt", "reprint"]);
+export const printJobStatusEnum = pgEnum("print_job_status", ["queued", "completed", "failed"]);
+// "not_required" covers ticket validations/reprints, which aren't a new
+// fiscal event. "pending"/"confirmed"/"failed" only apply to a genuine new
+// sale going through the fiscalization step (see src/lib/fiscalization/).
+export const fiscalStatusEnum = pgEnum("fiscal_status", ["not_required", "pending", "confirmed", "failed"]);
 
 export const operators = pgTable("operators", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -498,6 +517,117 @@ export const ticketScans = pgTable(
   ]
 );
 
+// A physical Android device bound to one operator via a one-time activation
+// code (see src/lib/mobile/device-activation.ts). Staff still log in with
+// their own vendor_users credentials on top of an activated device -- this
+// table is device identity/trust, not staff identity.
+export const devices = pgTable(
+  "devices",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    operatorId: integer("operator_id")
+      .notNull()
+      .references(() => operators.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    status: deviceStatusEnum("status").notNull().default("pending"),
+    // Hashed (SHA-256), never the raw code -- same reasoning as
+    // deviceRefreshTokens.tokenHash below. Null once claimed.
+    activationCodeHash: text("activation_code_hash").unique(),
+    activationCodeExpiresAt: timestamp("activation_code_expires_at", { withTimezone: true }),
+    // Set from the Android app's own generated install identifier at
+    // activation time -- informational (shown in the devices list), not a
+    // security boundary by itself.
+    deviceIdentifier: text("device_identifier"),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("devices_operator_idx").on(table.operatorId)]
+);
+
+// One row per staff login on one device. Deliberately scoped to the
+// (device, vendorUser) pair rather than just the device, so revoking one
+// teammate's access doesn't require killing every other session on a
+// shared device, and revoking a lost/stolen device (deviceId cascade)
+// doesn't require enumerating every staff member who ever used it.
+export const deviceRefreshTokens = pgTable(
+  "device_refresh_tokens",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    deviceId: integer("device_id")
+      .notNull()
+      .references(() => devices.id, { onDelete: "cascade" }),
+    vendorUserId: integer("vendor_user_id")
+      .notNull()
+      .references(() => vendorUsers.id, { onDelete: "cascade" }),
+    // SHA-256 hash of the raw refresh token -- the raw value is a bearer
+    // credential and is never persisted, matching bookings.ticketToken's
+    // treatment (opaque, unguessable, only compared by hash/equality).
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("device_refresh_tokens_device_idx").on(table.deviceId)]
+);
+
+// A durable, retryable physical-print request, decoupled from the
+// sale/validation that triggered it -- a flaky Bluetooth printer can be
+// retried via complete/fail without re-selling or re-validating anything.
+export const printJobs = pgTable(
+  "print_jobs",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    deviceId: integer("device_id").references(() => devices.id, { onDelete: "set null" }),
+    vendorUserId: integer("vendor_user_id").references(() => vendorUsers.id, { onDelete: "set null" }),
+    bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    type: printJobTypeEnum("type").notNull(),
+    isCopy: boolean("is_copy").notNull().default(false),
+    reprintReason: text("reprint_reason"),
+    fiscalStatus: fiscalStatusEnum("fiscal_status").notNull().default("not_required"),
+    fiscalNivf: text("fiscal_nivf"),
+    fiscalNslf: text("fiscal_nslf"),
+    fiscalQrData: text("fiscal_qr_data"),
+    // The exact ReceiptData snapshot the app printed (or will print) --
+    // kept for audit and so a later reprint renders identically even if the
+    // underlying booking record changes afterward.
+    payload: jsonb("payload").notNull(),
+    status: printJobStatusEnum("status").notNull().default("queued"),
+    failureReason: text("failure_reason"),
+    // Client-supplied, deduplicates a retried "create print job" request
+    // (e.g. after a network timeout where the app can't tell if its first
+    // request landed) -- null is allowed since not every caller needs it.
+    clientIdempotencyKey: text("client_idempotency_key").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("print_jobs_device_idx").on(table.deviceId),
+    check(
+      "print_jobs_reprint_reason_required",
+      sql`${table.isCopy} = false or ${table.reprintReason} is not null`
+    ),
+  ]
+);
+
+// Generic request-dedupe cache for mobile endpoints where a raw retry isn't
+// naturally safe against double-submission (unlike ticket validation, which
+// is already CAS-safe at the DB layer -- see validateTicketForVendor). The
+// first request with a given key executes and caches its response; a retry
+// with the same key just replays the cached response.
+export const mobileIdempotencyKeys = pgTable("mobile_idempotency_keys", {
+  key: text("key").primaryKey(),
+  vendorUserId: integer("vendor_user_id")
+    .notNull()
+    .references(() => vendorUsers.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull(),
+  responseStatus: integer("response_status").notNull(),
+  responseBody: jsonb("response_body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const operatorsRelations = relations(operators, ({ many }) => ({
   routes: many(routes),
   reports: many(operatorReports),
@@ -621,4 +751,20 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 export const operatorReportsRelations = relations(operatorReports, ({ one }) => ({
   operator: one(operators, { fields: [operatorReports.operatorId], references: [operators.id] }),
   booking: one(bookings, { fields: [operatorReports.bookingId], references: [bookings.id] }),
+}));
+
+export const devicesRelations = relations(devices, ({ one, many }) => ({
+  operator: one(operators, { fields: [devices.operatorId], references: [operators.id] }),
+  refreshTokens: many(deviceRefreshTokens),
+}));
+
+export const deviceRefreshTokensRelations = relations(deviceRefreshTokens, ({ one }) => ({
+  device: one(devices, { fields: [deviceRefreshTokens.deviceId], references: [devices.id] }),
+  vendorUser: one(vendorUsers, { fields: [deviceRefreshTokens.vendorUserId], references: [vendorUsers.id] }),
+}));
+
+export const printJobsRelations = relations(printJobs, ({ one }) => ({
+  device: one(devices, { fields: [printJobs.deviceId], references: [devices.id] }),
+  vendorUser: one(vendorUsers, { fields: [printJobs.vendorUserId], references: [vendorUsers.id] }),
+  booking: one(bookings, { fields: [printJobs.bookingId], references: [bookings.id] }),
 }));

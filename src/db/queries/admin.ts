@@ -696,7 +696,7 @@ export interface AdminBookingRow {
   status: "confirmed" | "cancelled";
   /** From the linked payments row -- a "confirmed" booking whose payment isn't "paid" yet is still mid-checkout, not a completed sale. */
   paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded" | "cancelled" | null;
-  channel: "online" | "walk_in" | "phone" | "touch_screen";
+  channel: "online" | "walk_in" | "phone" | "touch_screen" | "mobile";
   travelDate: string;
   seats: number;
   priceAtBooking: string;
@@ -800,7 +800,7 @@ export async function listScanLogForAdmin(limit = 200): Promise<AdminScanLogRow[
 
 export async function updateBookingDetailsForAdmin(
   bookingId: number,
-  input: { passengerName: string; passengerPhone: string; passengerEmail: string | null; channel: "online" | "walk_in" | "phone" | "touch_screen" }
+  input: { passengerName: string; passengerPhone: string; passengerEmail: string | null; channel: "online" | "walk_in" | "phone" | "touch_screen" | "mobile" }
 ): Promise<AdminMutationResult> {
   const [updated] = await db
     .update(bookings)

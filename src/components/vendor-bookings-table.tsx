@@ -29,6 +29,7 @@ const CHANNEL_LABELS: Record<VendorBookingRow["channel"], string> = {
   walk_in: "Walk-in",
   phone: "Phone",
   touch_screen: "Touch screen",
+  mobile: "Mobile app",
 };
 
 function EditBookingModal({

@@ -25,6 +25,7 @@ const CHANNEL_LABELS: Record<VendorFinanceTransaction["channel"], string> = {
   walk_in: "Walk-in",
   phone: "Phone",
   touch_screen: "Touch screen",
+  mobile: "Mobile app",
 };
 
 function firstParam(value: string | string[] | undefined): string | undefined {

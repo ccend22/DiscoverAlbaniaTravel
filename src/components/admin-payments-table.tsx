@@ -29,6 +29,7 @@ const CHANNEL_LABELS: Record<string, string> = {
   walk_in: "Walk-in",
   phone: "Phone",
   touch_screen: "Touch screen",
+  mobile: "Mobile app",
 };
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {

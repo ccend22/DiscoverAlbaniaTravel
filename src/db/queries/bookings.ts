@@ -22,7 +22,7 @@ export interface CreateBookingInput {
   /** Overrides the route's base price -- used when a manual booking boards from an intermediate stop, priced via that stop's own route_stops.priceToDestination rather than the full-route fare. */
   priceOverride?: string;
   /** Defaults to "online" -- pass a vendor-side channel for manually-entered bookings. */
-  channel?: "online" | "walk_in" | "phone" | "touch_screen";
+  channel?: "online" | "walk_in" | "phone" | "touch_screen" | "mobile";
 }
 
 /** Bearer secret for the emailed "manage your booking" link -- see the `manageToken` column comment in schema.ts. */

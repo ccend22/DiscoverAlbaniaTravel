@@ -13,6 +13,7 @@ const CHANNEL_LABELS: Record<string, string> = {
   walk_in: "Walk-in",
   phone: "Phone",
   touch_screen: "Touch screen",
+  mobile: "Mobile app",
 };
 
 export default async function VendorManifestPage({

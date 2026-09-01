@@ -37,6 +37,7 @@ import {
   updateVendorRouteStop,
   updateVendorTeamUserPermissions,
 } from "@/db/queries/vendors";
+import { createDeviceActivationCode, revokeDevice } from "@/db/queries/mobile";
 import { isVendorPermission } from "@/lib/vendor-permissions";
 import { generateTicketQrSvg } from "@/lib/ticket-qr-svg";
 import {
@@ -438,4 +439,23 @@ export async function deleteVendorTeamUserAction(formData: FormData) {
   if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
   revalidatePath("/vendor/users");
   redirect("/vendor/users?saved=1");
+}
+
+export async function createDeviceActivationCodeAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const label = String(formData.get("label") ?? "").trim();
+  if (!label) redirect("/vendor/devices?error=Enter a name for the device");
+  const result = await createDeviceActivationCode(vendorUserId, label);
+  if (!result.ok) redirect("/vendor/devices?error=Only the owner can activate devices");
+  revalidatePath("/vendor/devices");
+  redirect(`/vendor/devices?code=${result.code}&expiresAt=${result.expiresAt.toISOString()}`);
+}
+
+export async function revokeDeviceAction(formData: FormData) {
+  const vendorUserId = await requireVendorSession();
+  const deviceId = Number(formData.get("deviceId"));
+  const revoked = await revokeDevice(vendorUserId, deviceId);
+  if (!revoked) redirect("/vendor/devices?error=Couldn't revoke that device");
+  revalidatePath("/vendor/devices");
+  redirect("/vendor/devices?saved=1");
 }

@@ -29,6 +29,7 @@ const CHANNEL_LABELS: Record<AdminBookingRow["channel"], string> = {
   walk_in: "Walk-in",
   phone: "Phone",
   touch_screen: "Touch screen",
+  mobile: "Mobile app",
 };
 
 /** A "confirmed" booking whose payment hasn't actually cleared yet is still mid-checkout, not a completed sale -- don't show it as Confirmed. */
