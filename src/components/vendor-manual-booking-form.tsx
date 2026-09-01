@@ -2,7 +2,6 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { Button } from "./ui/button";
-import { ToggleChip } from "./toggle-chip";
 import { formatTime } from "@/lib/format";
 
 // Same visual language as ToggleChip, but a plain button rather than a
@@ -64,10 +63,10 @@ export function VendorManualBookingForm({
   touchScreenMode = false,
   action,
 }: VendorManualBookingFormProps) {
-  // Departures are picked in two fast taps instead of one long list: first
-  // the route, then just that route's times -- a native <select> full of
-  // "CODE · From · Time" rows doesn't scale and is slow to scan/tap on a
-  // touch-screen kiosk.
+  // Route first, as a fast single tap -- a native <select> full of "CODE ·
+  // From · Time" rows doesn't scale and is slow to scan/tap on a
+  // touch-screen kiosk. Departure time narrows from there as a dropdown
+  // scoped to just that route's times.
   const routes = useMemo(() => {
     const byId = new Map<number, { routeId: number; routeCode: string; fromStationName: string; toStationName: string }>();
     for (const departure of departures) {
@@ -95,7 +94,10 @@ export function VendorManualBookingForm({
     return only.length === 1 ? String(only[0].id) : "";
   });
   const [routeStopId, setRouteStopId] = useState("");
-  const [seats, setSeats] = useState(1);
+  // Left blank rather than defaulting to 1 -- the vendor has to actively
+  // decide the seat count instead of silently booking one seat if they
+  // click through the field without noticing it.
+  const [seats, setSeats] = useState<number | "">("");
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
 
   const selectedDeparture = useMemo(
@@ -127,7 +129,7 @@ export function VendorManualBookingForm({
   );
 
   const farePerSeat = selectedStop?.priceToDestination ?? selectedDeparture?.basePrice ?? null;
-  const fareTotal = farePerSeat !== null ? Number(farePerSeat) * seats : null;
+  const fareTotal = farePerSeat !== null && typeof seats === "number" ? Number(farePerSeat) * seats : null;
   const feeAmount = Number(serviceFeeEur);
   const computedTotal = fareTotal !== null ? fareTotal + feeAmount : null;
   const displayedTotal = amountOverride ?? (computedTotal !== null ? computedTotal.toFixed(2) : "");
@@ -162,20 +164,20 @@ export function VendorManualBookingForm({
           {routeId === "" ? (
             <p className="mt-1 text-sm text-muted">Choose a route first.</p>
           ) : (
-            <div className="mt-1 flex flex-wrap gap-2">
+            <select
+              name="tripDepartureId"
+              required
+              value={departureId}
+              onChange={(e) => handleDepartureChange(e.target.value)}
+              className={`mt-1 ${FIELD_CLASS}`}
+            >
+              <option value="" disabled>Select a time</option>
               {timesForSelectedRoute.map((departure) => (
-                <ToggleChip
-                  key={departure.id}
-                  type="radio"
-                  name="tripDepartureId"
-                  value={String(departure.id)}
-                  required
-                  checked={departureId === String(departure.id)}
-                  onChange={() => handleDepartureChange(String(departure.id))}
-                  label={formatTime(departure.departureTime)}
-                />
+                <option key={departure.id} value={departure.id}>
+                  {formatTime(departure.departureTime)}
+                </option>
               ))}
-            </div>
+            </select>
           )}
         </div>
       </div>
@@ -193,7 +195,11 @@ export function VendorManualBookingForm({
           min="1"
           max="9"
           value={seats}
-          onChange={(e) => setSeats(Math.max(1, Number(e.target.value) || 1))}
+          onChange={(e) => {
+            const raw = e.target.value;
+            setSeats(raw === "" ? "" : Math.max(1, Math.min(9, Number(raw) || 1)));
+          }}
+          placeholder="e.g. 2"
           required
           className={FIELD_CLASS}
         />
@@ -241,7 +247,7 @@ export function VendorManualBookingForm({
 
       <div className="sm:col-span-2 rounded-lg border border-border bg-surface-sunken p-3 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-muted">Fare{seats > 1 ? ` (${seats} seats)` : ""}</span>
+          <span className="text-muted">Fare{typeof seats === "number" && seats > 1 ? ` (${seats} seats)` : ""}</span>
           <span className="font-medium text-foreground">{fareTotal !== null ? `€${fareTotal.toFixed(2)}` : "—"}</span>
         </div>
         <label className="mt-2 flex flex-col gap-1 border-t border-border pt-2 text-sm">

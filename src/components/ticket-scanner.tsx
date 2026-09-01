@@ -141,9 +141,14 @@ export function TicketScanner({
   const detail = result && "bookingReference" in result ? result : null;
   const copy = result ? STATUS_COPY[result.status] : null;
   const ResultIcon = copy?.tone === "success" ? CheckCircleIcon : AlertCircleIcon;
+  // Once a scan resolves (or is resolving), the camera panel gives way to
+  // the result -- a vendor checking someone in doesn't need a dead camera
+  // box taking up half the screen next to the answer they're looking for.
+  const showCamera = !isPending && !result;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,.75fr)]">
+    <div className={`grid gap-6 ${showCamera ? "lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,.75fr)]" : ""}`}>
+      {showCamera && (
       <section className="overflow-hidden rounded-2xl bg-brand-deep text-white shadow-[var(--shadow-lg)]">
         {expectedRouteLabel && (
           <div className="border-b border-white/10 bg-white/5 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-cyan">
@@ -187,8 +192,9 @@ export function TicketScanner({
           </label>
         </div>
       </section>
+      )}
 
-      <aside className="min-w-0">
+      <aside className={showCamera ? "min-w-0" : "mx-auto w-full max-w-xl min-w-0"}>
         {isPending && (
           <div role="status" className="rounded-2xl border border-border bg-surface p-6 text-center shadow-[var(--shadow-xs)]">
             <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-teal/25 border-t-teal" />
