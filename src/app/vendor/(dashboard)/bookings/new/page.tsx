@@ -6,7 +6,6 @@ import {
 import { requireVendorPermission } from "@/lib/vendor-access";
 import { Alert } from "@/components/ui/alert";
 import { VendorManualBookingForm } from "@/components/vendor-manual-booking-form";
-import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
 import { createManualBookingAction } from "../../../actions";
 import { getAlbaniaDateInputValue } from "@/lib/timezone";
 
@@ -45,7 +44,6 @@ export default async function NewManualBookingPage({
       <VendorManualBookingForm
         departures={departures}
         routeStopOptions={routeStopOptions}
-        serviceFeeEur={MANUAL_BOOKING_SERVICE_FEE_EUR}
         todayDate={today}
         initialChannel={touchScreenMode ? "touch_screen" : "walk_in"}
         touchScreenMode={touchScreenMode}

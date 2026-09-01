@@ -9,7 +9,6 @@ import { isUniqueViolation, violatedConstraint } from "./db-errors";
 import { cancelBookingForVendor, createBooking, getBookingWhatsAppDetail } from "./bookings";
 import { nextSyntheticSourceId } from "./admin-stations";
 import { recordAdminDelete } from "./audit-log";
-import { MANUAL_BOOKING_SERVICE_FEE_EUR } from "@/lib/manual-booking";
 import { parseTicketQrPayload } from "@/lib/ticket-code";
 import { sendNewTicketWhatsAppNotification } from "@/lib/whatsapp";
 import { formatDateLong, formatTime } from "@/lib/format";
@@ -981,8 +980,11 @@ export async function createManualBookingForVendor(
     return { ok: false, error: MANUAL_BOOKING_ERROR_MESSAGES[result.error] ?? "Couldn't create that booking." };
   }
 
+  // No platform service fee here -- unlike an online booking, a manual sale
+  // is the vendor's own walk-in/phone/kiosk transaction, so the amount
+  // collected is just the fare.
   const fareTotal = Number(result.priceAtBooking) * input.seats;
-  const defaultAmount = (fareTotal + Number(MANUAL_BOOKING_SERVICE_FEE_EUR)).toFixed(2);
+  const defaultAmount = fareTotal.toFixed(2);
 
   await db.insert(payments).values({
     bookingId: result.bookingId,

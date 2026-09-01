@@ -1,8 +1,3 @@
-import { BUS_BOOKING_SERVICE_FEE_EUR } from "@/lib/service-fees";
-
-/** Flat charge added on top of the fare for a vendor-entered (walk-in/phone/kiosk) booking. */
-export const MANUAL_BOOKING_SERVICE_FEE_EUR = BUS_BOOKING_SERVICE_FEE_EUR.toFixed(2);
-
 export const BOOKING_CHANNEL_OPTIONS = [
   { value: "walk_in", label: "Walk-in" },
   { value: "phone", label: "Phone" },

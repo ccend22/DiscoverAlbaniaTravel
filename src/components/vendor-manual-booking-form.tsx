@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { Button } from "./ui/button";
+import { ToggleChip } from "./toggle-chip";
 import { formatTime } from "@/lib/format";
 
 // Same visual language as ToggleChip, but a plain button rather than a
@@ -42,7 +43,6 @@ interface RouteStopOption {
 interface VendorManualBookingFormProps {
   departures: DepartureOption[];
   routeStopOptions: RouteStopOption[];
-  serviceFeeEur: string;
   todayDate: string;
   initialChannel?: "walk_in" | "phone" | "touch_screen";
   touchScreenMode?: boolean;
@@ -57,7 +57,6 @@ const FIELD_CLASS = "min-h-14 rounded-xl border border-border bg-background px-4
 export function VendorManualBookingForm({
   departures,
   routeStopOptions,
-  serviceFeeEur,
   todayDate,
   initialChannel = "walk_in",
   touchScreenMode = false,
@@ -129,10 +128,10 @@ export function VendorManualBookingForm({
   );
 
   const farePerSeat = selectedStop?.priceToDestination ?? selectedDeparture?.basePrice ?? null;
+  // No platform fee here -- a manual sale is the vendor's own transaction,
+  // so the amount to collect is just the fare.
   const fareTotal = farePerSeat !== null && typeof seats === "number" ? Number(farePerSeat) * seats : null;
-  const feeAmount = Number(serviceFeeEur);
-  const computedTotal = fareTotal !== null ? fareTotal + feeAmount : null;
-  const displayedTotal = amountOverride ?? (computedTotal !== null ? computedTotal.toFixed(2) : "");
+  const displayedTotal = amountOverride ?? (fareTotal !== null ? fareTotal.toFixed(2) : "");
 
   function handleDepartureChange(value: string) {
     setDepartureId(value);
@@ -163,6 +162,23 @@ export function VendorManualBookingForm({
           <span className="font-medium">Departure time</span>
           {routeId === "" ? (
             <p className="mt-1 text-sm text-muted">Choose a route first.</p>
+          ) : touchScreenMode ? (
+            // A native <select> means opening the OS picker on every tap --
+            // too slow and fiddly on a kiosk. Chips stay one direct tap.
+            <div className="mt-1 flex flex-wrap gap-2">
+              {timesForSelectedRoute.map((departure) => (
+                <ToggleChip
+                  key={departure.id}
+                  type="radio"
+                  name="tripDepartureId"
+                  value={String(departure.id)}
+                  required
+                  checked={departureId === String(departure.id)}
+                  onChange={() => handleDepartureChange(String(departure.id))}
+                  label={formatTime(departure.departureTime)}
+                />
+              ))}
+            </div>
           ) : (
             <select
               name="tripDepartureId"
