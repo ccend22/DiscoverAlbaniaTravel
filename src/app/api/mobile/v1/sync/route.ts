@@ -9,7 +9,9 @@ const bodySchema = z.object({
       z.object({
         clientIdempotencyKey: z.string().trim().min(1),
         scannedValue: z.string().trim().min(1),
-        expectedRouteId: z.coerce.number().int().positive().optional(),
+        // .nullish() -- see tickets/validate for why .optional() alone lets
+        // an explicit JSON null fail the whole batch item.
+        expectedRouteId: z.coerce.number().int().positive().nullish(),
       })
     )
     .min(1)
@@ -31,12 +33,12 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return mobileErrorResponse(400, "invalid_request", "validations must be a non-empty array (max 200 per batch).");
+    return mobileErrorResponse(400, "invalid_request", parsed.error.issues[0]?.message ?? "validations must be a non-empty array (max 200 per batch).");
   }
 
   const results = [];
   for (const item of parsed.data.validations) {
-    const result = await validateTicketForVendor(auth.auth.vendorUserId, item.scannedValue, item.expectedRouteId);
+    const result = await validateTicketForVendor(auth.auth.vendorUserId, item.scannedValue, item.expectedRouteId ?? undefined);
     results.push({ clientIdempotencyKey: item.clientIdempotencyKey, result });
   }
 

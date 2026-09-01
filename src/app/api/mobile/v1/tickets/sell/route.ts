@@ -9,16 +9,21 @@ import { getFiscalizationProvider } from "@/lib/fiscalization";
 
 const ENDPOINT = "tickets/sell";
 
+// .nullish() throughout, not .optional() -- JSON clients (e.g. Kotlin's
+// nullable types) send an explicit `null` for an absent value rather than
+// omitting the key; .optional() alone only tolerates a missing key and
+// fails the whole request on a present `null` (see tickets/validate for the
+// full explanation, where this exact pattern was already found live).
 const bodySchema = z.object({
   tripDepartureId: z.coerce.number().int().positive(),
   travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   passengerName: z.string().trim().min(2),
   passengerPhone: z.string().trim().min(6),
-  passengerEmail: z.string().trim().toLowerCase().email().or(z.literal("")).optional(),
+  passengerEmail: z.string().trim().toLowerCase().email().or(z.literal("")).nullish(),
   seats: z.coerce.number().int().min(1).max(9),
-  routeStopId: z.coerce.number().int().positive().optional(),
+  routeStopId: z.coerce.number().int().positive().nullish(),
   paid: z.boolean(),
-  amountOverride: z.string().optional(),
+  amountOverride: z.string().nullish(),
 });
 
 // Selling a new ticket is never offline-queued and never safe to just retry
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return mobileErrorResponse(400, "invalid_request", "One or more fields are missing or invalid.");
+    return mobileErrorResponse(400, "invalid_request", parsed.error.issues[0]?.message ?? "One or more fields are missing or invalid.");
   }
 
   const result = await createManualBookingForVendor(auth.auth.vendorUserId, {
@@ -65,10 +70,10 @@ export async function POST(request: NextRequest) {
     passengerPhone: parsed.data.passengerPhone,
     passengerEmail: parsed.data.passengerEmail || null,
     seats: parsed.data.seats,
-    routeStopId: parsed.data.routeStopId,
+    routeStopId: parsed.data.routeStopId ?? undefined,
     channel: "mobile",
     paid: parsed.data.paid,
-    amountOverride: parsed.data.amountOverride,
+    amountOverride: parsed.data.amountOverride ?? undefined,
   });
 
   if (!result.ok) {

@@ -5,7 +5,14 @@ import { requireMobileAuth, mobileErrorResponse } from "@/lib/mobile/require-mob
 
 const bodySchema = z.object({
   scannedValue: z.string().trim().min(1),
-  expectedRouteId: z.coerce.number().int().positive().optional(),
+  // .nullish() (not .optional()) -- JSON clients that serialize a nullable
+  // field (e.g. Kotlin's Int?) send an explicit `null` rather than omitting
+  // the key entirely. .optional() only tolerates a missing key; a present
+  // `null` value fails z.coerce.number() (Number(null) === 0, which then
+  // fails .positive()), which used to silently fail the *whole* request
+  // with a misleading "scannedValue is required" error even though
+  // scannedValue itself was fine.
+  expectedRouteId: z.coerce.number().int().positive().nullish(),
 });
 
 // A thin HTTP wrapper -- validateTicketForVendor already does the real work,
@@ -20,9 +27,13 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return mobileErrorResponse(400, "invalid_request", "scannedValue is required.");
+    return mobileErrorResponse(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid request body.");
   }
 
-  const result = await validateTicketForVendor(auth.auth.vendorUserId, parsed.data.scannedValue, parsed.data.expectedRouteId);
+  const result = await validateTicketForVendor(
+    auth.auth.vendorUserId,
+    parsed.data.scannedValue,
+    parsed.data.expectedRouteId ?? undefined
+  );
   return NextResponse.json(result);
 }

@@ -5,7 +5,9 @@ import { requireMobileAuth, mobileErrorResponse } from "@/lib/mobile/require-mob
 
 const bodySchema = z.object({
   reason: z.enum(["paper_out", "disconnected", "timeout", "unknown_failure"]),
-  detail: z.string().trim().max(500).optional(),
+  // .nullish() -- see tickets/validate for why .optional() alone lets an
+  // explicit JSON null (Kotlin's String?) fail the whole request.
+  detail: z.string().trim().max(500).nullish(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const body = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return mobileErrorResponse(400, "invalid_request", "reason is required.");
+    return mobileErrorResponse(400, "invalid_request", parsed.error.issues[0]?.message ?? "reason is required.");
   }
 
   const failureReason = parsed.data.detail ? `${parsed.data.reason}: ${parsed.data.detail}` : parsed.data.reason;
