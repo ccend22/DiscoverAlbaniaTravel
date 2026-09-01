@@ -142,19 +142,28 @@ export function VendorManualBookingForm({
   return (
     <form action={action} className="mt-6 grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2">
       <div className="flex flex-col gap-3 text-sm sm:col-span-2">
-        {routes.length > 1 && (
+        {routes.length > 0 && (
           <div className="flex flex-col gap-1">
             <span className="font-medium">Route</span>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {routes.map((route) => (
-                <PickerChip
-                  key={route.routeId}
-                  active={routeId === String(route.routeId)}
-                  onClick={() => handleRouteChange(String(route.routeId))}
-                  label={`${route.routeCode} · ${route.fromStationName} → ${route.toStationName}`}
-                />
-              ))}
-            </div>
+            {routes.length > 1 ? (
+              <div className="mt-1 flex flex-wrap gap-2">
+                {routes.map((route) => (
+                  <PickerChip
+                    key={route.routeId}
+                    active={routeId === String(route.routeId)}
+                    onClick={() => handleRouteChange(String(route.routeId))}
+                    label={`${route.routeCode} · ${route.fromStationName} → ${route.toStationName}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              // Only one route to pick from, so there's nothing to tap --
+              // still shown as a plain label so it's clear which line the
+              // departure time below belongs to.
+              <p className="mt-1 text-sm font-medium text-foreground">
+                {routes[0].routeCode} · {routes[0].fromStationName} → {routes[0].toStationName}
+              </p>
+            )}
           </div>
         )}
 
