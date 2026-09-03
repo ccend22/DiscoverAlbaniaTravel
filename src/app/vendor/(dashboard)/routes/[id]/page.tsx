@@ -40,15 +40,15 @@ export default async function VendorRouteDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/vendor/routes" className="text-sm text-teal hover:underline">← Back to routes</Link>
+      <Link href="/vendor/routes" className="text-sm text-teal hover:underline">← Kthehu te linjat</Link>
       <h1 className="mt-2 font-display text-2xl font-bold text-foreground">{route.code} · {route.longName}</h1>
       <p className="mt-1 text-sm text-muted">
-        Intermediate stops along this route, with the earliest a customer could miss the bus (use a conservative time) and the fare from that stop to the final destination.
+        Ndalesat e ndërmjetme përgjatë kësaj linje, me kohën më të hershme kur një klient mund të humbasë autobusin (përdor një kohë konservative) dhe çmimin nga ajo ndalesë deri në destinacionin final.
       </p>
 
       {saved && (
         <div className="mt-6">
-          <Alert tone="success">Changes saved.</Alert>
+          <Alert tone="success">Ndryshimet u ruajtën.</Alert>
         </div>
       )}
       {error && (
@@ -62,12 +62,12 @@ export default async function VendorRouteDetailPage({
           <table className="w-full min-w-[680px] border-collapse text-sm">
             <thead className="border-b border-border text-left text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Station</th>
-                <th className="px-4 py-3 font-medium">Order</th>
-                <th className="px-4 py-3 font-medium">Minutes from departure</th>
-                <th className="px-4 py-3 font-medium">Price to destination</th>
-                <th className="px-4 py-3"><span className="sr-only">Save</span></th>
-                <th className="px-4 py-3"><span className="sr-only">Delete</span></th>
+                <th className="px-4 py-3 font-medium">Stacioni</th>
+                <th className="px-4 py-3 font-medium">Radha</th>
+                <th className="px-4 py-3 font-medium">Minuta nga nisja</th>
+                <th className="px-4 py-3 font-medium">Çmimi deri në destinacion</th>
+                <th className="px-4 py-3"><span className="sr-only">Ruaj</span></th>
+                <th className="px-4 py-3"><span className="sr-only">Fshi</span></th>
               </tr>
             </thead>
             <tbody>
@@ -106,7 +106,7 @@ export default async function VendorRouteDetailPage({
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="Same as full fare"
+                      placeholder="Njësoj si çmimi i plotë"
                       defaultValue={stop.priceToDestination ?? ""}
                       className="w-32 rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-teal"
                     />
@@ -116,7 +116,7 @@ export default async function VendorRouteDetailPage({
                       form={`stop-${stop.id}`}
                       className="rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground shadow-[var(--shadow-xs)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-brand-strong hover:shadow-[var(--shadow-sm)] active:translate-y-0"
                     >
-                      Save
+                      Ruaj
                     </button>
                   </td>
                   <td className="px-4 py-3 align-top">
@@ -124,7 +124,7 @@ export default async function VendorRouteDetailPage({
                       <input type="hidden" name="routeId" value={routeId} />
                       <input type="hidden" name="routeStopId" value={stop.id} />
                       <button className="rounded-md border border-red/30 px-3 py-1.5 text-sm font-medium text-red transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-red-soft hover:shadow-[var(--shadow-xs)]">
-                        Delete
+                        Fshi
                       </button>
                     </form>
                   </td>
@@ -132,7 +132,7 @@ export default async function VendorRouteDetailPage({
               ))}
               {stops.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">No stops on this route yet.</td>
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted">Ende pa ndalesa në këtë linjë.</td>
                 </tr>
               )}
             </tbody>
@@ -141,8 +141,8 @@ export default async function VendorRouteDetailPage({
       </section>
 
       <section className="border-t border-border py-8">
-        <h2 className="text-lg font-semibold text-foreground">Add a stop</h2>
-        <p className="mt-1 text-sm text-muted">Pick one of the existing stations, or search a new location on the map if the stop isn&apos;t listed yet.</p>
+        <h2 className="text-lg font-semibold text-foreground">Shto një ndalesë</h2>
+        <p className="mt-1 text-sm text-muted">Zgjidh një nga stacionet ekzistuese, ose kërko një vendndodhje të re në hartë nëse ndalesa nuk është listuar ende.</p>
         <div className="mt-4">
           <VendorAddRouteStopForm
             routeId={routeId}

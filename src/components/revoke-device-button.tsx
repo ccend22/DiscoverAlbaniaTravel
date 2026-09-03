@@ -15,13 +15,13 @@ export function RevokeDeviceButton({
     <form
       action={action}
       onSubmit={(e) => {
-        if (!window.confirm(`Revoke "${label}"? It will be signed out immediately and can't be reactivated -- you'd need to generate a new code.`)) {
+        if (!window.confirm(`Të revokohet "${label}"? Do të dalë menjëherë dhe nuk mund të riaktivizohet -- do të duhet të gjenerosh një kod të ri.`)) {
           e.preventDefault();
         }
       }}
     >
       <input type="hidden" name="deviceId" value={deviceId} />
-      <Button variant="danger" size="sm">Revoke</Button>
+      <Button variant="danger" size="sm">Revoko</Button>
     </form>
   );
 }

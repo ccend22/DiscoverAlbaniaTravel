@@ -14,18 +14,18 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
   return (
     <div className="public-page mx-auto max-w-md px-4 py-12 sm:px-6 sm:py-16">
       <Link href="/" className="text-sm text-teal underline">
-        Back to search
+        Kthehu te kërkimi
       </Link>
-      <p className="mt-6 animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">Bus operations</p>
-      <h1 className="mt-2 animate-fade-up font-display text-2xl font-bold text-foreground [animation-delay:60ms]">Vendor sign in</h1>
+      <p className="mt-6 animate-fade-up text-xs font-bold uppercase tracking-[0.1em] text-teal">Operator autobusësh</p>
+      <h1 className="mt-2 animate-fade-up font-display text-2xl font-bold text-foreground [animation-delay:60ms]">Hyrje për operatorë</h1>
       <p className="mt-2 animate-fade-up text-sm text-muted [animation-delay:100ms]">
-        Manage your operator profile and public departures.
+        Menaxho profilin e operatorit dhe nisjet publike.
       </p>
 
       {pending && (
         <div className="mt-5">
           <Alert tone="success">
-            Application received. An admin needs to approve your company before you can sign in.
+            Aplikimi u pranua. Një administrator duhet të aprovojë kompaninë tënde përpara se të mund të hysh.
           </Alert>
         </div>
       )}
@@ -48,7 +48,7 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Password</span>
+          <span className="font-medium text-foreground">Fjalëkalimi</span>
           <PasswordInput
             name="password"
             required
@@ -58,13 +58,13 @@ export default async function VendorLoginPage({ searchParams }: VendorLoginPageP
             className="public-input min-h-11 px-3 py-2"
           />
         </label>
-        <Button type="submit">Sign in</Button>
+        <Button type="submit">Hyr</Button>
       </form>
 
       <p className="mt-6 text-sm text-muted">
-        Don&apos;t have an account?{" "}
+        Nuk ke llogari?{" "}
         <Link href="/vendor/signup" className="text-teal underline">
-          Apply here
+          Apliko këtu
         </Link>
       </p>
     </div>

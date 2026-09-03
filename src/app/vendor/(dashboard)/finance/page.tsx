@@ -13,19 +13,19 @@ import {
 } from "@/lib/vendor-finance";
 
 const RANGE_OPTIONS: Array<{ value: VendorFinanceRange; label: string }> = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "this_month", label: "This month" },
-  { value: "all", label: "All time" },
+  { value: "today", label: "Sot" },
+  { value: "7d", label: "7 ditë" },
+  { value: "30d", label: "30 ditë" },
+  { value: "this_month", label: "Këtë muaj" },
+  { value: "all", label: "Gjithë kohën" },
 ];
 
 const CHANNEL_LABELS: Record<VendorFinanceTransaction["channel"], string> = {
   online: "Online",
-  walk_in: "Walk-in",
-  phone: "Phone",
-  touch_screen: "Touch screen",
-  mobile: "Mobile app",
+  walk_in: "Në sportel",
+  phone: "Telefon",
+  touch_screen: "Ekran prekës",
+  mobile: "Aplikacioni mobil",
 };
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -37,15 +37,15 @@ function financeHref(range: VendorFinanceRange): string {
 }
 
 function paymentBadge(transaction: VendorFinanceTransaction): { label: string; tone: BadgeTone } {
-  if (transaction.state === "collected") return { label: "Paid", tone: "success" };
-  if (transaction.state === "review") return { label: "Refund review", tone: "danger" };
-  if (transaction.state === "missing") return { label: "No payment", tone: "warning" };
-  if (transaction.paymentStatus === "authorized") return { label: "Authorized", tone: "info" };
-  if (transaction.paymentStatus === "pending") return { label: "Pending", tone: "warning" };
-  if (transaction.paymentStatus === "refunded") return { label: "Refunded", tone: "neutral" };
-  if (transaction.paymentStatus === "failed") return { label: "Failed", tone: "danger" };
-  if (transaction.paymentStatus === "cancelled") return { label: "Cancelled", tone: "neutral" };
-  return { label: "Closed", tone: "neutral" };
+  if (transaction.state === "collected") return { label: "E paguar", tone: "success" };
+  if (transaction.state === "review") return { label: "Kontroll rimbursimi", tone: "danger" };
+  if (transaction.state === "missing") return { label: "Pa pagesë", tone: "warning" };
+  if (transaction.paymentStatus === "authorized") return { label: "E autorizuar", tone: "info" };
+  if (transaction.paymentStatus === "pending") return { label: "Në pritje", tone: "warning" };
+  if (transaction.paymentStatus === "refunded") return { label: "E rimbursuar", tone: "neutral" };
+  if (transaction.paymentStatus === "failed") return { label: "Dështoi", tone: "danger" };
+  if (transaction.paymentStatus === "cancelled") return { label: "E anulluar", tone: "neutral" };
+  return { label: "E mbyllur", tone: "neutral" };
 }
 
 interface VendorFinanceDashboardProps {
@@ -82,12 +82,12 @@ function VendorFinanceDashboard({
       <header className="animate-fade-up border-b border-border pb-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-[-0.025em] text-foreground">Finance</h1>
+            <h1 className="font-display text-3xl font-bold tracking-[-0.025em] text-foreground">Financat</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Paid ticket income for {operatorName}, with platform fees separated from your operator earnings.
+              Të ardhurat nga biletat e paguara për {operatorName}, me komisionet e platformës të ndara nga fitimet e tua si operator.
             </p>
           </div>
-          <nav className="flex flex-wrap gap-1.5" aria-label="Finance period">
+          <nav className="flex flex-wrap gap-1.5" aria-label="Periudha financiare">
             {RANGE_OPTIONS.map((option) => {
               const active = period.range === option.value;
               return (
@@ -111,7 +111,7 @@ function VendorFinanceDashboard({
         <form method="get" className="mt-5 flex flex-col gap-3 rounded-xl bg-surface-sunken p-3 sm:flex-row sm:items-end">
           <input type="hidden" name="range" value="custom" />
           <label className="flex flex-1 flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">From</span>
+            <span className="font-medium text-foreground">Nga</span>
             <input
               type="date"
               name="from"
@@ -121,7 +121,7 @@ function VendorFinanceDashboard({
             />
           </label>
           <label className="flex flex-1 flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">To</span>
+            <span className="font-medium text-foreground">Deri</span>
             <input
               type="date"
               name="to"
@@ -131,45 +131,45 @@ function VendorFinanceDashboard({
             />
           </label>
           <button className="min-h-11 rounded-md bg-brand px-5 py-2 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal">
-            Apply dates
+            Apliko datat
           </button>
         </form>
       </header>
 
-      <p className="mt-6 text-sm font-medium text-muted">Showing {period.label}</p>
+      <p className="mt-6 text-sm font-medium text-muted">Duke shfaqur {period.label}</p>
 
       <section className="mt-3 grid overflow-hidden rounded-xl bg-brand-deep text-white shadow-[var(--shadow-md)] lg:grid-cols-[1.15fr_1fr]" aria-labelledby="finance-summary-title">
         <div className="flex min-h-[250px] flex-col justify-between p-6 sm:p-8">
           <div>
-            <h2 id="finance-summary-title" className="text-sm font-semibold text-white/75">Operator earnings</h2>
+            <h2 id="finance-summary-title" className="text-sm font-semibold text-white/75">Fitimet e operatorit</h2>
             <p className="mt-3 font-display text-4xl font-bold tracking-[-0.035em] tabular-nums sm:text-5xl">
               {formatCurrency(summary.operatorEarningsEur)}
             </p>
             <p className="mt-3 max-w-lg text-sm leading-6 text-white/70">
-              Money collected from paid, confirmed tickets after the {formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)} platform service fee. Fuel, salaries, taxes, and other operating costs are not tracked yet.
+              Të ardhura të mbledhura nga biletat e paguara dhe të konfirmuara, pas komisionit të platformës prej {formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)}. Karburanti, pagat, taksat dhe kosto të tjera operative nuk gjurmohen ende.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/15 pt-5 text-sm">
-            <p><span className="block text-white/60">Paid bookings</span><strong className="mt-0.5 block text-lg tabular-nums">{summary.paidBookings}</strong></p>
-            <p><span className="block text-white/60">Seats sold</span><strong className="mt-0.5 block text-lg tabular-nums">{summary.seatsSold}</strong></p>
+            <p><span className="block text-white/60">Rezervime të paguara</span><strong className="mt-0.5 block text-lg tabular-nums">{summary.paidBookings}</strong></p>
+            <p><span className="block text-white/60">Vende të shitura</span><strong className="mt-0.5 block text-lg tabular-nums">{summary.seatsSold}</strong></p>
           </div>
         </div>
 
         <dl className="grid border-t border-white/15 bg-white/[0.06] sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0">
           <div className="p-5 sm:p-6">
-            <dt className="text-sm text-white/65">Gross collected</dt>
+            <dt className="text-sm text-white/65">Të mbledhura bruto</dt>
             <dd className="mt-1 text-2xl font-bold tabular-nums">{formatCurrency(summary.grossCollectedEur)}</dd>
-            <p className="mt-1 text-xs text-white/55">Customer payments received</p>
+            <p className="mt-1 text-xs text-white/55">Pagesat e marra nga klientët</p>
           </div>
           <div className="border-t border-white/15 p-5 sm:border-l sm:border-t-0 sm:p-6 lg:border-l-0 lg:border-t">
-            <dt className="text-sm text-white/65">Platform fees</dt>
+            <dt className="text-sm text-white/65">Komisionet e platformës</dt>
             <dd className="mt-1 text-2xl font-bold tabular-nums">−{formatCurrency(summary.platformFeesEur)}</dd>
-            <p className="mt-1 text-xs text-white/55">{formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)} per paid booking</p>
+            <p className="mt-1 text-xs text-white/55">{formatCurrency(BUS_BOOKING_SERVICE_FEE_EUR)} për çdo rezervim të paguar</p>
           </div>
           <div className="border-t border-white/15 p-5 sm:border-l sm:border-t-0 sm:p-6 lg:border-l-0 lg:border-t">
-            <dt className="text-sm text-white/65">Awaiting payment</dt>
+            <dt className="text-sm text-white/65">Në pritje të pagesës</dt>
             <dd className="mt-1 text-2xl font-bold tabular-nums text-gold-soft">{formatCurrency(summary.pendingAmountEur)}</dd>
-            <p className="mt-1 text-xs text-white/55">Not included in earnings</p>
+            <p className="mt-1 text-xs text-white/55">Nuk përfshihet në fitime</p>
           </div>
         </dl>
       </section>
@@ -178,10 +178,10 @@ function VendorFinanceDashboard({
         <div className="mt-5 flex items-start gap-3 rounded-xl border border-warning/25 bg-warning-soft p-4 text-sm text-warning">
           <AlertCircleIcon width={20} height={20} className="mt-0.5 shrink-0" />
           <div>
-            <p className="font-semibold">{needsAttention} transaction{needsAttention === 1 ? "" : "s"} need attention</p>
+            <p className="font-semibold">{needsAttention} transaksion{needsAttention === 1 ? "" : "e"} kërkon vëmendje</p>
             <p className="mt-1 leading-6 text-warning/85">
-              {summary.reviewCount > 0 && `${summary.reviewCount} paid cancelled booking${summary.reviewCount === 1 ? "" : "s"} may need a refund. `}
-              {summary.missingPaymentCount > 0 && `${summary.missingPaymentCount} confirmed booking${summary.missingPaymentCount === 1 ? " has" : "s have"} no payment record.`}
+              {summary.reviewCount > 0 && `${summary.reviewCount} rezervim${summary.reviewCount === 1 ? "" : "e"} i paguar dhe i anulluar mund të ketë nevojë për rimbursim. `}
+              {summary.missingPaymentCount > 0 && `${summary.missingPaymentCount} rezervim${summary.missingPaymentCount === 1 ? "" : "e"} i konfirmuar nuk ka regjistrim pagese.`}
             </p>
           </div>
         </div>
@@ -191,8 +191,8 @@ function VendorFinanceDashboard({
         <section className="min-w-0" aria-labelledby="earnings-trend-title">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="earnings-trend-title" className="text-lg font-semibold text-foreground">Earnings trend</h2>
-              <p className="mt-1 text-sm text-muted">Operator earnings grouped by {finance.trendGranularity}.</p>
+              <h2 id="earnings-trend-title" className="text-lg font-semibold text-foreground">Tendenca e fitimeve</h2>
+              <p className="mt-1 text-sm text-muted">Fitimet e operatorit të grupuara sipas {finance.trendGranularity}.</p>
             </div>
             <p className="text-sm font-semibold tabular-nums text-teal">{formatCurrency(summary.operatorEarningsEur)} total</p>
           </div>
@@ -203,7 +203,7 @@ function VendorFinanceDashboard({
                 className="flex h-64 items-end gap-2"
                 style={{ minWidth: `${Math.max(560, finance.trend.length * 44)}px` }}
                 role="img"
-                aria-label={`Operator earnings trend for ${period.label}`}
+                aria-label={`Tendenca e fitimeve të operatorit për ${period.label}`}
               >
                 {finance.trend.map((item) => {
                   const height = maxTrendValue > 0 ? Math.max(3, (item.earningsEur / maxTrendValue) * 100) : 0;
@@ -225,16 +225,16 @@ function VendorFinanceDashboard({
               </div>
             ) : (
               <div className="flex min-h-64 flex-col items-center justify-center text-center">
-                <p className="font-medium text-foreground">No paid income in this period</p>
-                <p className="mt-1 max-w-sm text-sm leading-6 text-muted">Paid and confirmed bookings will appear here as soon as a payment is recorded.</p>
+                <p className="font-medium text-foreground">Ende pa të ardhura të paguara në këtë periudhë</p>
+                <p className="mt-1 max-w-sm text-sm leading-6 text-muted">Rezervimet e paguara dhe të konfirmuara do të shfaqen këtu sapo të regjistrohet një pagesë.</p>
               </div>
             )}
           </div>
         </section>
 
         <section className="min-w-0" aria-labelledby="route-performance-title">
-          <h2 id="route-performance-title" className="text-lg font-semibold text-foreground">Route performance</h2>
-          <p className="mt-1 text-sm text-muted">Ranked by operator earnings.</p>
+          <h2 id="route-performance-title" className="text-lg font-semibold text-foreground">Performanca e linjave</h2>
+          <p className="mt-1 text-sm text-muted">Renditur sipas fitimeve të operatorit.</p>
           <div className="mt-4 rounded-xl border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
             {finance.routes.length > 0 ? (
               <ol className="space-y-5">
@@ -250,14 +250,14 @@ function VendorFinanceDashboard({
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
                       <div className="h-full rounded-full bg-teal" style={{ width: `${Math.max(3, route.share * 100)}%` }} />
                     </div>
-                    <p className="mt-1.5 text-xs text-muted">{route.bookings} booking{route.bookings === 1 ? "" : "s"} · {route.seats} seat{route.seats === 1 ? "" : "s"}</p>
+                    <p className="mt-1.5 text-xs text-muted">{route.bookings} rezervim{route.bookings === 1 ? "" : "e"} · {route.seats} vend{route.seats === 1 ? "" : "e"}</p>
                   </li>
                 ))}
               </ol>
             ) : (
               <div className="flex min-h-64 flex-col items-center justify-center text-center">
-                <p className="font-medium text-foreground">No route income yet</p>
-                <p className="mt-1 text-sm leading-6 text-muted">This ranking starts after the first paid booking.</p>
+                <p className="font-medium text-foreground">Ende pa të ardhura nga linjat</p>
+                <p className="mt-1 text-sm leading-6 text-muted">Kjo renditje fillon pas rezervimit të parë të paguar.</p>
               </div>
             )}
           </div>
@@ -267,12 +267,12 @@ function VendorFinanceDashboard({
       <section className="mt-10 min-w-0 max-w-full border-t border-border pt-8" aria-labelledby="transaction-ledger-title">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 id="transaction-ledger-title" className="text-lg font-semibold text-foreground">Transaction ledger</h2>
-            <p className="mt-1 text-sm text-muted">Latest payment state for each booking in this period.</p>
+            <h2 id="transaction-ledger-title" className="text-lg font-semibold text-foreground">Regjistri i transaksioneve</h2>
+            <p className="mt-1 text-sm text-muted">Statusi më i fundit i pagesës për çdo rezervim në këtë periudhë.</p>
           </div>
           <div className="text-xs text-muted sm:text-right">
-            <p>Showing up to 100 most recent entries</p>
-            <p className="mt-1 sm:hidden">Swipe sideways to see status and amounts.</p>
+            <p>Duke shfaqur deri në 100 hyrjet më të fundit</p>
+            <p className="mt-1 sm:hidden">Rrëshqit anash për të parë statusin dhe shumat.</p>
           </div>
         </div>
 
@@ -280,14 +280,14 @@ function VendorFinanceDashboard({
           <table className="w-full min-w-[1040px] border-collapse text-sm">
             <thead className="border-b border-border bg-surface-sunken/70 text-left text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Payment date</th>
-                <th className="px-4 py-3 font-medium">Booking</th>
-                <th className="px-4 py-3 font-medium">Route</th>
-                <th className="px-4 py-3 font-medium">Channel</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Gross</th>
-                <th className="px-4 py-3 text-right font-medium">Platform fee</th>
-                <th className="px-4 py-3 text-right font-medium">Operator earnings</th>
+                <th className="px-4 py-3 font-medium">Data e pagesës</th>
+                <th className="px-4 py-3 font-medium">Rezervimi</th>
+                <th className="px-4 py-3 font-medium">Linja</th>
+                <th className="px-4 py-3 font-medium">Kanali</th>
+                <th className="px-4 py-3 font-medium">Statusi</th>
+                <th className="px-4 py-3 text-right font-medium">Bruto</th>
+                <th className="px-4 py-3 text-right font-medium">Komisioni</th>
+                <th className="px-4 py-3 text-right font-medium">Fitimi i operatorit</th>
               </tr>
             </thead>
             <tbody>
@@ -297,10 +297,10 @@ function VendorFinanceDashboard({
                   <tr key={transaction.bookingId} className="border-b border-border last:border-0 hover:bg-surface-sunken/60">
                     <td className="px-4 py-3 text-muted">{formatDateShort(transaction.financialDate)}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/ticket/${transaction.bookingReference}`} target="_blank" rel="noreferrer" title="Open and print QR ticket" className="font-mono text-xs font-semibold text-teal underline decoration-teal/30 underline-offset-4 hover:decoration-teal">
+                      <Link href={`/ticket/${transaction.bookingReference}`} target="_blank" rel="noreferrer" title="Hap dhe printo biletën me kod QR" className="font-mono text-xs font-semibold text-teal underline decoration-teal/30 underline-offset-4 hover:decoration-teal">
                         {transaction.bookingReference}
                       </Link>
-                      <p className="mt-1 text-xs text-muted">Travel {formatDateShort(transaction.travelDate)}</p>
+                      <p className="mt-1 text-xs text-muted">Udhëtimi më {formatDateShort(transaction.travelDate)}</p>
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground">{transaction.routeCode}</p>
@@ -323,8 +323,8 @@ function VendorFinanceDashboard({
               {finance.transactions.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
-                    <p className="font-medium text-foreground">No transactions in this period</p>
-                    <p className="mt-1 text-sm text-muted">Choose another date range to review older activity.</p>
+                    <p className="font-medium text-foreground">Ende pa transaksione në këtë periudhë</p>
+                    <p className="mt-1 text-sm text-muted">Zgjidh një interval tjetër datash për të parë aktivitetin e mëparshëm.</p>
                   </td>
                 </tr>
               )}
@@ -336,7 +336,7 @@ function VendorFinanceDashboard({
       <aside className="mt-6 flex items-start gap-3 text-sm leading-6 text-muted">
         <InfoIcon width={18} height={18} className="mt-0.5 shrink-0 text-teal" />
         <p>
-          Finance uses the latest payment attempt per booking and the payment settlement date. “Operator earnings” means collected ticket income after the platform service fee, before your own operating costs; it is not accounting profit.
+          Financat përdorin përpjekjen e fundit të pagesës për çdo rezervim dhe datën e shlyerjes së pagesës. &ldquo;Fitimet e operatorit&rdquo; nënkuptojnë të ardhurat e mbledhura nga biletat pas komisionit të platformës, para kostove të tua operative; nuk përbën fitim kontabël.
         </p>
       </aside>
     </div>

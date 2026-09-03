@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { SearchIcon } from "@/components/icons";
 
 const WEEKDAYS = [
-  { value: 1, label: "Mon" },
-  { value: 2, label: "Tue" },
-  { value: 3, label: "Wed" },
-  { value: 4, label: "Thu" },
-  { value: 5, label: "Fri" },
-  { value: 6, label: "Sat" },
-  { value: 7, label: "Sun" },
+  { value: 1, label: "Hën" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mër" },
+  { value: 4, label: "Enj" },
+  { value: 5, label: "Pre" },
+  { value: 6, label: "Sht" },
+  { value: 7, label: "Die" },
 ];
 
 export interface VendorDeparture {
@@ -55,7 +55,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
     <div>
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted">
-          Showing {filtered.length} of {departures.length} departures
+          Duke shfaqur {filtered.length} nga {departures.length} nisje
         </p>
         <label className="relative w-full sm:w-72">
           <SearchIcon
@@ -67,8 +67,8 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search route or station"
-            aria-label="Search departures"
+            placeholder="Kërko linjën ose stacionin"
+            aria-label="Kërko nisjet"
             className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-teal"
           />
         </label>
@@ -78,19 +78,19 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="border-b border-border text-left text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Route</th>
-              <th className="px-4 py-3 font-medium">From</th>
-              <th className="px-4 py-3 font-medium">Times</th>
-              <th className="px-4 py-3 font-medium">Days</th>
-              <th className="px-4 py-3 font-medium">Price</th>
-              <th className="px-4 py-3 font-medium">Seats</th>
-              <th className="px-4 py-3 font-medium">Boarding</th>
+              <th className="px-4 py-3 font-medium">Linja</th>
+              <th className="px-4 py-3 font-medium">Nga</th>
+              <th className="px-4 py-3 font-medium">Oraret</th>
+              <th className="px-4 py-3 font-medium">Ditët</th>
+              <th className="px-4 py-3 font-medium">Çmimi</th>
+              <th className="px-4 py-3 font-medium">Vendet</th>
+              <th className="px-4 py-3 font-medium">Hipja</th>
               <th className="px-4 py-3 font-medium">
-                <span className="sr-only">Save</span>
+                <span className="sr-only">Ruaj</span>
               </th>
               {deleteAction && (
                 <th className="px-4 py-3 font-medium">
-                  <span className="sr-only">Delete</span>
+                  <span className="sr-only">Fshi</span>
                 </th>
               )}
             </tr>
@@ -104,7 +104,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                     {departure.routeLongName}
                   </p>
                   <Link href={`/vendor/manifest/${departure.id}`} className="mt-1 inline-block text-xs font-medium text-teal hover:underline">
-                    Boarding list
+                    Lista e hipjes
                   </Link>
                 </td>
                 <td className="px-4 py-3 align-top text-foreground">
@@ -157,7 +157,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                     min="0"
                     step="0.01"
                     required
-                    placeholder="No price on file"
+                    placeholder="Pa çmim të regjistruar"
                     defaultValue={departure.basePrice ?? ""}
                     className="w-24 rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-teal"
                   />
@@ -173,7 +173,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                       required
                       defaultValue={departure.plannedSeats}
                       className="w-20 rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-teal"
-                      aria-label="Planned seats"
+                      aria-label="Vendet e planifikuara"
                     />
                     <input
                       form={`departure-${departure.id}`}
@@ -184,7 +184,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                       required
                       defaultValue={departure.freeSeats}
                       className="w-20 rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-teal"
-                      aria-label="Free seats"
+                      aria-label="Vendet e lira"
                     />
                   </div>
                 </td>
@@ -198,7 +198,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                       className="accent-teal"
                     />
                     <Badge tone={departure.canBoard ? "success" : "neutral"}>
-                      {departure.canBoard ? "Open" : "Closed"}
+                      {departure.canBoard ? "E hapur" : "E mbyllur"}
                     </Badge>
                   </label>
                 </td>
@@ -207,7 +207,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                     form={`departure-${departure.id}`}
                     className="rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground shadow-[var(--shadow-xs)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-brand-strong hover:shadow-[var(--shadow-sm)] active:translate-y-0"
                   >
-                    Save
+                    Ruaj
                   </button>
                 </td>
                 {deleteAction && (
@@ -215,7 +215,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                     <form
                       action={deleteAction}
                       onSubmit={(e) => {
-                        if (!window.confirm(`Delete this departure (${departure.routeCode})? This can't be undone.`)) {
+                        if (!window.confirm(`Të fshihet kjo nisje (${departure.routeCode})? Ky veprim nuk mund të kthehet mbrapsht.`)) {
                           e.preventDefault();
                         }
                       }}
@@ -223,7 +223,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
                       <input type="hidden" name="tripDepartureId" value={departure.id} />
                       {operatorId != null && <input type="hidden" name="operatorId" value={operatorId} />}
                       <button className="rounded-md border border-red/30 px-3 py-1.5 text-sm font-medium text-red transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:-translate-y-px hover:bg-red-soft hover:shadow-[var(--shadow-xs)]">
-                        Delete
+                        Fshi
                       </button>
                     </form>
                   </td>
@@ -233,7 +233,7 @@ export function VendorDeparturesTable({ departures, updateAction, deleteAction, 
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={deleteAction ? 9 : 8} className="px-4 py-8 text-center text-muted">
-                  No departures match &quot;{query}&quot;.
+                  Asnjë nisje nuk përputhet me &quot;{query}&quot;.
                 </td>
               </tr>
             )}

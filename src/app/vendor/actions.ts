@@ -57,17 +57,17 @@ export async function loginVendorAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor/login?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid login")}`);
+    redirect(`/vendor/login?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Hyrje e pavlefshme")}`);
   }
 
   const result = await authenticateVendor(parsed.data.email, parsed.data.password);
   if (!result.ok) {
     const message =
       result.error === "pending_approval"
-        ? "Your account is awaiting admin approval. You'll be able to sign in once it's approved."
+        ? "Llogaria jote është në pritje të aprovimit nga administratori. Do të mund të hysh sapo të aprovohet."
         : result.error === "rejected"
-          ? "This vendor application was not approved. Contact support for details."
-          : "Invalid email or password.";
+          ? "Ky aplikim operatori nuk u aprovua. Kontakto mbështetjen për detaje."
+          : "Email ose fjalëkalim i pasaktë.";
     redirect(`/vendor/login?error=${encodeURIComponent(message)}`);
   }
 
@@ -84,7 +84,7 @@ export async function signupClaimOperatorAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor/signup?mode=claim&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+    redirect(`/vendor/signup?mode=claim&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Të dhëna të pavlefshme")}`);
   }
 
   const result = await applyForExistingOperator(parsed.data.operatorId, {
@@ -112,7 +112,7 @@ export async function signupNewOperatorAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor/signup?mode=new&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+    redirect(`/vendor/signup?mode=new&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Të dhëna të pavlefshme")}`);
   }
 
   const result = await applyAsNewOperator({
@@ -148,7 +148,7 @@ export async function updateVendorOperatorAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid operator details")}`);
+    redirect(`/vendor/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Të dhëna operatori të pavlefshme")}`);
   }
 
   await updateVendorOperator(vendorUserId, {
@@ -177,7 +177,7 @@ export async function updateVendorDepartureAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
+    redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Nisje e pavlefshme")}`);
   }
 
   const updated = await updateVendorDeparture(vendorUserId, {
@@ -187,7 +187,7 @@ export async function updateVendorDepartureAction(formData: FormData) {
   });
 
   if (!updated) {
-    redirect("/vendor/departures?error=Departure%20not%20found");
+    redirect(`/vendor/departures?error=${encodeURIComponent("Nisja nuk u gjet")}`);
   }
 
   revalidatePath("/vendor/departures");
@@ -197,11 +197,11 @@ export async function updateVendorDepartureAction(formData: FormData) {
 export async function createVendorRouteAction(formData: FormData) {
   const vendorUserId = await requireVendorSession();
   const parsed = vendorRouteSchema.safeParse({ code: formData.get("code"), longName: formData.get("longName") });
-  if (!parsed.success) redirect(`/vendor/routes?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid route")}`);
+  if (!parsed.success) redirect(`/vendor/routes?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Linjë e pavlefshme")}`);
   try {
     await createVendorRoute(vendorUserId, parsed.data);
   } catch {
-    redirect("/vendor/routes?error=That%20route%20code%20is%20already%20in%20use");
+    redirect(`/vendor/routes?error=${encodeURIComponent("Ky kod linje është tashmë në përdorim")}`);
   }
   revalidatePath("/vendor/routes");
   redirect("/vendor/routes?saved=1");
@@ -221,7 +221,7 @@ export async function createVendorDepartureAction(formData: FormData) {
     plannedSeats: formData.get("plannedSeats"),
     weekdays: formData.getAll("weekdays"),
   });
-  if (!parsed.success) redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid departure")}`);
+  if (!parsed.success) redirect(`/vendor/departures?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Nisje e pavlefshme")}`);
   let created = false;
   try {
     created = await createVendorDeparture(vendorUserId, {
@@ -229,9 +229,9 @@ export async function createVendorDepartureAction(formData: FormData) {
       weekdays: parsed.data.weekdays.sort((a, b) => a - b),
     });
   } catch {
-    redirect("/vendor/departures?error=A%20departure%20with%20these%20details%20already%20exists");
+    redirect(`/vendor/departures?error=${encodeURIComponent("Një nisje me këto të dhëna ekziston tashmë")}`);
   }
-  if (!created) redirect("/vendor/departures?error=Route%20not%20found");
+  if (!created) redirect(`/vendor/departures?error=${encodeURIComponent("Linja nuk u gjet")}`);
   revalidatePath("/vendor/departures");
   redirect("/vendor/departures?saved=1");
 }
@@ -247,7 +247,7 @@ export async function createVendorRouteStopAction(formData: FormData) {
     priceToDestination: formData.get("priceToDestination") || undefined,
   });
   if (!parsed.success) {
-    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Ndalesë e pavlefshme")}`);
   }
   const result = await createVendorRouteStop(vendorUserId, parsed.data);
   if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
@@ -269,7 +269,7 @@ export async function createVendorRouteStopAtNewLocationAction(formData: FormDat
     priceToDestination: formData.get("priceToDestination") || undefined,
   });
   if (!parsed.success) {
-    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Ndalesë e pavlefshme")}`);
   }
   const result = await createVendorRouteStopAtNewLocation(vendorUserId, parsed.data);
   if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
@@ -289,7 +289,7 @@ export async function updateVendorRouteStopAction(formData: FormData) {
       priceToDestination: formData.get("priceToDestination") || undefined,
     });
   if (!parsed.success) {
-    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid stop")}`);
+    redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Ndalesë e pavlefshme")}`);
   }
   const result = await updateVendorRouteStop(vendorUserId, routeStopId, parsed.data);
   if (!result.ok) redirect(`/vendor/routes/${routeId}?error=${encodeURIComponent(result.error)}`);
@@ -324,7 +324,7 @@ export async function createManualBookingAction(formData: FormData) {
   });
   if (!parsed.success) {
     const mode = touchScreenMode ? "&mode=touch_screen" : "";
-    redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}${mode}`);
+    redirect(`/vendor/bookings/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Rezervim i pavlefshëm")}${mode}`);
   }
 
   const result = await createManualBookingForVendor(vendorUserId, {
@@ -362,7 +362,7 @@ export async function updateVendorBookingAction(formData: FormData) {
     channel: formData.get("channel"),
   });
   if (!parsed.success) {
-    redirect(`/vendor/bookings?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid booking")}`);
+    redirect(`/vendor/bookings?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Rezervim i pavlefshëm")}`);
   }
   const result = await updateVendorBookingDetails(vendorUserId, bookingId, {
     passengerName: parsed.data.passengerName,
@@ -414,7 +414,7 @@ export async function createVendorTeamUserAction(formData: FormData) {
     permissions: formData.getAll("permissions"),
   });
   if (!parsed.success) {
-    redirect(`/vendor/users?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid details")}`);
+    redirect(`/vendor/users?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Të dhëna të pavlefshme")}`);
   }
   const result = await createVendorTeamUser(vendorUserId, parsed.data);
   if (!result.ok) redirect(`/vendor/users?error=${encodeURIComponent(result.error)}`);
@@ -444,9 +444,9 @@ export async function deleteVendorTeamUserAction(formData: FormData) {
 export async function createDeviceActivationCodeAction(formData: FormData) {
   const vendorUserId = await requireVendorSession();
   const label = String(formData.get("label") ?? "").trim();
-  if (!label) redirect("/vendor/devices?error=Enter a name for the device");
+  if (!label) redirect(`/vendor/devices?error=${encodeURIComponent("Shkruaj një emër për pajisjen")}`);
   const result = await createDeviceActivationCode(vendorUserId, label);
-  if (!result.ok) redirect("/vendor/devices?error=Only the owner can activate devices");
+  if (!result.ok) redirect(`/vendor/devices?error=${encodeURIComponent("Vetëm pronari mund të aktivizojë pajisje")}`);
   revalidatePath("/vendor/devices");
   redirect(`/vendor/devices?code=${result.code}&expiresAt=${result.expiresAt.toISOString()}`);
 }
@@ -455,7 +455,7 @@ export async function revokeDeviceAction(formData: FormData) {
   const vendorUserId = await requireVendorSession();
   const deviceId = Number(formData.get("deviceId"));
   const revoked = await revokeDevice(vendorUserId, deviceId);
-  if (!revoked) redirect("/vendor/devices?error=Couldn't revoke that device");
+  if (!revoked) redirect(`/vendor/devices?error=${encodeURIComponent("Pajisja nuk mund të revokohej")}`);
   revalidatePath("/vendor/devices");
   redirect("/vendor/devices?saved=1");
 }

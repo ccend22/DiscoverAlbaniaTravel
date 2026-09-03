@@ -43,7 +43,7 @@ export function VendorAddRouteStopForm({
             mode === "existing" ? "bg-brand text-brand-foreground shadow-sm" : "text-muted hover:text-foreground"
           }`}
         >
-          Existing station
+          Stacion ekzistues
         </button>
         <button
           type="button"
@@ -52,7 +52,7 @@ export function VendorAddRouteStopForm({
             mode === "map" ? "bg-brand text-brand-foreground shadow-sm" : "text-muted hover:text-foreground"
           }`}
         >
-          Search on map
+          Kërko në hartë
         </button>
       </div>
 
@@ -60,30 +60,30 @@ export function VendorAddRouteStopForm({
         <form action={existingStationAction} className="grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2 lg:grid-cols-4">
           <input type="hidden" name="routeId" value={routeId} />
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Station</span>
+            <span className="font-medium">Stacioni</span>
             <select name="stationId" required className="min-h-11 rounded-md border border-border bg-background px-3 py-2">
-              <option value="">Choose station</option>
+              <option value="">Zgjidh stacionin</option>
               {availableStations.map((station) => (
                 <option key={station.id} value={station.id}>{station.city} · {station.name}</option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Order</span>
+            <span className="font-medium">Radha</span>
             <input name="sequenceOrder" type="number" min="1" required defaultValue={nextSequenceOrder} className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Minutes from departure</span>
+            <span className="font-medium">Minuta nga nisja</span>
             <input name="minutesFromDeparture" type="number" min="0" required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Price to destination <span className="font-normal text-muted">(optional)</span></span>
-            <input name="priceToDestination" type="number" min="0" step="0.01" placeholder="Same as full fare" className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+            <span className="font-medium">Çmimi deri në destinacion <span className="font-normal text-muted">(opsionale)</span></span>
+            <input name="priceToDestination" type="number" min="0" step="0.01" placeholder="Njësoj si çmimi i plotë" className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <div className="lg:col-span-4">
-            <Button type="submit" size="sm" disabled={availableStations.length === 0}>Add stop</Button>
+            <Button type="submit" size="sm" disabled={availableStations.length === 0}>Shto ndalesën</Button>
             {availableStations.length === 0 && (
-              <p className="mt-2 text-xs text-muted">Every station is already on this route -- search a new location instead.</p>
+              <p className="mt-2 text-xs text-muted">Çdo stacion është tashmë në këtë linjë -- kërko një vendndodhje të re në vend të kësaj.</p>
             )}
           </div>
         </form>
@@ -93,12 +93,12 @@ export function VendorAddRouteStopForm({
           <input type="hidden" name="latitude" value={coords?.lat ?? ""} />
           <input type="hidden" name="longitude" value={coords?.lng ?? ""} />
           <label className="flex flex-col gap-1 text-sm sm:col-span-2 lg:col-span-2">
-            <span className="font-medium">Search a location</span>
+            <span className="font-medium">Kërko një vendndodhje</span>
             <PlacesAutocompleteInput
               name="search"
               value={search}
               onChange={setSearch}
-              placeholder="Search a town, stop, or landmark in Albania"
+              placeholder="Kërko një qytet, ndalesë ose pikë referimi në Shqipëri"
               required
               countryRestriction="al"
               className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
@@ -111,18 +111,18 @@ export function VendorAddRouteStopForm({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Stop name</span>
+            <span className="font-medium">Emri i ndalesës</span>
             <input
               name="stationName"
               required
               value={stationName}
               onChange={(e) => setStationName(e.target.value)}
-              placeholder="e.g. Divjake qender"
+              placeholder="p.sh. Divjakë qendër"
               className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">City</span>
+            <span className="font-medium">Qyteti</span>
             <input
               name="city"
               required
@@ -132,22 +132,22 @@ export function VendorAddRouteStopForm({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Order</span>
+            <span className="font-medium">Radha</span>
             <input name="sequenceOrder" type="number" min="1" required defaultValue={nextSequenceOrder} className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Minutes from departure</span>
+            <span className="font-medium">Minuta nga nisja</span>
             <input name="minutesFromDeparture" type="number" min="0" required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Price to destination <span className="font-normal text-muted">(optional)</span></span>
-            <input name="priceToDestination" type="number" min="0" step="0.01" placeholder="Same as full fare" className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
+            <span className="font-medium">Çmimi deri në destinacion <span className="font-normal text-muted">(opsionale)</span></span>
+            <input name="priceToDestination" type="number" min="0" step="0.01" placeholder="Njësoj si çmimi i plotë" className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           {!coords && (
-            <p className="text-xs text-muted lg:col-span-4">Pick a suggestion from the search box so the exact map location is saved.</p>
+            <p className="text-xs text-muted lg:col-span-4">Zgjidh një sugjerim nga kutia e kërkimit që të ruhet vendndodhja e saktë në hartë.</p>
           )}
           <div className="lg:col-span-4">
-            <Button type="submit" size="sm" disabled={!coords}>Add stop</Button>
+            <Button type="submit" size="sm" disabled={!coords}>Shto ndalesën</Button>
           </div>
         </form>
       )}

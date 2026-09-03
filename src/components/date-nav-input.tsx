@@ -16,7 +16,7 @@ export function DateNavInput({ date }: { date: string }) {
         onChange={(event) => {
           if (event.target.value) router.push(`${pathname}?date=${event.target.value}`);
         }}
-        aria-label="Overview date"
+        aria-label="Data e përmbledhjes"
         className="min-h-11 rounded-md border border-border bg-surface py-2 pl-9 pr-3 text-sm font-medium text-foreground outline-none focus:border-teal"
       />
     </label>

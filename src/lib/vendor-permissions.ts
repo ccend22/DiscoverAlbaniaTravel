@@ -1,10 +1,10 @@
 export const VENDOR_PERMISSIONS = [
-  { key: "calendar", label: "Calendar" },
-  { key: "bookings", label: "Bookings" },
-  { key: "scanner", label: "Scan tickets" },
-  { key: "finance", label: "Finance" },
-  { key: "routes", label: "Routes & stops" },
-  { key: "departures", label: "Departures" },
+  { key: "calendar", label: "Kalendari" },
+  { key: "bookings", label: "Rezervimet" },
+  { key: "scanner", label: "Skano biletat" },
+  { key: "finance", label: "Financat" },
+  { key: "routes", label: "Linjat dhe stacionet" },
+  { key: "departures", label: "Nisjet" },
 ] as const;
 
 export type VendorPermission = (typeof VENDOR_PERMISSIONS)[number]["key"];

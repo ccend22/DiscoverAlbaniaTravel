@@ -20,20 +20,20 @@ interface NavLink {
 }
 
 const MAIN_LINKS: NavLink[] = [
-  { href: "/vendor", label: "Overview" },
-  { href: "/vendor/calendar", label: "Calendar", permission: "calendar" },
-  { href: "/vendor/bookings", label: "Bookings", permission: "bookings" },
-  { href: "/vendor/scanner", label: "Scan tickets", permission: "scanner" },
-  { href: "/vendor/finance", label: "Finance", permission: "finance" },
+  { href: "/vendor", label: "Përmbledhje" },
+  { href: "/vendor/calendar", label: "Kalendari", permission: "calendar" },
+  { href: "/vendor/bookings", label: "Rezervimet", permission: "bookings" },
+  { href: "/vendor/scanner", label: "Skano biletat", permission: "scanner" },
+  { href: "/vendor/finance", label: "Financat", permission: "finance" },
 ];
 
 const SETTINGS_LINKS: NavLink[] = [
-  { href: "/vendor/profile", label: "Profile" },
-  { href: "/vendor/routes", label: "Routes & stops", permission: "routes" },
-  { href: "/vendor/departures", label: "Departures", permission: "departures" },
-  { href: "/vendor/users", label: "Users", ownerOnly: true },
-  { href: "/vendor/devices", label: "Devices", ownerOnly: true },
-  { href: "/vendor/activity-log", label: "Activity Logs", permission: "scanner" },
+  { href: "/vendor/profile", label: "Profili" },
+  { href: "/vendor/routes", label: "Linjat dhe stacionet", permission: "routes" },
+  { href: "/vendor/departures", label: "Nisjet", permission: "departures" },
+  { href: "/vendor/users", label: "Përdoruesit", ownerOnly: true },
+  { href: "/vendor/devices", label: "Pajisjet", ownerOnly: true },
+  { href: "/vendor/activity-log", label: "Regjistri i aktivitetit", permission: "scanner" },
 ];
 
 function visibleLinks(links: NavLink[], vendor: { isOwner: boolean; permissions: string[] }): NavLink[] {
@@ -116,15 +116,15 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
     <>
       <header className="sticky top-0 z-50 border-b border-border bg-surface/95 shadow-[var(--shadow-xs)] backdrop-blur-md print:hidden lg:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link href="/vendor" aria-label="Discover Albania Transport vendor portal" className="flex items-center gap-2">
+          <Link href="/vendor" aria-label="Portali i operatorit Discover Albania Transport" className="flex items-center gap-2">
             <BrandMark size={24} />
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-muted">Vendor</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-muted">Operatori</span>
           </Link>
           <button
             ref={menuButtonRef}
             type="button"
             onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
+            aria-label="Hap menynë"
             aria-expanded={drawerOpen}
             className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-brand-soft hover:text-foreground"
           >
@@ -144,7 +144,7 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Vendor menu"
+        aria-label="Menyja e operatorit"
         aria-hidden={!drawerOpen}
         inert={!drawerOpen ? true : undefined}
         className={`fixed inset-0 z-50 flex h-[100dvh] max-w-full flex-col overflow-hidden bg-surface-sunken text-foreground transition-transform duration-500 ease-[var(--ease-out-expo)] print:hidden lg:hidden ${
@@ -157,20 +157,20 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
         >
           <span className="flex items-center gap-2">
             <BrandMark size={26} />
-            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Vendor</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Operatori</span>
           </span>
           <button
             ref={closeButtonRef}
             type="button"
             {...tapToDismiss(closeDrawer)}
-            aria-label="Close menu"
+            aria-label="Mbyll menynë"
             className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors active:bg-brand-soft"
           >
             <CloseIcon width={20} height={20} />
           </button>
         </div>
 
-        <nav className="overlay-scroll flex-1 overflow-y-auto px-3 py-4" aria-label="Vendor sections">
+        <nav className="overlay-scroll flex-1 overflow-y-auto px-3 py-4" aria-label="Seksionet e operatorit">
           <div className="flex flex-col gap-0.5">
             {mainLinks.map((link) => (
               <NavLinkItem key={link.href} pathname={pathname} link={link} onNavigate={closeDrawer} />
@@ -187,7 +187,7 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
               }`}
             >
               <SettingsIcon width={16} height={16} />
-              <span className="flex-1 text-left">Settings</span>
+              <span className="flex-1 text-left">Cilësimet</span>
               <ChevronDownIcon
                 width={14}
                 height={14}
@@ -211,18 +211,18 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
         >
           <button className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted transition-colors duration-[var(--dur-fast)] hover:bg-brand-soft hover:text-foreground">
             <LogOutIcon width={16} height={16} />
-            Sign out
+            Dilni
           </button>
         </form>
       </div>
 
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface-sunken text-foreground print:hidden lg:flex">
-        <Link href="/vendor" aria-label="Discover Albania Transport vendor portal" className="group flex flex-col items-start gap-1.5 border-b border-border px-5 py-5">
+        <Link href="/vendor" aria-label="Portali i operatorit Discover Albania Transport" className="group flex flex-col items-start gap-1.5 border-b border-border px-5 py-5">
           <BrandMark size={26} className="transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:scale-110" />
-          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Transport · Vendor</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Transport · Operatori</span>
         </Link>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Vendor sections">
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Seksionet e operatorit">
         <div className="flex flex-col gap-0.5">
           {mainLinks.map((link) => (
             <NavLinkItem key={link.href} pathname={pathname} link={link} />
@@ -239,7 +239,7 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
             }`}
           >
             <SettingsIcon width={16} height={16} />
-            <span className="flex-1 text-left">Settings</span>
+            <span className="flex-1 text-left">Cilësimet</span>
             <ChevronDownIcon
               width={14}
               height={14}
@@ -259,7 +259,7 @@ export function VendorSidebar({ isOwner, permissions }: { isOwner: boolean; perm
       <form action={logoutVendorAction} className="border-t border-border p-3">
         <button className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted transition-colors duration-[var(--dur-fast)] hover:bg-brand-soft hover:text-foreground">
           <LogOutIcon width={16} height={16} />
-          Sign out
+          Dilni
         </button>
       </form>
       </aside>

@@ -144,7 +144,7 @@ export function VendorManualBookingForm({
       <div className="flex flex-col gap-3 text-sm sm:col-span-2">
         {routes.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="font-medium">Route</span>
+            <span className="font-medium">Linja</span>
             {routes.length > 1 ? (
               <div className="mt-1 flex flex-wrap gap-2">
                 {routes.map((route) => (
@@ -168,9 +168,9 @@ export function VendorManualBookingForm({
         )}
 
         <div className="flex flex-col gap-1">
-          <span className="font-medium">Departure time</span>
+          <span className="font-medium">Ora e nisjes</span>
           {routeId === "" ? (
-            <p className="mt-1 text-sm text-muted">Choose a route first.</p>
+            <p className="mt-1 text-sm text-muted">Zgjidh një linjë së pari.</p>
           ) : touchScreenMode ? (
             // A native <select> means opening the OS picker on every tap --
             // too slow and fiddly on a kiosk. Chips stay one direct tap.
@@ -196,7 +196,7 @@ export function VendorManualBookingForm({
               onChange={(e) => handleDepartureChange(e.target.value)}
               className={`mt-1 ${FIELD_CLASS}`}
             >
-              <option value="" disabled>Select a time</option>
+              <option value="" disabled>Zgjidh një orë</option>
               {timesForSelectedRoute.map((departure) => (
                 <option key={departure.id} value={departure.id}>
                   {formatTime(departure.departureTime)}
@@ -208,12 +208,12 @@ export function VendorManualBookingForm({
       </div>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Travel date</span>
+        <span className="font-medium">Data e udhëtimit</span>
         <input name="travelDate" type="date" min={todayDate} defaultValue={todayDate} required className={FIELD_CLASS} />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Seats</span>
+        <span className="font-medium">Vendet</span>
         <input
           name="seats"
           type="number"
@@ -224,7 +224,7 @@ export function VendorManualBookingForm({
             const raw = e.target.value;
             setSeats(raw === "" ? "" : Math.max(1, Math.min(9, Number(raw) || 1)));
           }}
-          placeholder="e.g. 2"
+          placeholder="p.sh. 2"
           required
           className={FIELD_CLASS}
         />
@@ -232,7 +232,7 @@ export function VendorManualBookingForm({
 
       {stopsForRoute.length > 0 && (
         <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span className="font-medium">Boarding stop <span className="font-normal text-muted">(leave as full route to board at the start)</span></span>
+          <span className="font-medium">Ndalesa e hipjes <span className="font-normal text-muted">(lëre linjën e plotë për hipje në fillim)</span></span>
           <select
             name="routeStopId"
             value={routeStopId}
@@ -243,11 +243,11 @@ export function VendorManualBookingForm({
             className={FIELD_CLASS}
           >
             <option value="">
-              Full itinerary: {selectedDeparture?.fromStationName} → {selectedDeparture?.toStationName} (default fare)
+              Itinerari i plotë: {selectedDeparture?.fromStationName} → {selectedDeparture?.toStationName} (çmimi standard)
             </option>
             {stopsForRoute.map((stop) => (
               <option key={stop.id} value={stop.id}>
-                board at {stop.stationName}
+                hipje te {stop.stationName}
                 {stop.priceToDestination ? ` · €${stop.priceToDestination}` : ""}
               </option>
             ))}
@@ -258,25 +258,25 @@ export function VendorManualBookingForm({
       <input type="hidden" name="channel" value={touchScreenMode ? "touch_screen" : initialChannel} />
 
       <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-        <span className="font-medium">Passenger name</span>
+        <span className="font-medium">Emri i udhëtarit</span>
         <input name="passengerName" required className={FIELD_CLASS} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Phone <span className="font-normal text-muted">(optional)</span></span>
+        <span className="font-medium">Telefoni <span className="font-normal text-muted">(opsionale)</span></span>
         <input name="passengerPhone" className={FIELD_CLASS} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Email <span className="font-normal text-muted">(optional)</span></span>
+        <span className="font-medium">Email <span className="font-normal text-muted">(opsionale)</span></span>
         <input name="passengerEmail" type="email" className={FIELD_CLASS} />
       </label>
 
       <div className="sm:col-span-2 rounded-lg border border-border bg-surface-sunken p-3 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-muted">Fare{typeof seats === "number" && seats > 1 ? ` (${seats} seats)` : ""}</span>
+          <span className="text-muted">Çmimi{typeof seats === "number" && seats > 1 ? ` (${seats} vende)` : ""}</span>
           <span className="font-medium text-foreground">{fareTotal !== null ? `€${fareTotal.toFixed(2)}` : "—"}</span>
         </div>
         <label className="mt-2 flex flex-col gap-1 border-t border-border pt-2 text-sm">
-          <span className="font-medium">Amount to collect (EUR)</span>
+          <span className="font-medium">Shuma për t&apos;u arkëtuar (EUR)</span>
           <input
             name="amountOverride"
             type="number"
@@ -293,16 +293,16 @@ export function VendorManualBookingForm({
         <div className="sm:col-span-2">
           <input type="hidden" name="paid" value="true" />
           <Button type="submit" className="min-h-14 w-full text-base sm:min-h-16 sm:text-lg">
-            Create and show QR ticket
+            Krijo dhe shfaq biletën me kod QR
           </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row">
           <Button type="submit" variant="outline" className="min-h-14 flex-1 text-base">
-            Create booking
+            Krijo rezervimin
           </Button>
           <Button type="submit" name="paid" value="true" className="min-h-14 flex-1 text-base">
-            Book is Paid
+            Rezervimi është i paguar
           </Button>
         </div>
       )}

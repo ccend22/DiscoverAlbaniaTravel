@@ -34,7 +34,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
       <div
         className="relative inline-flex w-full rounded-full bg-[#edf4f3] p-1 text-sm sm:w-fit"
         role="group"
-        aria-label="Signup mode"
+        aria-label="Mënyra e regjistrimit"
       >
         <span
           className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-brand-deep shadow-sm transition-transform duration-[var(--dur-base)] ease-[var(--ease-spring)] ${
@@ -50,7 +50,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
             mode === "claim" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
-          My company is listed
+          Kompania ime është e listuar
         </button>
         <button
           type="button"
@@ -60,7 +60,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
             mode === "new" ? "text-brand-foreground" : "text-muted hover:text-foreground"
           }`}
         >
-          Register a new company
+          Regjistro një kompani të re
         </button>
       </div>
 
@@ -82,7 +82,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal">
                 <BuildingIcon width={15} height={15} />
               </span>
-              <h2 className="font-display text-base font-bold text-foreground">Find your company</h2>
+              <h2 className="font-display text-base font-bold text-foreground">Gjej kompaninë tënde</h2>
             </div>
 
             <label className="relative mt-4 block">
@@ -94,7 +94,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
                   setQuery(e.target.value);
                   setSelected(null);
                 }}
-                placeholder="Search by company name or city"
+                placeholder="Kërko sipas emrit të kompanisë ose qytetit"
                 suppressHydrationWarning
                 className="public-input min-h-11 w-full py-2 pl-9 pr-3 text-base"
               />
@@ -102,7 +102,7 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
 
             <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-border">
               {filtered.length === 0 ? (
-                <p className="p-4 text-sm text-muted">No unclaimed company matches that search.</p>
+                <p className="p-4 text-sm text-muted">Asnjë kompani e paregjistruar nuk përputhet me këtë kërkim.</p>
               ) : (
                 <ul className="divide-y divide-border">
                   {filtered.map((operator) => (
@@ -125,14 +125,14 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
                 </ul>
               )}
             </div>
-            {!selected && <p className="mt-2 text-xs text-muted">Select your company from the list above.</p>}
+            {!selected && <p className="mt-2 text-xs text-muted">Zgjidh kompaninë tënde nga lista më sipër.</p>}
           </div>
 
           <div className="border-t border-border pt-5">
-            <h2 className="font-display text-base font-bold text-foreground">Your details</h2>
+            <h2 className="font-display text-base font-bold text-foreground">Të dhënat e tua</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="font-medium text-foreground">Your full name</span>
+                <span className="font-medium text-foreground">Emri yt i plotë</span>
                 <input name="name" required minLength={2} autoComplete="name" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
@@ -140,14 +140,14 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
                 <input name="email" type="email" required autoComplete="email" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">Password</span>
+                <span className="font-medium text-foreground">Fjalëkalimi</span>
                 <input name="password" type="password" required minLength={8} autoComplete="new-password" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
             </div>
           </div>
 
           <Button type="submit" disabled={!selected}>
-            Submit application
+            Dërgo aplikimin
           </Button>
         </form>
       ) : (
@@ -160,37 +160,37 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal">
                 <BuildingIcon width={15} height={15} />
               </span>
-              <h2 className="font-display text-base font-bold text-foreground">Company details</h2>
+              <h2 className="font-display text-base font-bold text-foreground">Të dhënat e kompanisë</h2>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="font-medium text-foreground">Company name</span>
+                <span className="font-medium text-foreground">Emri i kompanisë</span>
                 <input name="operatorName" required minLength={2} autoComplete="organization" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">VAT / tax number</span>
+                <span className="font-medium text-foreground">NIPT / numri tatimor</span>
                 <input name="vat" required minLength={3} suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">Phone</span>
+                <span className="font-medium text-foreground">Telefoni</span>
                 <input name="phone" type="tel" autoComplete="tel" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">Street</span>
+                <span className="font-medium text-foreground">Rruga</span>
                 <input name="street" autoComplete="street-address" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">City</span>
+                <span className="font-medium text-foreground">Qyteti</span>
                 <input name="city" autoComplete="address-level2" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
             </div>
           </div>
 
           <div className="border-t border-border pt-5">
-            <h2 className="font-display text-base font-bold text-foreground">Your details</h2>
+            <h2 className="font-display text-base font-bold text-foreground">Të dhënat e tua</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="font-medium text-foreground">Your full name</span>
+                <span className="font-medium text-foreground">Emri yt i plotë</span>
                 <input name="name" required minLength={2} autoComplete="name" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
@@ -198,13 +198,13 @@ export function VendorSignupForm({ operators, defaultMode, error, claimAction, n
                 <input name="email" type="email" required autoComplete="email" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-foreground">Password</span>
+                <span className="font-medium text-foreground">Fjalëkalimi</span>
                 <input name="password" type="password" required minLength={8} autoComplete="new-password" suppressHydrationWarning className="min-h-11 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-teal" />
               </label>
             </div>
           </div>
 
-          <Button type="submit">Submit application</Button>
+          <Button type="submit">Dërgo aplikimin</Button>
         </form>
       )}
     </div>

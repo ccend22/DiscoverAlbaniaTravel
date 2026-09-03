@@ -15,11 +15,11 @@ export function RemoveTeamUserButton({
     <form
       action={action}
       onSubmit={(e) => {
-        if (!window.confirm(`Remove ${name} from your team?`)) e.preventDefault();
+        if (!window.confirm(`Të hiqet ${name} nga ekipi yt?`)) e.preventDefault();
       }}
     >
       <input type="hidden" name="targetUserId" value={targetUserId} />
-      <Button variant="danger" size="sm">Remove</Button>
+      <Button variant="danger" size="sm">Hiq</Button>
     </form>
   );
 }

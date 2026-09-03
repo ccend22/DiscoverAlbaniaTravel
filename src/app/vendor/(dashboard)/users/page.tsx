@@ -20,16 +20,16 @@ export default async function VendorUsersPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Users</h1>
-      <p className="mt-1 text-sm text-muted">Teammates who can sign in to manage {context.operatorName}&apos;s bookings and routes.</p>
-      {params.saved && <div className="mt-6"><Alert tone="success">Changes saved.</Alert></div>}
+      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Përdoruesit</h1>
+      <p className="mt-1 text-sm text-muted">Kolegët që mund të hyjnë për të menaxhuar rezervimet dhe linjat e {context.operatorName}.</p>
+      {params.saved && <div className="mt-6"><Alert tone="success">Ndryshimet u ruajtën.</Alert></div>}
       {params.error && <div className="mt-6"><Alert tone="error">{params.error}</Alert></div>}
 
       <section className="py-8">
-        <h2 className="text-lg font-semibold text-foreground">Add a teammate</h2>
+        <h2 className="text-lg font-semibold text-foreground">Shto një koleg</h2>
         <form action={createVendorTeamUserAction} className="mt-4 grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Full name</span>
+            <span className="font-medium">Emri i plotë</span>
             <input name="name" required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -37,12 +37,12 @@ export default async function VendorUsersPage({
             <input name="email" type="email" required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-            <span className="font-medium">Password</span>
+            <span className="font-medium">Fjalëkalimi</span>
             <PasswordInput name="password" minLength={8} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <div className="sm:col-span-2">
-            <span className="text-sm font-medium">Access</span>
-            <p className="mt-0.5 text-xs text-muted">Choose which pages this teammate can see and use. They&apos;ll only get their own view of the vendor panel based on this.</p>
+            <span className="text-sm font-medium">Qasja</span>
+            <p className="mt-0.5 text-xs text-muted">Zgjidh cilat faqe mund t&apos;i shohë dhe përdorë ky koleg. Ai/ajo do të ketë vetëm pamjen e vet të panelit të operatorit bazuar në këtë.</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {VENDOR_PERMISSIONS.map((permission) => (
                 <PermissionToggle key={permission.key} name="permissions" value={permission.key} label={permission.label} />
@@ -50,22 +50,22 @@ export default async function VendorUsersPage({
             </div>
           </div>
           <div className="sm:col-span-2">
-            <Button type="submit" size="sm">Add teammate</Button>
+            <Button type="submit" size="sm">Shto kolegun</Button>
           </div>
         </form>
       </section>
 
       <section className="border-t border-border py-8">
-        <h2 className="text-lg font-semibold text-foreground">Your team</h2>
+        <h2 className="text-lg font-semibold text-foreground">Ekipi yt</h2>
         <div className="mt-4 overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-border text-left text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Emri</th>
                 <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Access</th>
-                <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+                <th className="px-4 py-3 font-medium">Statusi</th>
+                <th className="px-4 py-3 font-medium">Qasja</th>
+                <th className="px-4 py-3"><span className="sr-only">Veprime</span></th>
               </tr>
             </thead>
             <tbody>
@@ -75,14 +75,14 @@ export default async function VendorUsersPage({
                   <td className="px-4 py-3 align-top text-muted">{user.email}</td>
                   <td className="px-4 py-3 align-top">
                     <Badge tone={user.status === "approved" ? "success" : user.status === "rejected" ? "danger" : "warning"}>
-                      {user.status}
+                      {user.status === "approved" ? "e aprovuar" : user.status === "rejected" ? "e refuzuar" : "në pritje"}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 align-top">
                     {user.isOwner ? (
-                      <Badge tone="info">Owner · full access</Badge>
+                      <Badge tone="info">Pronar · qasje e plotë</Badge>
                     ) : user.permissions.length === 0 ? (
-                      <span className="text-xs text-muted">No pages yet</span>
+                      <span className="text-xs text-muted">Ende pa faqe</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
                         {user.permissions.map((key) => (
@@ -110,7 +110,7 @@ export default async function VendorUsersPage({
               ))}
               {teamUsers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">No teammates yet.</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted">Ende pa kolegë.</td>
                 </tr>
               )}
             </tbody>

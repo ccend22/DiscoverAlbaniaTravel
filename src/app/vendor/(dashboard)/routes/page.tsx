@@ -18,10 +18,10 @@ export default async function VendorRoutesPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Routes & stops</h1>
+      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Linjat dhe stacionet</h1>
       {params.saved && (
         <div className="mt-6">
-          <Alert tone="success">Changes saved.</Alert>
+          <Alert tone="success">Ndryshimet u ruajtën.</Alert>
         </div>
       )}
       {params.error && (
@@ -31,25 +31,25 @@ export default async function VendorRoutesPage({
       )}
 
       <section className="py-8">
-        <h2 className="text-lg font-semibold text-foreground">Add a route</h2>
+        <h2 className="text-lg font-semibold text-foreground">Shto një linjë</h2>
         <form action={createVendorRouteAction} className="mt-4 grid gap-3 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-[180px_1fr_auto]">
-          <input name="code" required placeholder="Route code" className="min-h-11 rounded-md border border-border bg-background px-3 py-2 text-sm" />
-          <input name="longName" required placeholder="Route name, e.g. Tirana to Vlore" className="min-h-11 rounded-md border border-border bg-background px-3 py-2 text-sm" />
-          <Button type="submit" size="sm" className="sm:self-center">Add route</Button>
+          <input name="code" required placeholder="Kodi i linjës" className="min-h-11 rounded-md border border-border bg-background px-3 py-2 text-sm" />
+          <input name="longName" required placeholder="Emri i linjës, p.sh. Tiranë - Vlorë" className="min-h-11 rounded-md border border-border bg-background px-3 py-2 text-sm" />
+          <Button type="submit" size="sm" className="sm:self-center">Shto linjën</Button>
         </form>
       </section>
 
       <section className="border-t border-border py-8">
-        <h2 className="text-lg font-semibold text-foreground">Your routes</h2>
-        <p className="mt-1 text-sm text-muted">Open a route to add intermediate stops with boarding time and fare.</p>
+        <h2 className="text-lg font-semibold text-foreground">Linjat e tua</h2>
+        <p className="mt-1 text-sm text-muted">Hap një linjë për të shtuar ndalesa të ndërmjetme me kohën e hipjes dhe çmimin.</p>
         <div className="mt-4 overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="border-b border-border text-left text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Code</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Stops</th>
-                <th className="px-4 py-3"><span className="sr-only">Manage</span></th>
+                <th className="px-4 py-3 font-medium">Kodi</th>
+                <th className="px-4 py-3 font-medium">Emri</th>
+                <th className="px-4 py-3 font-medium">Ndalesat</th>
+                <th className="px-4 py-3"><span className="sr-only">Menaxho</span></th>
               </tr>
             </thead>
             <tbody>
@@ -60,14 +60,14 @@ export default async function VendorRoutesPage({
                   <td className="px-4 py-3 tabular-nums text-muted">{route.stopCount}</td>
                   <td className="px-4 py-3 text-right">
                     <Link href={`/vendor/routes/${route.id}`} className="text-sm font-medium text-teal hover:underline">
-                      Manage stops
+                      Menaxho ndalesat
                     </Link>
                   </td>
                 </tr>
               ))}
               {routesList.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted">No routes yet.</td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted">Ende pa linja.</td>
                 </tr>
               )}
             </tbody>

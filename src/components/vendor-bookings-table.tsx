@@ -16,6 +16,12 @@ import type { VendorBookingRow } from "@/db/queries/vendors";
 
 type StatusFilter = "all" | "confirmed" | "cancelled";
 
+const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+  all: "Të gjitha",
+  confirmed: "Të konfirmuara",
+  cancelled: "Të anulluara",
+};
+
 interface VendorBookingsTableProps {
   bookings: VendorBookingRow[];
   updateAction: (formData: FormData) => void;
@@ -26,10 +32,10 @@ interface VendorBookingsTableProps {
 
 const CHANNEL_LABELS: Record<VendorBookingRow["channel"], string> = {
   online: "Online",
-  walk_in: "Walk-in",
-  phone: "Phone",
-  touch_screen: "Touch screen",
-  mobile: "Mobile app",
+  walk_in: "Në sportel",
+  phone: "Telefon",
+  touch_screen: "Ekran prekës",
+  mobile: "Aplikacioni mobil",
 };
 
 function EditBookingModal({
@@ -54,12 +60,12 @@ function EditBookingModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Edit booking"
+        aria-label="Ndrysho rezervimin"
         className="relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[1.5rem] border border-white/70 bg-surface p-6 shadow-[0_32px_90px_rgba(0,24,32,0.34)] sm:rounded-[1.5rem]"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-foreground">{booking.bookingReference}</h2>
-          <button type="button" {...tapToDismiss(onClose)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground">
+          <button type="button" {...tapToDismiss(onClose)} aria-label="Mbyll" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground">
             <CloseIcon width={16} height={16} />
           </button>
         </div>
@@ -74,19 +80,19 @@ function EditBookingModal({
         <form action={updateAction} className="mt-5 grid gap-3">
           <input type="hidden" name="bookingId" value={booking.bookingId} />
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Passenger name</span>
+            <span className="font-medium">Emri i udhëtarit</span>
             <input name="passengerName" defaultValue={booking.passengerName} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Phone</span>
+            <span className="font-medium">Telefoni</span>
             <input name="passengerPhone" defaultValue={booking.passengerPhone} required className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Email <span className="font-normal text-muted">(optional)</span></span>
+            <span className="font-medium">Email <span className="font-normal text-muted">(opsionale)</span></span>
             <input name="passengerEmail" type="email" defaultValue={booking.passengerEmail ?? ""} className="min-h-11 rounded-md border border-border bg-background px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Channel</span>
+            <span className="font-medium">Kanali</span>
             {isManual ? (
               <select name="channel" defaultValue={booking.channel} className="min-h-11 rounded-md border border-border bg-background px-3 py-2">
                 {BOOKING_CHANNEL_OPTIONS.map((option) => (
@@ -94,10 +100,10 @@ function EditBookingModal({
                 ))}
               </select>
             ) : (
-              <p className="min-h-11 rounded-md border border-border bg-surface-sunken px-3 py-2 text-muted">Online (customer self-service)</p>
+              <p className="min-h-11 rounded-md border border-border bg-surface-sunken px-3 py-2 text-muted">Online (vetë-shërbim nga klienti)</p>
             )}
           </label>
-          <Button type="submit" className="mt-1">Save changes</Button>
+          <Button type="submit" className="mt-1">Ruaj ndryshimet</Button>
         </form>
 
         {booking.status === "confirmed" && (
@@ -105,13 +111,13 @@ function EditBookingModal({
             action={cancelAction}
             className="mt-4 border-t border-border pt-4"
             onSubmit={(e) => {
-              if (!window.confirm(`Cancel booking ${booking.bookingReference}? This releases the seat back to inventory.`)) {
+              if (!window.confirm(`Të anullohet rezervimi ${booking.bookingReference}? Kjo e kthen vendin përsëri të lirë.`)) {
                 e.preventDefault();
               }
             }}
           >
             <input type="hidden" name="bookingId" value={booking.bookingId} />
-            <Button type="submit" variant="danger" className="w-full">Cancel booking</Button>
+            <Button type="submit" variant="danger" className="w-full">Anullo rezervimin</Button>
           </form>
         )}
       </div>
@@ -150,13 +156,13 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
               key={option}
               type="button"
               onClick={() => setStatus(option)}
-              className={`min-h-9 rounded px-3 py-1.5 font-medium capitalize transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
+              className={`min-h-9 rounded px-3 py-1.5 font-medium transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
                 status === option
                   ? "bg-brand text-brand-foreground shadow-sm"
                   : "text-muted hover:text-foreground"
               }`}
             >
-              {option}
+              {STATUS_FILTER_LABELS[option]}
             </button>
           ))}
         </div>
@@ -170,28 +176,28 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search passenger, route, or reference"
-            aria-label="Search bookings"
+            placeholder="Kërko udhëtarin, linjën ose referencën"
+            aria-label="Kërko rezervimet"
             className="min-h-11 w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-teal"
           />
         </label>
       </div>
 
-      <p className="mb-2 text-xs text-muted sm:hidden">Tap a row to edit or cancel it.</p>
+      <p className="mb-2 text-xs text-muted sm:hidden">Prek një rresht për ta ndryshuar ose anulluar.</p>
       <div className="overflow-x-auto rounded-md border border-border bg-surface shadow-[var(--shadow-xs)]">
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="border-b border-border text-left text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Reference</th>
-              <th className="px-4 py-3 font-medium">Route</th>
-              <th className="px-4 py-3 font-medium">Passenger</th>
-              <th className="px-4 py-3 font-medium">Travel date</th>
-              <th className="px-4 py-3 font-medium">Seats</th>
-              <th className="px-4 py-3 font-medium">Total</th>
-              <th className="px-4 py-3 font-medium">Channel</th>
-              <th className="px-4 py-3 font-medium">Payment</th>
+              <th className="px-4 py-3 font-medium">Referenca</th>
+              <th className="px-4 py-3 font-medium">Linja</th>
+              <th className="px-4 py-3 font-medium">Udhëtari</th>
+              <th className="px-4 py-3 font-medium">Data e udhëtimit</th>
+              <th className="px-4 py-3 font-medium">Vendet</th>
+              <th className="px-4 py-3 font-medium">Totali</th>
+              <th className="px-4 py-3 font-medium">Kanali</th>
+              <th className="px-4 py-3 font-medium">Pagesa</th>
               <th className="px-4 py-3 font-medium">Check-in</th>
-              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Statusi</th>
             </tr>
           </thead>
           <tbody>
@@ -213,7 +219,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                     rel="noreferrer"
                     onClick={(event) => event.stopPropagation()}
                     className="text-teal underline decoration-teal/35 underline-offset-4 hover:decoration-teal"
-                    title="Open and print QR ticket"
+                    title="Hap dhe printo biletën me kod QR"
                   >
                     {booking.bookingReference}
                   </Link>
@@ -228,7 +234,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                   <p>{booking.passengerName}</p>
                   <p className="text-xs text-muted">{booking.passengerPhone}</p>
                 </td>
-                <td className="px-4 py-3 align-top text-muted">{formatDateLong(booking.travelDate)}</td>
+                <td className="px-4 py-3 align-top text-muted">{formatDateLong(booking.travelDate, "al")}</td>
                 <td className="px-4 py-3 align-top tabular-nums text-foreground">{booking.seats}</td>
                 <td className="px-4 py-3 align-top tabular-nums text-foreground">
                   {formatPrice(booking.priceAtBooking, booking.seats)}
@@ -238,7 +244,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                 </td>
                 <td className="px-4 py-3 align-top">
                   {booking.paymentStatus === "paid" ? (
-                    <Badge tone="success">Paid</Badge>
+                    <Badge tone="success">E paguar</Badge>
                   ) : booking.paymentStatus && booking.channel !== "online" ? (
                     // Only a manually-taken booking can be marked paid here -- an
                     // online booking's payment status must only ever come from the
@@ -246,7 +252,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                     <form action={markPaidAction} onClick={(e) => e.stopPropagation()}>
                       <input type="hidden" name="bookingId" value={booking.bookingId} />
                       <button className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning hover:bg-warning/20">
-                        Mark paid
+                        Shëno të paguar
                       </button>
                     </form>
                   ) : booking.paymentStatus ? (
@@ -257,16 +263,16 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
                 </td>
                 <td className="px-4 py-3 align-top">
                   {booking.checkedInAt ? (
-                    <Badge tone="success">Boarded</Badge>
+                    <Badge tone="success">Hipur</Badge>
                   ) : isExpired ? (
-                    <Badge tone="warning">Expired</Badge>
+                    <Badge tone="warning">E skaduar</Badge>
                   ) : (
-                    <Badge tone="neutral">Not scanned</Badge>
+                    <Badge tone="neutral">Ende pa u skanuar</Badge>
                   )}
                 </td>
                 <td className="px-4 py-3 align-top">
                   <Badge tone={isExpired ? "warning" : booking.status === "confirmed" ? "success" : "danger"}>
-                    {isExpired ? "Expired" : booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
+                    {isExpired ? "E skaduar" : booking.status === "confirmed" ? "E konfirmuar" : "E anulluar"}
                   </Badge>
                 </td>
               </tr>
@@ -275,7 +281,7 @@ export function VendorBookingsTable({ bookings, updateAction, cancelAction, mark
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-4 py-8 text-center text-muted">
-                  {bookings.length === 0 ? "No bookings yet." : "No bookings match this filter."}
+                  {bookings.length === 0 ? "Ende pa rezervime." : "Asnjë rezervim nuk përputhet me këtë filtër."}
                 </td>
               </tr>
             )}

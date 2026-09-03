@@ -16,10 +16,10 @@ export default async function VendorProfilePage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Operator profile</h1>
+      <h1 className="animate-fade-up font-display text-2xl font-bold text-foreground">Profili i operatorit</h1>
       {params.saved && (
         <div className="mt-6">
-          <Alert tone="success">Changes saved.</Alert>
+          <Alert tone="success">Ndryshimet u ruajtën.</Alert>
         </div>
       )}
       {params.error && (
@@ -32,7 +32,7 @@ export default async function VendorProfilePage({
         className="mt-6 grid gap-4 rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-xs)] sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span className="font-medium text-foreground">Operator name</span>
+          <span className="font-medium text-foreground">Emri i operatorit</span>
           <input
             name="name"
             required
@@ -41,7 +41,7 @@ export default async function VendorProfilePage({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Phone</span>
+          <span className="font-medium text-foreground">Telefoni</span>
           <input
             name="phone"
             defaultValue={context.operatorPhone ?? ""}
@@ -58,7 +58,7 @@ export default async function VendorProfilePage({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Street</span>
+          <span className="font-medium text-foreground">Rruga</span>
           <input
             name="street"
             defaultValue={context.operatorStreet ?? ""}
@@ -66,7 +66,7 @@ export default async function VendorProfilePage({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">City</span>
+          <span className="font-medium text-foreground">Qyteti</span>
           <input
             name="city"
             defaultValue={context.operatorCity ?? ""}
@@ -74,7 +74,7 @@ export default async function VendorProfilePage({
           />
         </label>
         <div className="sm:col-span-2">
-          <Button type="submit">Save operator</Button>
+          <Button type="submit">Ruaj operatorin</Button>
         </div>
       </form>
     </div>

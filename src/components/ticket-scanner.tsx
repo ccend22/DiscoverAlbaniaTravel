@@ -6,30 +6,23 @@ import { validateTicketAction } from "@/app/vendor/(dashboard)/scanner/actions";
 import type { TicketValidationResult } from "@/db/queries/vendors";
 import { Button } from "@/components/ui/button";
 import { AlertCircleIcon, CameraIcon, CheckCircleIcon, QrCodeIcon } from "@/components/icons";
+import { formatAlbaniaDateTime } from "@/lib/timezone";
 
 type CameraState = "idle" | "starting" | "active" | "error";
 
 const STATUS_COPY: Record<TicketValidationResult["status"], { title: string; body: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
-  valid: { title: "Ticket valid", body: "Passenger checked in successfully.", tone: "success" },
-  valid_off_hours: { title: "Ticket valid — outside scheduled time", body: "Passenger checked in, but this scan is well outside the scheduled boarding time. Worth a second look.", tone: "warning" },
-  already_used: { title: "Already validated", body: "This ticket has already been used.", tone: "warning" },
-  too_early: { title: "Too early", body: "This ticket becomes valid on its travel date.", tone: "warning" },
-  expired: { title: "Ticket expired", body: "The travel date has passed.", tone: "danger" },
-  cancelled: { title: "Booking cancelled", body: "Do not board this passenger with this ticket.", tone: "danger" },
-  unpaid: { title: "Payment not confirmed", body: "Collect or confirm payment before validating this ticket.", tone: "warning" },
-  wrong_route: { title: "Wrong line", body: "This ticket is booked for a different line. Do not board it here.", tone: "neutral" },
-  wrong_operator: { title: "Different line", body: "This ticket belongs to a different operator's line. Do not board it here.", tone: "neutral" },
-  invalid_code: { title: "QR not recognized", body: "Use a Discover Albania Transport ticket QR or enter a valid booking reference.", tone: "danger" },
-  not_found: { title: "Ticket not found", body: "This code doesn't match any ticket.", tone: "danger" },
+  valid: { title: "Bileta e vlefshme", body: "Udhëtari u regjistrua me sukses.", tone: "success" },
+  valid_off_hours: { title: "Bileta e vlefshme — jashtë orarit të planifikuar", body: "Udhëtari u regjistrua, por ky skanim është dukshëm jashtë orarit të planifikuar të hipjes. Ia vlen një kontroll shtesë.", tone: "warning" },
+  already_used: { title: "Tashmë e vlefshme", body: "Kjo biletë është përdorur tashmë.", tone: "warning" },
+  too_early: { title: "Shumë herët", body: "Kjo biletë bëhet e vlefshme në datën e saj të udhëtimit.", tone: "warning" },
+  expired: { title: "Bileta ka skaduar", body: "Data e udhëtimit ka kaluar.", tone: "danger" },
+  cancelled: { title: "Rezervimi u anullua", body: "Mos e ngjit këtë udhëtar me këtë biletë.", tone: "danger" },
+  unpaid: { title: "Pagesa nuk është konfirmuar", body: "Arkëto ose konfirmo pagesën përpara se ta vlefshmërosh këtë biletë.", tone: "warning" },
+  wrong_route: { title: "Linjë e gabuar", body: "Kjo biletë është rezervuar për një linjë tjetër. Mos e ngjit këtu.", tone: "neutral" },
+  wrong_operator: { title: "Linjë tjetër", body: "Kjo biletë i përket linjës së një operatori tjetër. Mos e ngjit këtu.", tone: "neutral" },
+  invalid_code: { title: "Kodi QR nuk u njoh", body: "Përdor një kod QR bilete të Discover Albania Transport ose shkruaj një referencë të vlefshme rezervimi.", tone: "danger" },
+  not_found: { title: "Bileta nuk u gjet", body: "Ky kod nuk përputhet me asnjë biletë.", tone: "danger" },
 };
-
-function formatAlbaniaDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Tirane",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export function TicketScanner({
   expectedRouteId,
@@ -66,7 +59,7 @@ export function TicketScanner({
         if (navigator.vibrate) navigator.vibrate(nextResult.status === "valid" ? 90 : [70, 60, 70]);
       } catch {
         scanLockedRef.current = false;
-        setCameraError("Validation could not reach the server. Check the connection and try again.");
+        setCameraError("Vlefshmërimi nuk arriti të lidhet me serverin. Kontrollo lidhjen dhe provo përsëri.");
       }
     });
   }, [stopCamera, expectedRouteId]);
@@ -102,8 +95,8 @@ export function TicketScanner({
       setCameraState("error");
       setCameraError(
         err instanceof Error && err.message === "camera-timeout"
-          ? "Camera didn't respond. On iPhone, check Settings → Safari → Camera is set to Allow (or Ask), then try again."
-          : "Camera access failed. Allow camera permission, or take/upload a photo instead."
+          ? "Kamera nuk u përgjigj. Në iPhone, kontrollo që Settings → Safari → Camera të jetë vendosur në Allow (ose Ask), pastaj provo përsëri."
+          : "Qasja në kamerë dështoi. Lejo qasjen te kamera, ose bëj/ngarko një foto në vend të kësaj."
       );
     }
   }, [stopCamera, validate]);
@@ -125,7 +118,7 @@ export function TicketScanner({
       validate(decoded.getText());
     } catch {
       setCameraState("error");
-      setCameraError("No readable QR code was found in that photo. Try again with the full code in focus.");
+      setCameraError("Nuk u gjet asnjë kod QR i lexueshëm në atë foto. Provo përsëri me kodin e plotë në fokus.");
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
@@ -152,7 +145,7 @@ export function TicketScanner({
       <section className="overflow-hidden rounded-2xl bg-brand-deep text-white shadow-[var(--shadow-lg)]">
         {expectedRouteLabel && (
           <div className="border-b border-white/10 bg-white/5 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-cyan">
-            Scanning for {expectedRouteLabel}
+            Duke skanuar për {expectedRouteLabel}
           </div>
         )}
         <div className="relative aspect-[4/3] min-h-72 bg-black">
@@ -163,7 +156,7 @@ export function TicketScanner({
                 <QrCodeIcon width={34} height={34} />
               </span>
               <p className="max-w-sm text-sm text-white/75">
-                Position the full QR code inside the camera view. Validation happens automatically.
+                Vendos kodin e plotë QR brenda pamjes së kamerës. Vlefshmërimi ndodh automatikisht.
               </p>
             </div>
           )}
@@ -174,11 +167,11 @@ export function TicketScanner({
         <div className="flex flex-col gap-3 p-4 sm:flex-row">
           <Button type="button" onClick={startCamera} disabled={cameraState === "starting" || isPending} className="min-h-12 flex-1">
             <CameraIcon width={18} height={18} />
-            {cameraState === "starting" ? "Starting camera…" : cameraState === "active" ? "Restart camera" : "Use camera"}
+            {cameraState === "starting" ? "Duke nisur kamerën…" : cameraState === "active" ? "Rinis kamerën" : "Përdor kamerën"}
           </Button>
           <label className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
             <QrCodeIcon width={18} height={18} />
-            Take or upload photo
+            Bëj ose ngarko një foto
             <input
               type="file"
               accept="image/*"
@@ -198,7 +191,7 @@ export function TicketScanner({
         {isPending && (
           <div role="status" className="rounded-2xl border border-border bg-surface p-6 text-center shadow-[var(--shadow-xs)]">
             <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-teal/25 border-t-teal" />
-            <p className="mt-3 text-sm font-medium text-foreground">Validating ticket…</p>
+            <p className="mt-3 text-sm font-medium text-foreground">Duke vlefshmëruar biletën…</p>
           </div>
         )}
 
@@ -219,7 +212,7 @@ export function TicketScanner({
             {result.status === "wrong_operator" && (
               <dl className="mt-5 grid gap-3 border-t border-current/20 pt-5 text-sm">
                 <div>
-                  <dt className="text-current/70">Actual line</dt>
+                  <dt className="text-current/70">Linja e vërtetë</dt>
                   <dd className="font-semibold">{result.operatorName} · {result.routeCode}</dd>
                 </div>
               </dl>
@@ -228,32 +221,32 @@ export function TicketScanner({
             {detail && (
               <dl className="mt-5 grid gap-3 border-t border-current/20 pt-5 text-sm">
                 <div>
-                  <dt className="text-current/70">Passenger</dt>
-                  <dd className="font-semibold">{detail.passengerName} · {detail.seats} seat{detail.seats === 1 ? "" : "s"}</dd>
+                  <dt className="text-current/70">Udhëtari</dt>
+                  <dd className="font-semibold">{detail.passengerName} · {detail.seats} vend{detail.seats === 1 ? "" : "e"}</dd>
                 </div>
                 <div>
-                  <dt className="text-current/70">Route</dt>
+                  <dt className="text-current/70">Linja</dt>
                   <dd className="font-semibold">{detail.routeCode} · {detail.fromStationName} → {detail.toStationName}</dd>
                 </div>
                 <div>
-                  <dt className="text-current/70">Boarding</dt>
-                  <dd className="font-semibold">{detail.boardingStationName} · {formatAlbaniaDateTime(detail.scheduledBoardingAt)}</dd>
+                  <dt className="text-current/70">Hipja</dt>
+                  <dd className="font-semibold">{detail.boardingStationName} · {formatAlbaniaDateTime(new Date(detail.scheduledBoardingAt), "al")}</dd>
                 </div>
                 <div>
-                  <dt className="text-current/70">Reference</dt>
+                  <dt className="text-current/70">Referenca</dt>
                   <dd className="font-mono font-semibold">{detail.bookingReference}</dd>
                 </div>
                 {detail.checkedInAt && (
                   <div>
-                    <dt className="text-current/70">Validated</dt>
-                    <dd className="font-semibold">{formatAlbaniaDateTime(detail.checkedInAt)}</dd>
+                    <dt className="text-current/70">Vlefshmëruar</dt>
+                    <dd className="font-semibold">{formatAlbaniaDateTime(new Date(detail.checkedInAt), "al")}</dd>
                   </div>
                 )}
               </dl>
             )}
 
             <Button type="button" variant="outline" onClick={resetScanner} className="mt-6 w-full border-current/30 bg-white/70 text-current hover:bg-white">
-              Scan another ticket
+              Skano një biletë tjetër
             </Button>
           </div>
         )}
@@ -267,7 +260,7 @@ export function TicketScanner({
             }}
           >
             <label className="flex flex-col gap-2 text-sm">
-              <span className="font-semibold text-foreground">Enter booking reference</span>
+              <span className="font-semibold text-foreground">Shkruaj referencën e rezervimit</span>
               <input
                 value={manualCode}
                 onChange={(event) => setManualCode(event.target.value.toUpperCase())}
@@ -276,7 +269,7 @@ export function TicketScanner({
                 className="min-h-14 rounded-xl border border-border bg-background px-4 py-3 font-mono text-base uppercase outline-none focus:border-teal focus:ring-2 focus:ring-teal/15"
               />
             </label>
-            <Button type="submit" disabled={!manualCode.trim()} className="mt-3 min-h-12 w-full">Validate reference</Button>
+            <Button type="submit" disabled={!manualCode.trim()} className="mt-3 min-h-12 w-full">Vlefshmëro referencën</Button>
           </form>
         )}
 

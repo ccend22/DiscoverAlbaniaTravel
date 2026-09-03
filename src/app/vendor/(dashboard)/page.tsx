@@ -53,13 +53,13 @@ export default async function VendorOverviewPage({
   const canBook = vendorHasPermission(context, "bookings");
 
   const statItems = [
-    { label: "Routes", value: vendorRoutes.length, icon: MapPinIcon, tone: "teal" as const },
-    { label: "Departures today", value: daily?.departuresRunning ?? 0, icon: BusIcon, tone: "sky" as const },
-    { label: "Bookings today", value: daily?.bookingsCount ?? 0, icon: TicketIcon, tone: "coral" as const },
+    { label: "Linja", value: vendorRoutes.length, icon: MapPinIcon, tone: "teal" as const },
+    { label: "Nisje sot", value: daily?.departuresRunning ?? 0, icon: BusIcon, tone: "sky" as const },
+    { label: "Rezervime sot", value: daily?.bookingsCount ?? 0, icon: TicketIcon, tone: "coral" as const },
     {
-      label: "Seats booked today",
+      label: "Vende të rezervuara sot",
       value: daily?.seatsBooked ?? 0,
-      sublabel: daily ? `${daily.checkedIn} checked in · ${daily.occupancyPercent}% occupancy` : undefined,
+      sublabel: daily ? `${daily.checkedIn} check-in · ${daily.occupancyPercent}% e mbushur` : undefined,
       icon: UsersIcon,
       tone: "gold" as const,
     },
@@ -69,7 +69,7 @@ export default async function VendorOverviewPage({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="animate-fade-up flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.1em] text-teal">Bus operations</p>
+          <p className="text-xs font-bold uppercase tracking-[0.1em] text-teal">Operator autobusësh</p>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-2xl font-bold text-foreground">{context.operatorName}</h1>
             {context.operatorRatingCount > 0 ? (
@@ -79,7 +79,7 @@ export default async function VendorOverviewPage({
                 <span className="font-normal text-gold/80">({context.operatorRatingCount})</span>
               </span>
             ) : (
-              <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-muted">No ratings yet</span>
+              <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-muted">Ende pa vlerësime</span>
             )}
           </div>
           <p className="mt-1 text-sm text-muted">{context.vendorEmail}</p>
@@ -89,13 +89,13 @@ export default async function VendorOverviewPage({
             {canScan && (
               <LinkButton href="/vendor/scanner" variant="outline" size="sm">
                 <QrCodeIcon width={16} height={16} />
-                Scan ticket
+                Skano biletën
               </LinkButton>
             )}
             {canBook && (
               <LinkButton href="/vendor/bookings/new" size="sm">
                 <PlusIcon width={16} height={16} />
-                New manual booking
+                Rezervim i ri manual
               </LinkButton>
             )}
           </div>
@@ -107,10 +107,10 @@ export default async function VendorOverviewPage({
           <DateNavInput date={date} />
           {date !== today && (
             <Link href="/vendor" className="text-sm font-medium text-teal hover:underline">
-              Today
+              Sot
             </Link>
           )}
-          <p className="text-sm text-muted">Showing {formatDateLong(date)}</p>
+          <p className="text-sm text-muted">Duke shfaqur {formatDateLong(date, "al")}</p>
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -136,7 +136,7 @@ export default async function VendorOverviewPage({
 
       {vendorHasPermission(context, "bookings") && (
         <section className="border-t border-border py-8">
-          <h2 className="text-lg font-semibold text-foreground">Bookings on {formatDateLong(date)}</h2>
+          <h2 className="text-lg font-semibold text-foreground">Rezervimet më {formatDateLong(date, "al")}</h2>
           <div className="mt-4">
             <VendorBookingsTable
               bookings={dateBookings}
@@ -151,18 +151,18 @@ export default async function VendorOverviewPage({
 
       {(vendorHasPermission(context, "routes") || vendorHasPermission(context, "departures")) && (
         <section className="border-t border-border py-8">
-          <h2 className="text-lg font-semibold text-foreground">Quick links</h2>
+          <h2 className="text-lg font-semibold text-foreground">Lidhje të shpejta</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {vendorHasPermission(context, "routes") && (
               <Link href="/vendor/routes" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
-                <p className="font-medium text-foreground">Manage routes & stops</p>
-                <p className="mt-1 text-sm text-muted">Add intermediate stops with timing and fares.</p>
+                <p className="font-medium text-foreground">Menaxho linjat dhe stacionet</p>
+                <p className="mt-1 text-sm text-muted">Shto ndalesa të ndërmjetme me kohë dhe çmime.</p>
               </Link>
             )}
             {vendorHasPermission(context, "departures") && (
               <Link href="/vendor/departures" className="card-lift rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-xs)]">
-                <p className="font-medium text-foreground">Manage departures</p>
-                <p className="mt-1 text-sm text-muted">Adjust schedule, price, seats, and boarding.</p>
+                <p className="font-medium text-foreground">Menaxho nisjet</p>
+                <p className="mt-1 text-sm text-muted">Përshtat orarin, çmimin, vendet dhe hipjen.</p>
               </Link>
             )}
           </div>

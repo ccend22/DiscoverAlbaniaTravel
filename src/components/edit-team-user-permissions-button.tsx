@@ -26,7 +26,7 @@ export function EditTeamUserPermissionsButton({
   return (
     <>
       <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
-        Edit access
+        Ndrysho qasjen
       </Button>
       {open &&
         createPortal(
@@ -35,16 +35,16 @@ export function EditTeamUserPermissionsButton({
             <div
               role="dialog"
               aria-modal="true"
-              aria-label={`Edit ${name}'s access`}
+              aria-label={`Ndrysho qasjen e ${name}`}
               className="relative flex max-h-[90dvh] w-full max-w-sm flex-col overflow-y-auto rounded-t-[1.5rem] border border-white/70 bg-surface p-6 shadow-[0_32px_90px_rgba(0,24,32,0.34)] sm:rounded-[1.5rem]"
             >
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold text-foreground">{name}&apos;s access</h2>
-                <button type="button" {...tapToDismiss(() => setOpen(false))} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground">
+                <h2 className="font-display text-lg font-bold text-foreground">Qasja e {name}</h2>
+                <button type="button" {...tapToDismiss(() => setOpen(false))} aria-label="Mbyll" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground">
                   <CloseIcon width={16} height={16} />
                 </button>
               </div>
-              <p className="mt-1 text-sm text-muted">Choose which pages {name} can see and use.</p>
+              <p className="mt-1 text-sm text-muted">Zgjidh cilat faqe mund t&apos;i shohë dhe përdorë {name}.</p>
 
               <form
                 action={action}
@@ -63,7 +63,7 @@ export function EditTeamUserPermissionsButton({
                     />
                   ))}
                 </div>
-                <Button type="submit" className="mt-2">Save access</Button>
+                <Button type="submit" className="mt-2">Ruaj qasjen</Button>
               </form>
             </div>
           </div>,
